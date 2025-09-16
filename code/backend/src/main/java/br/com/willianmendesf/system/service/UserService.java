@@ -3,7 +3,7 @@ package br.com.willianmendesf.system.service;
 import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.User;
 import br.com.willianmendesf.system.model.UserDTO;
-import br.com.willianmendesf.system.repository.UserRepository;
+import br.com.willianmendesf.system.interfaces.UserRepository;
 import br.com.willianmendesf.system.utils.HashUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +44,7 @@ public class UserService {
             var userPassword = user.getPassword();
             var encryptedPassword = HashUtil.toMD5(userPassword);
             user.setPassword(encryptedPassword);
+            user.setId(userRepository.findMaxId() + 1);
             return userRepository.save(user);
         } catch (Exception e) {
             throw new UserException("Error creating new user", e);
