@@ -4,11 +4,11 @@ spring:
 
   sql:
     init:
-      mode: always
+      mode: never
       schema-locations: classpath:sql/
 
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}
+    url: jdbc:mysql://${SQL_HOST}:${SQL_PORT}/${SQL_DB}
     username: ${SQL_USER}
     password: ${SQL_PASS}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -20,3 +20,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+    port: 8080
+    servlet:
+      context-path: /api/v1
+
+file:
+  temp-dir: /tmp/files
