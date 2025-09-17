@@ -3,7 +3,7 @@ package br.com.willianmendesf.system.service;
 import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.User;
 import br.com.willianmendesf.system.model.UserDTO;
-import br.com.willianmendesf.system.interfaces.UserRepository;
+import br.com.willianmendesf.system.interfaces.UserInterface;
 import br.com.willianmendesf.system.utils.HashUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +16,12 @@ import java.util.List;
 @AllArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
+    private final UserInterface userInterface;
 
     public List<UserDTO> findAll() {
         try {
             log.info("Fetching all users from the database");
-            var result = userRepository.findAll();
+            var result = userInterface.findAll();
             return result.stream().map(user -> new UserDTO(user.getName(), user.getEmail())).toList();
         } catch (Exception e) {
             throw new UserException("Error fetching users from the database");
@@ -31,7 +31,7 @@ public class UserService {
     public UserDTO getUserById(Long id) {
         try {
             log.info("Fetching user with ID: {}", id);
-            var result =  userRepository.findById(id).orElseThrow();
+            var result =  userInterface.findById(id).orElseThrow();
             return new UserDTO(result.getName(), result.getEmail());
         } catch (Exception e) {
             throw new UserException("Error fetching user with ID: " + id);
@@ -44,8 +44,8 @@ public class UserService {
             var userPassword = user.getPassword();
             var encryptedPassword = HashUtil.toMD5(userPassword);
             user.setPassword(encryptedPassword);
-            user.setId(userRepository.findMaxId() + 1);
-            return userRepository.save(user);
+            user.setId(userInterface.findMaxId() + 1);
+            return userInterface.save(user);
         } catch (Exception e) {
             throw new UserException("Error creating new user", e);
         }
@@ -54,7 +54,7 @@ public class UserService {
     public void deleteById(Long id) {
         try {
             log.info("Deleting user with ID: {}", id);
-            userRepository.deleteById(id);
+            userInterface.deleteById(id);
         } catch (Exception e) {
             throw new UserException("Error deleting user with ID: " + id);
         }

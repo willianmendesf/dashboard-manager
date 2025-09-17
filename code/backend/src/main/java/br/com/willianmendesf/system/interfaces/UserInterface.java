@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserInterface extends JpaRepository<User, Long> {
     @Query("SELECT COALESCE(MAX(u.id), 0) FROM User u")
     Long findMaxId();
 }
