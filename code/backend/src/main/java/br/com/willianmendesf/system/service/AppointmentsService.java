@@ -1,7 +1,7 @@
 package br.com.willianmendesf.system.service;
 
-import br.com.willianmendesf.system.interfaces.AppointmentsInterface;
-import br.com.willianmendesf.system.model.Appointments;
+import br.com.willianmendesf.system.model.AppointmentsEntity;
+import br.com.willianmendesf.system.repository.AppointmentsRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,38 +13,35 @@ import java.util.List;
 @AllArgsConstructor
 public class AppointmentsService {
 
-    private final AppointmentsInterface appointments;
+    private final AppointmentsRepository repository;
 
-    public List<Appointments> getAllAppointments() {
+    public List<AppointmentsEntity> getAllAppointments() {
         log.info("Fetching all appointments from the database");
-        return appointments.findAll();
+        return repository.findAll();
     }
 
-    public Appointments getAppointmentByName(String name) {
+    public AppointmentsEntity getAppointmentByName(String name) {
         log.info("Fetching appointment with name: {}", name);
-        return appointments.findAll().stream().filter(a -> a.getName().equals(name)).findFirst().orElse(null);
+        return repository.findAll().stream().filter(a -> a.getName().equals(name)).findFirst().orElse(null);
     }
 
-    public Appointments getAppointmentById(Long id) {
+    public AppointmentsEntity getAppointmentById(Long id) {
         log.info("Fetching appointment with ID: {}", id);
-        return appointments.findById(id).orElse(null);
+        return repository.findById(id).orElse(null);
     }
 
-    public void createAppointment(Appointments appointment) {
+    public void createAppointment(AppointmentsEntity appointment) {
         log.info("Creating new appointment!");
-        appointments.save(appointment);
+        repository.save(appointment);
     }
 
-    public void updateAppointment(Long id, Appointments updatedAppointment) {
+    public void updateAppointment(Long id, AppointmentsEntity updatedAppointment) {
         log.info("Updating appointment with ID: {}", id);
-        if (appointments.existsById(id)) {
-            updatedAppointment.setId(id);
-            appointments.save(updatedAppointment);
-        }
+        repository.save(updatedAppointment);
     }
 
     public void deleteAppointment(Long id) {
         log.info("Deleting appointment with ID: {}", id);
-        appointments.deleteById(id);
+        repository.deleteById(id);
     }
 }

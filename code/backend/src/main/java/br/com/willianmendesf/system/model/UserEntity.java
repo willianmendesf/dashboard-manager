@@ -8,15 +8,17 @@ import lombok.Data;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-public class User {
+public class UserEntity {
     @Id
     private Long id;
+    private String username;
     private String name;
     private String email;
     private String password;
+    private String roles;
     private String dtype = null;
 
-    public User() { }
+    public UserEntity() { }
 
     @Override
     public String toString() {

@@ -10,7 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "appointments")
-public class Appointments {
+public class AppointmentsEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,9 +26,9 @@ public class Appointments {
     private Long retries;
     private Long timeout;
 
-    public Appointments() { }
+    public AppointmentsEntity() { }
 
-    public Appointments(Long retries, String name, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout) {
+    public AppointmentsEntity(Long retries, String name, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout) {
         this.retries = retries;
         this.name = name;
         this.schedule = schedule;

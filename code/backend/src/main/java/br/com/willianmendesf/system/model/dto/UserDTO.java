@@ -1,4 +1,4 @@
-package br.com.willianmendesf.system.model;
+package br.com.willianmendesf.system.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

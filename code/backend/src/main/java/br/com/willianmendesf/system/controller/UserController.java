@@ -1,7 +1,7 @@
 package br.com.willianmendesf.system.controller;
 
-import br.com.willianmendesf.system.model.User;
-import br.com.willianmendesf.system.model.UserDTO;
+import br.com.willianmendesf.system.model.UserEntity;
+import br.com.willianmendesf.system.model.dto.UserDTO;
 import br.com.willianmendesf.system.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,8 +30,8 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<HttpStatus> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
+    public ResponseEntity<HttpStatus> createUser(@RequestBody UserEntity userEntity) {
+        UserEntity createdUserEntity = userService.createUser(userEntity);
         return ResponseEntity.status(201).body(HttpStatus.CREATED);
     }
 
