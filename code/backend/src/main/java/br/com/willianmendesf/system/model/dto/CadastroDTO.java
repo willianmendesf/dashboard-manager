@@ -11,6 +11,8 @@ public class CadastroDTO {
     private String nome;
     private String email;
     private LocalDate nascimento;
+    private Integer idade;
+    private String estadoCivil;
     private String telefone;
 
     public CadastroDTO(CadastroEntity cadastroEntity) {
@@ -18,6 +20,8 @@ public class CadastroDTO {
         this.nome = cadastroEntity.getNome();
         this.email = cadastroEntity.getEmail();
         this.nascimento = cadastroEntity.getNascimento();
+        this.idade = cadastroEntity.getIdade();
         this.telefone = cadastroEntity.getTelefone();
+        this.estadoCivil = cadastroEntity.getEstadoCivil();
     }
 }
