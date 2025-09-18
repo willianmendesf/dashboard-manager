@@ -1,9 +1,9 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.exception.CadastroException;
-import br.com.willianmendesf.system.model.CadastroEntity;
-import br.com.willianmendesf.system.model.dto.CadastroDTO;
-import br.com.willianmendesf.system.repository.CadastroRepository;
+import br.com.willianmendesf.system.model.RegisterEntity;
+import br.com.willianmendesf.system.model.dto.RegisterDTO;
+import br.com.willianmendesf.system.repository.RegisterRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,35 +13,35 @@ import java.util.List;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class CadastroService {
+public class RegisterService {
 
-    private final CadastroRepository repository;
+    private final RegisterRepository repository;
 
-    public List<CadastroDTO> getAll() {
+    public List<RegisterDTO> getAll() {
         try {
             log.info("Fetching all appointments from the database");
-            return repository.findAll().stream().map(CadastroDTO::new).toList();
+            return repository.findAll().stream().map(RegisterDTO::new).toList();
         } catch (Exception e) {
             throw new CadastroException("Error to return values" ,e);
         }
     }
 
-    public CadastroDTO getById(Long id) {
+    public RegisterDTO getById(Long id) {
         try {
             log.info("Fetching appointment with ID: {}", id);
-            CadastroEntity entity = repository.findById(id).orElse(null);
+            RegisterEntity entity = repository.findById(id).orElse(null);
             if (entity == null) throw new CadastroException("Cadastro not found for ID: " + id);
-            return new CadastroDTO(entity);
+            return new RegisterDTO(entity);
         } catch (Exception e) {
             throw new CadastroException("ID " + id + " not found");
         }
     }
 
-    public void create(CadastroEntity cadastro) {
+    public void create(RegisterEntity cadastro) {
         try {
             log.info("Creating new appointment!");
-            CadastroEntity saved = repository.save(cadastro);
-            new CadastroDTO(saved);
+            RegisterEntity saved = repository.save(cadastro);
+            new RegisterDTO(saved);
         } catch (Exception e) {
             throw new CadastroException("Error to create new appointment", e);
         }
