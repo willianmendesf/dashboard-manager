@@ -14,38 +14,38 @@ public class AppointmentsController {
     private final AppointmentsService service;
 
     @GetMapping
-    public ResponseEntity<Iterable<AppointmentsEntity>> getAllAppointments() {
-        Iterable<AppointmentsEntity> appointments = service.getAllAppointments();
+    public ResponseEntity<Iterable<AppointmentsEntity>> getAll() {
+        Iterable<AppointmentsEntity> appointments = service.getAll();
         return ResponseEntity.ok(appointments);
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<AppointmentsEntity> getAppointmentById(@PathVariable Long id) {
-        AppointmentsEntity appointment = service.getAppointmentById(id);
+    public ResponseEntity<AppointmentsEntity> getById(@PathVariable Long id) {
+        AppointmentsEntity appointment = service.getById(id);
         return ResponseEntity.ok(appointment);
     }
 
     @GetMapping("/{name}")
-    public ResponseEntity<AppointmentsEntity> getAppointmentByName(@PathVariable String name) {
-        AppointmentsEntity appointment = service.getAppointmentByName(name);
+    public ResponseEntity<AppointmentsEntity> getByName(@PathVariable String name) {
+        AppointmentsEntity appointment = service.getByName(name);
         return ResponseEntity.ok(appointment);
     }
 
     @PostMapping
-    public ResponseEntity<Void> createAppointment(@RequestBody AppointmentsEntity appointment) {
-        service.createAppointment(appointment);
+    public ResponseEntity<Void> create(@RequestBody AppointmentsEntity appointment) {
+        service.create(appointment);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<Void> updateAppointment(@PathVariable Long id, @RequestBody AppointmentsEntity updatedAppointment) {
-        service.updateAppointment(id, updatedAppointment);
+    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody AppointmentsEntity updatedAppointment) {
+        service.update(id, updatedAppointment);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id) {
-        service.deleteAppointment(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
         return ResponseEntity.ok().build();
     }
 }
