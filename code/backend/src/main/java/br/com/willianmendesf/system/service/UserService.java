@@ -4,7 +4,7 @@ import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.UserEntity;
 import br.com.willianmendesf.system.model.dto.UserDTO;
 import br.com.willianmendesf.system.repository.UserRepository;
-import br.com.willianmendesf.system.utils.HashUtil;
+import br.com.willianmendesf.system.service.utils.HashUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
