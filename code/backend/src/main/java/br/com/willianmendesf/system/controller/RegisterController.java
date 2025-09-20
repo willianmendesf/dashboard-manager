@@ -1,6 +1,6 @@
 package br.com.willianmendesf.system.controller;
 
-import br.com.willianmendesf.system.model.RegisterEntity;
+import br.com.willianmendesf.system.model.entity.RegisterEntity;
 import br.com.willianmendesf.system.model.dto.RegisterDTO;
 import br.com.willianmendesf.system.service.RegisterService;
 import lombok.AllArgsConstructor;

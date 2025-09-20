@@ -1,10 +1,13 @@
 package br.com.willianmendesf.system.controller;
 
-import br.com.willianmendesf.system.model.AppointmentsEntity;
+import br.com.willianmendesf.system.model.dto.AppointmentsDTO;
+import br.com.willianmendesf.system.model.entity.AppointmentsEntity;
 import br.com.willianmendesf.system.service.AppointmentsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @AllArgsConstructor
@@ -14,20 +17,20 @@ public class AppointmentsController {
     private final AppointmentsService service;
 
     @GetMapping
-    public ResponseEntity<Iterable<AppointmentsEntity>> getAll() {
-        Iterable<AppointmentsEntity> appointments = service.getAll();
+    public ResponseEntity<List<AppointmentsDTO>> getAll() {
+        List<AppointmentsDTO> appointments = service.getAll();
         return ResponseEntity.ok(appointments);
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<AppointmentsEntity> getById(@PathVariable Long id) {
-        AppointmentsEntity appointment = service.getById(id);
+    public ResponseEntity<AppointmentsDTO> getById(@PathVariable Long id) {
+        AppointmentsDTO appointment = service.getById(id);
         return ResponseEntity.ok(appointment);
     }
 
     @GetMapping("/{name}")
-    public ResponseEntity<AppointmentsEntity> getByName(@PathVariable String name) {
-        AppointmentsEntity appointment = service.getByName(name);
+    public ResponseEntity<AppointmentsDTO> getByName(@PathVariable String name) {
+        AppointmentsDTO appointment = service.getByName(name);
         return ResponseEntity.ok(appointment);
     }
 

@@ -1,7 +1,7 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.exception.UserException;
-import br.com.willianmendesf.system.model.UserEntity;
+import br.com.willianmendesf.system.model.entity.UserEntity;
 import br.com.willianmendesf.system.model.dto.UserDTO;
 import br.com.willianmendesf.system.repository.UserRepository;
 import br.com.willianmendesf.system.service.utils.HashUtil;

@@ -1,4 +1,4 @@
-package br.com.willianmendesf.system.model;
+package br.com.willianmendesf.system.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -6,9 +6,9 @@ import lombok.Data;
 
 import java.util.List;
 
+@Entity
 @Data
 @AllArgsConstructor
-@Entity
 @Table(name = "appointments")
 public class AppointmentsEntity {
     @Id

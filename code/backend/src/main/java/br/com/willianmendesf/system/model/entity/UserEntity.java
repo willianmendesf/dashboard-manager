@@ -1,21 +1,34 @@
-package br.com.willianmendesf.system.model;
+package br.com.willianmendesf.system.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Entity
 @Data
 @AllArgsConstructor
-@Entity
 @Table(name = "users")
 public class UserEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "username", nullable = false)
     private String username;
+
+    @Column(name = "name")
     private String name;
+
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
+
+    @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "roles")
     private String roles;
+
+    @Column(name = "dtype")
     private String dtype = null;
 
     public UserEntity() { }

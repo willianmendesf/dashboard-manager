@@ -1,12 +1,14 @@
 package br.com.willianmendesf.system.service;
 
-import br.com.willianmendesf.system.model.AppointmentsEntity;
+import br.com.willianmendesf.system.model.dto.AppointmentsDTO;
+import br.com.willianmendesf.system.model.entity.AppointmentsEntity;
 import br.com.willianmendesf.system.repository.AppointmentsRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -15,19 +17,22 @@ public class AppointmentsService {
 
     private final AppointmentsRepository repository;
 
-    public List<AppointmentsEntity> getAll() {
+    public List<AppointmentsDTO> getAll() {
         log.info("Fetching all appointments from the database");
-        return repository.findAll();
+        List<AppointmentsEntity> entity = repository.findAll();
+        return entity.stream().map(AppointmentsDTO::new).collect(Collectors.toList());
     }
 
-    public AppointmentsEntity getByName(String name) {
+    public AppointmentsDTO getByName(String name) {
         log.info("Fetching appointment with name: {}", name);
-        return repository.findAll().stream().filter(a -> a.getName().equals(name)).findFirst().orElse(null);
+        AppointmentsEntity entity = repository.findAll().stream().filter(a -> a.getName().equals(name)).findFirst().orElse(null);
+        return new AppointmentsDTO(entity);
     }
 
-    public AppointmentsEntity getById(Long id) {
+    public AppointmentsDTO getById(Long id) {
         log.info("Fetching appointment with ID: {}", id);
-        return repository.findById(id).orElse(null);
+        AppointmentsEntity entity = repository.findById(id).orElse(null);
+        return new AppointmentsDTO(entity);
     }
 
     public void create(AppointmentsEntity appointment) {

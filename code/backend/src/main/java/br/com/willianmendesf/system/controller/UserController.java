@@ -1,6 +1,6 @@
 package br.com.willianmendesf.system.controller;
 
-import br.com.willianmendesf.system.model.UserEntity;
+import br.com.willianmendesf.system.model.entity.UserEntity;
 import br.com.willianmendesf.system.model.dto.UserDTO;
 import br.com.willianmendesf.system.service.UserService;
 import lombok.AllArgsConstructor;

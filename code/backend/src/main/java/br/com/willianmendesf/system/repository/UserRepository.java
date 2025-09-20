@@ -1,6 +1,6 @@
 package br.com.willianmendesf.system.repository;
 
-import br.com.willianmendesf.system.model.UserEntity;
+import br.com.willianmendesf.system.model.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

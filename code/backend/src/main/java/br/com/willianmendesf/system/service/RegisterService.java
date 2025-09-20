@@ -1,7 +1,7 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.exception.CadastroException;
-import br.com.willianmendesf.system.model.RegisterEntity;
+import br.com.willianmendesf.system.model.entity.RegisterEntity;
 import br.com.willianmendesf.system.model.dto.RegisterDTO;
 import br.com.willianmendesf.system.repository.RegisterRepository;
 import lombok.AllArgsConstructor;

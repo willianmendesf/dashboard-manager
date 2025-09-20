@@ -1,11 +1,13 @@
 package br.com.willianmendesf.system.model.dto;
 
-import br.com.willianmendesf.system.model.RegisterEntity;
+import br.com.willianmendesf.system.model.entity.RegisterEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
+@AllArgsConstructor
 public class RegisterDTO {
     private Long id;
     private String nome;
