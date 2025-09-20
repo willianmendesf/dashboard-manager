@@ -3,9 +3,23 @@ package br.com.willianmendesf.system.configuration;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class QueueConfiguration {
+public class AppConfiguration {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public String apiNodeUrl() {
+        Dotenv dotenv = Dotenv.configure()
+                .ignoreIfMissing()
+                .load();
+        return dotenv.get("API_WTZ_URL");
+    }
 
     @Bean
     public Dotenv loadDotenv() {

@@ -1,7 +1,7 @@
 package br.com.willianmendesf.system.service;
 
-import br.com.willianmendesf.system.model.SenderMessage;
-import io.github.cdimascio.dotenv.Dotenv;
+import br.com.willianmendesf.system.model.WhatzappMessageSender;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,26 +13,21 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class WhatsappMessageService {
 
     private final String apiNodeUrl;
     private final RestTemplate restTemplate;
 
-    public WhatsappMessageService() {
-        Dotenv dotenv = Dotenv.load();
-        this.apiNodeUrl = dotenv.get("API_WTZ_URL");
-        this.restTemplate = new RestTemplate();
-    }
-
-    public void sendMessage(SenderMessage senderMessage) {
+    public void sendMessage(WhatzappMessageSender message) {
         log.info("Sending wtz message!");
-        if (senderMessage.getPhone() == null || senderMessage.getPhone().isBlank()) throw new IllegalArgumentException("Number is null");
-        if (senderMessage.getMessage() == null || senderMessage.getMessage().isBlank()) throw new IllegalArgumentException("Message is null");
+        if (message.getPhone() == null || message.getPhone().isBlank()) throw new IllegalArgumentException("Number is null");
+        if (message.getMessage() == null || message.getMessage().isBlank()) throw new IllegalArgumentException("Message is null");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<SenderMessage> request = new HttpEntity<>(senderMessage, headers);
+        HttpEntity<WhatzappMessageSender> request = new HttpEntity<>(message, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(apiNodeUrl, request, String.class);

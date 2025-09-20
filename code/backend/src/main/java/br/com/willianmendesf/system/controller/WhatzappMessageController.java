@@ -1,6 +1,6 @@
 package br.com.willianmendesf.system.controller;
 
-import br.com.willianmendesf.system.model.SenderMessage;
+import br.com.willianmendesf.system.model.WhatzappMessageSender;
 import br.com.willianmendesf.system.service.WhatsappMessageService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ public class WhatzappMessageController {
     private final WhatsappMessageService service;
 
     @PostMapping
-    public ResponseEntity<Object> send(@RequestBody SenderMessage message) {
+    public ResponseEntity<Object> send(@RequestBody WhatzappMessageSender message) {
         service.sendMessage(message);
         return ResponseEntity.ok(200);
     }
