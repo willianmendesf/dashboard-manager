@@ -1,0 +1,360 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>WhatsApp Business</h1>
+    <p>Envie mensagens para contatos e grupos do WhatsApp</p>
+  </div>
+
+  <div class="whatsapp-layout">
+    <!-- Sidebar com contatos e grupos -->
+    <div class="contacts-sidebar">
+      <div class="sidebar-header">
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="filterContacts()"
+            placeholder="Buscar contatos..."
+          />
+          <span class="search-icon">🔍</span>
+        </div>
+        <div class="filter-tabs">
+          <button
+            class="tab-button"
+            [class.active]="activeTab === 'contacts'"
+            (click)="activeTab = 'contacts'; filterContacts()"
+          >
+            Contatos
+          </button>
+          <button
+            class="tab-button"
+            [class.active]="activeTab === 'groups'"
+            (click)="activeTab = 'groups'; filterContacts()"
+          >
+            Grupos
+          </button>
+        </div>
+      </div>
+
+      <div class="contacts-list">
+        <!-- Lista de Contatos -->
+        <div
+          class="contact-item"
+          *ngFor="let contact of filteredContacts"
+          [class.selected]="selectedRecipient?.type === 'contact' && selectedRecipient?.id === contact.id"
+          (click)="selectContact(contact)"
+        >
+          <div class="contact-avatar">
+            {{ contact.name.charAt(0) }}
+            <div class="online-indicator" *ngIf="contact.isOnline"></div>
+          </div>
+          <div class="contact-info">
+            <div class="contact-name">{{ contact.name }}</div>
+            <div class="contact-phone">{{ contact.phone }}</div>
+            <div class="contact-status" *ngIf="contact.lastSeen">
+              {{ contact.isOnline ? 'Online' : contact.lastSeen }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Grupos -->
+        <div
+          class="contact-item group-item"
+          *ngFor="let group of filteredGroups"
+          [class.selected]="selectedRecipient?.type === 'group' && selectedRecipient?.id === group.id"
+          (click)="selectGroup(group)"
+        >
+          <div class="contact-avatar group-avatar">
+            👥
+          </div>
+          <div class="contact-info">
+            <div class="contact-name">{{ group.name }}</div>
+            <div class="group-description">{{ group.description }}</div>
+            <div class="group-members">{{ group.members.length }} membros</div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="getFilteredItems().length === 0">
+          <div class="empty-icon">📱</div>
+          <p>Nenhum {{ activeTab === 'contacts' ? 'contato' : 'grupo' }} encontrado</p>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-add" (click)="showAddContactModal = true">
+          + Novo Contato
+        </button>
+        <button class="btn-add" (click)="showAddGroupModal = true">
+          + Novo Grupo
+        </button>
+      </div>
+    </div>
+
+    <!-- Área de composição de mensagem -->
+    <div class="message-composer">
+      <div class="composer-header" *ngIf="selectedRecipient">
+        <div class="recipient-info">
+          <div class="recipient-avatar">
+            {{ selectedRecipient.type === 'group' ? '👥' : selectedRecipient.name.charAt(0) }}
+          </div>
+          <div class="recipient-details">
+            <h3>{{ selectedRecipient.name }}</h3>
+            <p *ngIf="selectedRecipient.type === 'contact'">
+              {{ selectedRecipient.phone }}
+              <span class="online-status" *ngIf="selectedRecipient.isOnline">• Online</span>
+            </p>
+            <p *ngIf="selectedRecipient.type === 'group'">
+              {{ selectedRecipient.members.length }} membros
+            </p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-action" (click)="showRecipientInfo = true" title="Informações">
+            ℹ️
+          </button>
+        </div>
+      </div>
+
+      <div class="composer-body" *ngIf="selectedRecipient">
+        <div class="message-history">
+          <div
+            class="message-bubble"
+            *ngFor="let message of getMessagesForRecipient()"
+            [class.sent]="true"
+          >
+            <div class="message-content">{{ message.content }}</div>
+            <div class="message-meta">
+              <span class="message-time">{{ message.timestamp }}</span>
+              <span class="message-status">{{ getStatusIcon(message.status) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="message-input-area">
+          <div class="message-type-selector">
+            <button
+              class="type-button"
+              [class.active]="messageType === 'text'"
+              (click)="messageType = 'text'"
+            >
+              📝 Texto
+            </button>
+            <button
+              class="type-button"
+              [class.active]="messageType === 'image'"
+              (click)="messageType = 'image'"
+            >
+              🖼️ Imagem
+            </button>
+            <button
+              class="type-button"
+              [class.active]="messageType === 'document'"
+              (click)="messageType = 'document'"
+            >
+              📄 Documento
+            </button>
+          </div>
+
+          <div class="input-container" *ngIf="messageType === 'text'">
+            <textarea
+              [(ngModel)]="messageContent"
+              placeholder="Digite sua mensagem..."
+              class="message-textarea"
+              rows="3"
+              (keydown.enter)="sendMessage()"
+            ></textarea>
+            <div class="character-count">
+              {{ messageContent.length }}/4096 caracteres
+            </div>
+          </div>
+
+          <div class="file-upload-area" *ngIf="messageType === 'image' || messageType === 'document'">
+            <div class="upload-zone" (click)="fileInput.click()">
+              <div class="upload-icon">
+                {{ messageType === 'image' ? '🖼️' : '📄' }}
+              </div>
+              <p>Clique para selecionar {{ messageType === 'image' ? 'uma imagem' : 'um documento' }}</p>
+              <input
+                #fileInput
+                type="file"
+                [accept]="messageType === 'image' ? 'image/*' : '.pdf,.doc,.docx,.txt'"
+                (change)="onFileSelected($event)"
+                style="display: none"
+              />
+            </div>
+            <div class="selected-file" *ngIf="selectedFile">
+              <span>{{ selectedFile.name }}</span>
+              <button (click)="selectedFile = null">×</button>
+            </div>
+          </div>
+
+          <div class="message-actions">
+            <button class="btn-secondary" (click)="scheduleMessage()" [disabled]="!canSendMessage()">
+              ⏰ Agendar
+            </button>
+            <button class="btn-primary" (click)="sendMessage()" [disabled]="!canSendMessage()">
+              📤 Enviar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-composer" *ngIf="!selectedRecipient">
+        <div class="empty-icon">💬</div>
+        <h3>Selecione um contato ou grupo</h3>
+        <p>Escolha um destinatário na lista ao lado para começar a enviar mensagens</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Adicionar Contato -->
+  <div class="modal-overlay" *ngIf="showAddContactModal" (click)="closeAddContactModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Novo Contato</h3>
+        <button class="btn-close" (click)="closeAddContactModal()">×</button>
+      </div>
+
+      <form class="modal-body" (ngSubmit)="addContact()">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input
+            type="text"
+            [(ngModel)]="newContact.name"
+            name="name"
+            class="form-control"
+            placeholder="Nome do contato"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Telefone *</label>
+          <input
+            type="tel"
+            [(ngModel)]="newContact.phone"
+            name="phone"
+            class="form-control"
+            placeholder="+55 11 99999-9999"
+            required
+          />
+        </div>
+      </form>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeAddContactModal()">
+          Cancelar
+        </button>
+        <button type="button" class="btn-primary" (click)="addContact()">
+          Adicionar Contato
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Adicionar Grupo -->
+  <div class="modal-overlay" *ngIf="showAddGroupModal" (click)="closeAddGroupModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Novo Grupo</h3>
+        <button class="btn-close" (click)="closeAddGroupModal()">×</button>
+      </div>
+
+      <form class="modal-body" (ngSubmit)="addGroup()">
+        <div class="form-group">
+          <label>Nome do Grupo *</label>
+          <input
+            type="text"
+            [(ngModel)]="newGroup.name"
+            name="name"
+            class="form-control"
+            placeholder="Nome do grupo"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea
+            [(ngModel)]="newGroup.description"
+            name="description"
+            class="form-control"
+            placeholder="Descrição do grupo"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Membros</label>
+          <div class="members-selector">
+            <div
+              class="member-item"
+              *ngFor="let contact of contacts"
+              (click)="toggleMember(contact)"
+              [class.selected]="isMemberSelected(contact)"
+            >
+              <div class="member-avatar">{{ contact.name.charAt(0) }}</div>
+              <div class="member-info">
+                <div class="member-name">{{ contact.name }}</div>
+                <div class="member-phone">{{ contact.phone }}</div>
+              </div>
+              <div class="member-checkbox">
+                <span *ngIf="isMemberSelected(contact)">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeAddGroupModal()">
+          Cancelar
+        </button>
+        <button type="button" class="btn-primary" (click)="addGroup()">
+          Criar Grupo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Informações do Destinatário -->
+  <div class="modal-overlay" *ngIf="showRecipientInfo" (click)="showRecipientInfo = false">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Informações</h3>
+        <button class="btn-close" (click)="showRecipientInfo = false">×</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedRecipient">
+        <div class="recipient-profile">
+          <div class="profile-avatar">
+            {{ selectedRecipient.type === 'group' ? '👥' : selectedRecipient.name.charAt(0) }}
+          </div>
+          <div class="profile-info">
+            <h2>{{ selectedRecipient.name }}</h2>
+            <p *ngIf="selectedRecipient.type === 'contact'">{{ selectedRecipient.phone }}</p>
+            <p *ngIf="selectedRecipient.type === 'group'">{{ selectedRecipient.description }}</p>
+          </div>
+        </div>
+
+        <div class="info-details" *ngIf="selectedRecipient.type === 'group'">
+          <h4>Membros do Grupo ({{ selectedRecipient.members.length }})</h4>
+          <div class="members-list">
+            <div class="member-item" *ngFor="let member of selectedRecipient.members">
+              <div class="member-avatar">{{ member.name.charAt(0) }}</div>
+              <div class="member-info">
+                <div class="member-name">{{ member.name }}</div>
+                <div class="member-phone">{{ member.phone }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="showRecipientInfo = false">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

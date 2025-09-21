@@ -30,6 +30,24 @@ export class SidebarComponent {
       exact: true
     },
     {
+      path: '/messages',
+      label: 'Mensagens',
+      icon: '📨',
+      exact: true
+    },
+    {
+      path: '/user-management',
+      label: 'Gerenciar Usuários',
+      icon: '👤',
+      exact: true
+    },
+    {
+      path: '/whatsapp',
+      label: 'WhatsApp',
+      icon: '💬',
+      exact: true
+    },
+    {
       path: '/projects',
       label: 'Projetos',
       icon: '📂',

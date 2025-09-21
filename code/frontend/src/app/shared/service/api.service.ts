@@ -12,7 +12,6 @@ export class ApiService {
   private apiUrl = environment.apiUrl;
 
   public get(uri : string) {
-
     return this.http.get<any>(this.apiUrl + uri);
   }
 

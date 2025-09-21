@@ -4,6 +4,9 @@ import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { UsersComponent } from './pages/users/users.component';
 import { ProjectsComponent } from './pages/projects/projects.component';
 import { SettingsComponent } from './pages/settings/settings.component';
+import { MessagesComponent } from './pages/messages/messages.component';
+import { UserManagementComponent } from './pages/user-management/user-management.component';
+import { WhatsAppComponent } from './pages/whatsapp/whatsapp.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -11,5 +14,8 @@ export const routes: Routes = [
   { path: 'analytics', component: AnalyticsComponent },
   { path: 'users', component: UsersComponent },
   { path: 'projects', component: ProjectsComponent },
-  { path: 'settings', component: SettingsComponent }
+  { path: 'messages', component: MessagesComponent },
+  { path: 'settings', component: SettingsComponent },
+  { path: 'user-management', component: UserManagementComponent },
+  { path: 'whatsapp', component: WhatsAppComponent }
 ];
