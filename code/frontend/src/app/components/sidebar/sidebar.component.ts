@@ -1,0 +1,154 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-sidebar',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  template: `
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2 class="logo">Dashboard</h2>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul>
+          <li *ngFor="let item of menuItems">
+            <a 
+              [routerLink]="item.path" 
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{exact: item.exact}"
+              class="nav-link"
+            >
+              <span class="nav-icon" [innerHTML]="item.icon"></span>
+              <span class="nav-text">{{ item.label }}</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  `,
+  styles: [`
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+      color: white;
+      position: fixed;
+      left: 0;
+      top: 0;
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid #374151;
+    }
+
+    .logo {
+      margin: 0;
+      font-size: 24px;
+      font-weight: bold;
+      color: #3B82F6;
+      text-align: center;
+    }
+
+    .sidebar-nav {
+      padding: 16px 0;
+    }
+
+    .sidebar-nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-nav li {
+      margin: 4px 16px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      color: #D1D5DB;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3B82F6;
+      transform: translateX(4px);
+    }
+
+    .nav-link.active {
+      background: #3B82F6;
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-text {
+      flex: 1;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+    }
+  `]
+})
+export class SidebarComponent {
+  menuItems = [
+    {
+      path: '/home',
+      label: 'Home',
+      icon: '🏠',
+      exact: false
+    },
+    {
+      path: '/analytics',
+      label: 'Analytics',
+      icon: '📊',
+      exact: true
+    },
+    {
+      path: '/users',
+      label: 'Usuários',
+      icon: '👥',
+      exact: true
+    },
+    {
+      path: '/projects',
+      label: 'Projetos',
+      icon: '📂',
+      exact: true
+    },
+    {
+      path: '/settings',
+      label: 'Configurações',
+      icon: '⚙️',
+      exact: true
+    }
+  ];
+}

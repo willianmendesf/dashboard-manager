@@ -1,0 +1,64 @@
+
+<div class="page-container">
+  <div class="page-header">
+    <h1>Analytics</h1>
+    <p>Análise detalhada de métricas e performance</p>
+  </div>
+
+  <div class="analytics-grid">
+    <div class="analytics-card large">
+      <h3>Visitas no Site</h3>
+      <div class="chart-placeholder">
+        <div class="chart-bars">
+          <div class="bar" *ngFor="let value of chartData" [style.height.%]="value"></div>
+        </div>
+        <div class="chart-labels">
+          <span *ngFor="let label of chartLabels">{{ label }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="analytics-card">
+      <h3>Conversões</h3>
+      <div class="metric-value">847</div>
+      <div class="metric-trend positive">+23% vs mês anterior</div>
+    </div>
+
+    <div class="analytics-card">
+      <h3>Taxa de Rejeição</h3>
+      <div class="metric-value">32.4%</div>
+      <div class="metric-trend negative">+2.1% vs mês anterior</div>
+    </div>
+
+    <div class="analytics-card">
+      <h3>Tempo Médio na Página</h3>
+      <div class="metric-value">3m 42s</div>
+      <div class="metric-trend positive">+14% vs mês anterior</div>
+    </div>
+
+    <div class="analytics-card">
+      <h3>Páginas Mais Visitadas</h3>
+      <div class="page-list">
+        <div class="page-item" *ngFor="let page of topPages">
+          <span class="page-name">{{ page.name }}</span>
+          <span class="page-views">{{ page.views }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="analytics-card">
+      <h3>Dispositivos</h3>
+      <div class="device-stats">
+        <div class="device-item" *ngFor="let device of deviceStats">
+          <div class="device-bar">
+            <div class="device-fill" [style.width.%]="device.percentage"></div>
+          </div>
+          <div class="device-info">
+            <span class="device-name">{{ device.name }}</span>
+            <span class="device-percent">{{ device.percentage }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
