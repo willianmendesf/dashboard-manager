@@ -28,8 +28,15 @@ public class UserEntity {
     @Column(name = "roles")
     private String roles;
 
-    @Column(name = "dtype")
-    private String dtype = null;
+    @Column(name = "status")
+    private Boolean status;
+
+//    @Column(name = "created_at")
+//    private String created;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     public UserEntity() { }
 

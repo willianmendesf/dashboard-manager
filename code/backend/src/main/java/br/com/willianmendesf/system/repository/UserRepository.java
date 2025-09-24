@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
     @Query("SELECT COALESCE(MAX(u.id), 0) FROM UserEntity u")
     Long findMaxId();
+
+//    List<UserEntity> findFirstByOrderByCreatedAtDesc();
 }

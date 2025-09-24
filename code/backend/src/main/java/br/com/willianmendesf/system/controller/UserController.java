@@ -29,6 +29,18 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+//    @GetMapping("/recent")
+//    public ResponseEntity<UserDTO> getLastCreated() {
+//        UserDTO response = userService.getLastCreated();
+//        return ResponseEntity.ok(response);
+//    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<HttpStatus> updateUserById(@PathVariable Long id, @RequestBody UserEntity userEntity) {
+        UserEntity createdUserEntity = userService.updateById(id, userEntity);
+        return ResponseEntity.status(201).body(HttpStatus.CREATED);
+    }
+
     @PostMapping
     public ResponseEntity<HttpStatus> createUser(@RequestBody UserEntity userEntity) {
         UserEntity createdUserEntity = userService.createUser(userEntity);
