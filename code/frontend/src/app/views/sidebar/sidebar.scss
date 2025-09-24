@@ -1,7 +1,7 @@
 .sidebar {
   width: 250px;
   height: 100vh;
-  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  background: linear-gradient(180deg, #141920 0%, #3f4d5e 100%);
   color: white;
   position: fixed;
   left: 0;
@@ -20,7 +20,7 @@
   margin: 0;
   font-size: 24px;
   font-weight: bold;
-  color: #3B82F6;
+  color: #67c1be;
   text-align: center;
 }
 
@@ -51,12 +51,12 @@
 
 .nav-link:hover {
   background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  color: #67c1be;
   transform: translateX(4px);
 }
 
 .nav-link.active {
-  background: #3B82F6;
+  background: #67c1be;
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }

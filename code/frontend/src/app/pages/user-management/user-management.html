@@ -1,0 +1,268 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Gerenciamento de Usuários</h1>
+    <p>Crie, edite e gerencie usuários do sistema</p>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-filters">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="filterUsers()"
+          placeholder="Buscar usuários..."
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+      <select [(ngModel)]="statusFilter" (change)="filterUsers()" class="filter-select">
+        <option value="">Todos os Status</option>
+        <option value="active">Ativos</option>
+        <option value="inactive">Inativos</option>
+      </select>
+      <select [(ngModel)]="roleFilter" (change)="filterUsers()" class="filter-select">
+        <option value="">Todas as Funções</option>
+        <option value="admin">Administrador</option>
+        <option value="manager">Gerente</option>
+        <option value="user">Usuário</option>
+      </select>
+    </div>
+    <button class="btn-primary" (click)="openUserModal()">
+      + Novo Usuário
+    </button>
+  </div>
+
+  <div class="users-table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Usuário</th>
+          <th>Nome</th>
+          <th>Email</th>
+          <!-- <th>Telefone</th> -->
+          <th>Função</th>
+          <th>Status</th>
+          <!-- <th>Último Acesso</th> -->
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers" class="user-row">
+          <td class="user-cell">
+            <div class="user-avatar">{{ user.name.charAt(0) }}</div>
+            <div class="user-info">
+              <div class="user-name">{{ user.username }}</div>
+              <div class="user-id">ID: {{ user.id }}</div>
+            </div>
+          </td>
+          <td>
+            <div class="user-name">{{ user.name }}</div>
+          </td>
+          <td>{{ user.email }}</td>
+          <!-- <td>{{ user.phone }}</td> -->
+          <td>
+            <span class="role-badge" [class]="user.role">
+              {{ getRoleText(user.role) }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge">
+              {{ user.status === 'active' ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <!-- <td>{{ user.lastLogin || 'Nunca' }}</td> -->
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action view" (click)="viewUser(user)" title="Visualizar">
+                👁️
+              </button>
+              <button class="btn-action edit" (click)="editUser(user)" title="Editar">
+                ✏️
+              </button>
+              <button class="btn-action delete" (click)="deleteUser(user)" title="Excluir">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="filteredUsers.length === 0">
+      <div class="empty-icon">👤</div>
+      <h3>Nenhum usuário encontrado</h3>
+      <p>Tente ajustar os filtros ou criar um novo usuário</p>
+    </div>
+  </div>
+
+  <div class="pagination">
+    <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">
+      ← Anterior
+    </button>
+    <span class="pagination-info">
+      Página {{ currentPage }} de {{ totalPages }}
+    </span>
+    <button class="btn-pagination" [disabled]="currentPage === totalPages" (click)="nextPage()">
+      Próxima →
+    </button>
+  </div>
+
+  <!-- User Modal -->
+  <div class="modal-overlay" *ngIf="showUserModal" (click)="closeUserModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
+        <button class="btn-close" (click)="closeUserModal()">×</button>
+      </div>
+
+      <form class="modal-body" (ngSubmit)="saveUser()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nome Completo *</label>
+            <input
+              type="text"
+              [(ngModel)]="currentUser.name"
+              name="name"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Usuário</label>
+            <input
+              type="tel"
+              [(ngModel)]="currentUser.username"
+              name="username"
+              class="form-control"
+              placeholder=""
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Função *</label>
+            <select [(ngModel)]="currentUser.role" name="role" class="form-control" required>
+              <option value="">Selecione uma função</option>
+              <option value="admin">Administrador</option>
+              <option value="manager">Gerente</option>
+              <option value="user">Usuário</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="currentUser.status" name="status" class="form-control">
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="!isEditing">
+            <label>Email *</label>
+            <input
+              type="email"
+              [(ngModel)]="currentUser.email"
+              name="email"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group" *ngIf="isEditing">
+            <label>Email *</label>
+            <input
+              disabled
+              type="email"
+              [(ngModel)]="currentUser.email"
+              name="email"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="form-group" *ngIf="!isEditing">
+            <label>Senha *</label>
+            <input
+              type="password"
+              [(ngModel)]="currentUser.password"
+              name="password"
+              class="form-control"
+              placeholder="Senha será enviada por email"
+            />
+          </div>
+        </div>
+
+        <div class="permissions-section" *ngIf="currentUser.role">
+          <h4>Permissões</h4>
+          <div class="permissions-grid">
+            <label class="permission-item" *ngFor="let permission of getPermissionsForRole(currentUser.role)">
+              <input type="checkbox" [checked]="true" disabled />
+              <span>{{ permission }}</span>
+            </label>
+          </div>
+        </div>
+      </form>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeUserModal()">
+          Cancelar
+        </button>
+        <button type="button" class="btn-primary" (click)="saveUser()">
+          {{ isEditing ? 'Salvar Alterações' : 'Criar Usuário' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View User Modal -->
+  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Detalhes do Usuário</h3>
+        <button class="btn-close" (click)="closeViewModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="user-profile">
+          <div class="profile-avatar">{{ viewingUser?.name?.charAt(0) || '' }}</div>
+          <div class="profile-info">
+            <h2>{{ viewingUser?.name }}</h2>
+            <p class="profile-role">{{ getRoleText(viewingUser?.role || '') }}</p>
+            <span class="status-badge" [class]="viewingUser?.status">
+              {{ viewingUser?.status === 'active' ? 'Ativo' : 'Inativo' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Email</label>
+            <span>{{ viewingUser?.email }}</span>
+          </div>
+          <!-- <div class="detail-item">
+            <label>Telefone</label>
+            <span>{{ viewingUser?.phone }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Data de Criação</label>
+            <span>{{ viewingUser?.createdAt }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Último Acesso</label>
+            <span>{{ viewingUser?.lastLogin || 'Nunca acessou' }}</span>
+          </div> -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeViewModal()">
+          Fechar
+        </button>
+        <button type="button" class="btn-primary" (click)="editUser(viewingUser!)">
+          Editar Usuário
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

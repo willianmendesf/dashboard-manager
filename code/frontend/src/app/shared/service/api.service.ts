@@ -18,4 +18,12 @@ export class ApiService {
   public post(uri : string, data : any) {
     return this.http.post<any>(this.apiUrl + uri, data);
   }
+
+  public update(uri : string, data : any) {
+    return this.http.patch<any>(this.apiUrl + uri, data);
+  }
+
+  public delete(uri : string) {
+    return this.http.delete<any>(this.apiUrl + uri);
+  }
 }
