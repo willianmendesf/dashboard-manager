@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/whatsapp")
 @AllArgsConstructor
-public class WhatzappMessageController {
+public class WhatsappMessageController {
 
     private final WhatsappMessageService service;
 
@@ -21,6 +21,11 @@ public class WhatzappMessageController {
     @GetMapping("/groups")
     public ResponseEntity<Object> getGroups() {
         return ResponseEntity.ok(service.getGroups());
+    }
+
+    @GetMapping("/history/{jid}")
+    public ResponseEntity<Object> getGroups(@PathVariable String jid) {
+        return ResponseEntity.ok(service.getHistory(jid));
     }
 
     @PostMapping

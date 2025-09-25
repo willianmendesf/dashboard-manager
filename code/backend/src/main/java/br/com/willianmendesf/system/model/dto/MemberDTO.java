@@ -1,6 +1,6 @@
 package br.com.willianmendesf.system.model.dto;
 
-import br.com.willianmendesf.system.model.entity.RegisterEntity;
+import br.com.willianmendesf.system.model.entity.MemberEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
-public class RegisterDTO {
+public class MemberDTO {
     private Long id;
     private String nome;
     private String email;
@@ -17,7 +17,7 @@ public class RegisterDTO {
     private String estadoCivil;
     private String telefone;
 
-    public RegisterDTO(RegisterEntity registerEntity) {
+    public MemberDTO(MemberEntity registerEntity) {
         this.id = registerEntity.getId();
         this.nome = registerEntity.getNome();
         this.email = registerEntity.getEmail();

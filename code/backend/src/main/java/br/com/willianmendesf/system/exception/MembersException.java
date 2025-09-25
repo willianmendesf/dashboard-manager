@@ -1,19 +1,19 @@
 package br.com.willianmendesf.system.exception;
 
-public class CadastroException extends RuntimeException {
-    public CadastroException() {
+public class MembersException extends RuntimeException {
+    public MembersException() {
         super();
     }
 
-    public CadastroException(Throwable cause) {
+    public MembersException(Throwable cause) {
         super(cause);
     }
 
-    public CadastroException(String message) {
+    public MembersException(String message) {
         super(message);
     }
 
-    public CadastroException(String message, Throwable cause) {
+    public MembersException(String message, Throwable cause) {
         super(message, cause);
     }
 }
