@@ -13,7 +13,7 @@
           (input)="filterUsers()"
           placeholder="Buscar usuários..."
         />
-        <span class="search-icon">🔍</span>
+        <div class="search-icon">🔍</div>
       </div>
       <select [(ngModel)]="statusFilter" (change)="filterUsers()" class="filter-select">
         <option value="">Todos os Status</option>
@@ -27,9 +27,8 @@
         <option value="user">Usuário</option>
       </select>
     </div>
-    <button class="btn-primary" (click)="openUserModal()">
-      + Novo Usuário
-    </button>
+    <button class="btn-secondary" (click)="getUsers()">Atualizar</button>
+    <button class="btn-primary" (click)="openUserModal()">+ Novo Usuário</button>
   </div>
 
   <div class="users-table-container">

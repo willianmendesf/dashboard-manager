@@ -1,0 +1,14 @@
+@use '@swimlane/ngx-datatable/themes/material.css' as *;
+@use '@swimlane/ngx-datatable/assets/icons.css' as *;
+// @use '@swimlane/ngx-datatable/index.css' as *;
+@use 'primeicons/primeicons.css' as *;
+
+// @use 'bootstrap/scss/bootstrap' as *;
+@use './partials/_variables' as *;
+@use './partials/_datatable' as *;
+@use './partials/_modal' as *;
+@use './partials/_form' as *;
+@use './partials/_styles' as *;
+@use './partials/_filters_aside' as *;
+@use './partials/_spinner' as *;
+@use './partials/_navbar' as *;

@@ -1,0 +1,35 @@
+$enable-shadows: false;
+$enable-rounded: false;
+
+$spacer: 1rem;
+$spacers: (
+  6: ($spacer * 3.5),
+  7: ($spacer * 5),
+  8: ($spacer * 6.5),
+  9: ($spacer * 7),
+  10: ($spacer * 7.5),
+);
+
+$primary: #003475;
+$secondary: #00b0e6;
+$warning: #df7f1b;
+$heavy: #545454;
+$medium: #eee;
+$light: #f7f7f7;
+$green: #42A948;
+$red: #a94442;
+$yellow: yellow;
+
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url("/Dashboard/assets/fonts/Montserrat-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: 'Montserrat-dev';
+  src: url("/Dashboard/assets/fonts/Montserrat-Regular.ttf") format("truetype");
+}
+
+$font-family-base: 'Montserrat',  'Montserrat-dev', sans-serif;
+$font-size-base: 0.8rem;

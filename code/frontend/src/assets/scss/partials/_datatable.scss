@@ -1,0 +1,62 @@
+@use './variables' as *;
+
+.ngx-datatable.material.single-selection
+.datatable-body-row.active,
+.ngx-datatable.material.single-selection
+.datatable-body-row.active
+.datatable-row-group,
+.ngx-datatable.material.multi-selection
+.datatable-body-row.active,
+.ngx-datatable.material.multi-selection
+.datatable-body-row.active .datatable-row-group,
+.ngx-datatable.material.multi-click-selection
+.datatable-body-row.active,
+.ngx-datatable.material.multi-click-selection
+.datatable-body-row.active .datatable-row-group {
+  background-color: $secondary !important;
+}
+
+.datatable-body-row.active .datatable-body-cell-label {
+  color: #FFF;
+}
+
+.datatable-clickable .ngx-datatable.bootstrap:not(.cell-selection) .datatable-body-row:hover,
+.datatable-clickable .ngx-datatable.material:not(.cell-selection) .datatable-body-row:hover .datatable-row-group {
+  cursor: pointer;
+}
+
+.ngx-datatable .datatable-header-cell {
+  text-align: center !important;
+}
+
+.ngx-datatable .datatable-body-cell {
+  font-size: $font-size-base !important;
+}
+
+.ngx-datatable .datatable-header {
+  background-color: $primary;
+}
+
+.ngx-datatable .datatable-header .datatable-header-cell-template-wrap {
+  color: #FFF;
+}
+
+.ngx-datatable {
+  .datatable-body {
+    .progress-linear {
+      z-index: 999;
+      background-color: #aad1f9;
+    }
+  }
+}
+
+
+
+.small-padding .datatable-body-cell {
+    padding-top: 0.20em !important;
+    padding-bottom: 0em !important;
+}
+
+.small-padding .datatable-header-cell {
+  padding-top: 0.80em !important;
+}

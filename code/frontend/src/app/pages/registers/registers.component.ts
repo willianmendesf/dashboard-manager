@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../../shared/service/api.service';
 import { Register } from './model/register.model';
 import { WhatsappsService } from '../../shared/service/whatsapp.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'register',
@@ -12,7 +13,7 @@ import { WhatsappsService } from '../../shared/service/whatsapp.service';
   imports: [CommonModule]
 })
 export class Registers implements OnInit {
-
+  private unsubscribe$ = new Subject<void>();
   public registers : Register[] = [];
 
   constructor(
@@ -43,7 +44,9 @@ export class Registers implements OnInit {
       message: "Teste da minha api!"
     }
 
-    this.api.post("whatsapp", message).subscribe({
+    this.api.post("whatsapp", message)
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
       next: res => console.log(res),
       error: error => console.error(error),
       complete: () => console.info("completed yes!")

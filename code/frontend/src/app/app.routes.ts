@@ -13,7 +13,7 @@ export const routes: Routes = [
   { path: 'projects', component: ProjectsComponent },
   { path: 'messages', component: MessagesComponent },
   { path: 'whatsapp', component: WhatsAppComponent },
-  { path: 'user-management', component: UserManagementComponent },
   { path: 'analytics', component: AnalyticsComponent },
+  { path: 'user-management', component: UserManagementComponent },
   { path: 'settings', component: SettingsComponent }
 ];

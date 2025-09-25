@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/service/api.service';
+import { Subject, takeUntil } from 'rxjs';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-user-management',
@@ -10,8 +12,10 @@ import { ApiService } from '../../shared/service/api.service';
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss'
 })
-export class UserManagementComponent implements OnInit {
-  users : User[] = [];
+export class UserManagementComponent implements OnInit, OnDestroy {
+  private unsubscribe$ = new Subject<void>();
+
+  users: User[] = [];
   filteredUsers: User[] = [...this.users];
   searchTerm = '';
   statusFilter = '';
@@ -28,19 +32,31 @@ export class UserManagementComponent implements OnInit {
   totalPages = Math.ceil(this.users.length / this.itemsPerPage);
 
   constructor(
-    private api : ApiService
-  ) {}
+    private api : ApiService,
+    private cdr: ChangeDetectorRef
+  ) {
 
-  ngOnInit() {
-    this.getUsers();
-    this.filterUsers();
   }
 
-  private getUsers() {
-    this.api.get("/users").subscribe({
-      next: res => this.users = res,
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+
+  ngOnInit() {
+    this.getUsers()
+  }
+
+  public getUsers() {
+    this.api.get("/users")
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => {
+        this.users = res
+        this.filterUsers();
+      },
       error: error => console.error(error),
-      complete: () => console.log()
+      complete: () => this.filterUsers()
     })
   }
 
@@ -54,10 +70,12 @@ export class UserManagementComponent implements OnInit {
       status: user.status == 'active' ? 1 : 0,
     };
 
-    this.api.post("/users", newUser).subscribe({
-      next: res => console.log(res),
+    this.api.post("/users", newUser)
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => this.getUsers(),
       error: error => console.error(error),
-      complete: () => console.log("New user created!")
+      complete: () => this.getUsers()
     })
   }
 
@@ -71,18 +89,22 @@ export class UserManagementComponent implements OnInit {
       status: user.status == 'active' ? 1 : 0,
     };
 
-    this.api.update(`/users/${user.id}` , newUser).subscribe({
-      next: res => console.log(res),
+    this.api.update(`/users/${user.id}` , newUser)
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => this.getUsers(),
       error: error => console.error(error),
-      complete: () => console.log("User updated!")
+      complete: () => this.getUsers()
     })
   }
 
   public delete(id: number) {
-    this.api.delete("/users/" + id).subscribe({
-      next: res => console.log(res),
+    this.api.delete("/users/" + id)
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => this.getUsers(),
       error: error => console.error(error),
-      complete: () => console.log("Deleted!")
+      complete: () => this.getUsers()
     })
   }
 
@@ -155,10 +177,7 @@ export class UserManagementComponent implements OnInit {
         createdAt: new Date().toLocaleDateString('pt-BR')
       };
       this.createUser(newUser);
-      this.getUsers();
     }
-
-    this.filterUsers();
     this.closeUserModal();
   }
 
@@ -167,7 +186,6 @@ export class UserManagementComponent implements OnInit {
       this.delete(user.id)
       this.users = this.users.filter(u => u.id !== user.id);
       this.filterUsers();
-      this.getUsers()
     }
   }
 

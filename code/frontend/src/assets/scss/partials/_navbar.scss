@@ -1,0 +1,100 @@
+@use './_variables' as *;
+
+.top-navbar {
+  -webkit-box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16),
+    0 2px 10px 0 rgba(0, 0, 0, 0.26);
+  -moz-box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16),
+    0 2px 10px 0 rgba(0, 0, 0, 0.26);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.26);
+}
+
+.top-navbar .navbar-nav .nav-link {
+  height: 73px;
+  padding: 25px 20px 20px 20px;
+  color: $primary;
+  font-size: $font-size-base;
+}
+
+.top-navbar .nav-item:hover .nav-link {
+  color: $warning;
+  border-bottom: 3px solid $warning;
+}
+
+.top-banner {
+  // background-image: url("../images/top-banner.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  margin-top: 74px;
+  height: 50px;
+}
+
+.control-navbar .nav-item .nav-link {
+  height: 50px;
+  color: $heavy;
+  padding-top: 15px;
+  cursor: pointer;
+  font-size: $font-size-base;
+  border-bottom: 3px solid $light;
+}
+
+.control-navbar .nav-item .nav-link-active {
+  height: 50px;
+  color: $secondary;
+  padding-top: 15px;
+  font-size: $font-size-base;
+  border-bottom: 3px solid $secondary;
+}
+
+.control-navbar .nav-item:hover .nav-link {
+  color: $secondary;
+  border-bottom: 3px solid $secondary;
+}
+
+.button-wout-focus:focus {
+  outline: none !important;
+}
+
+.icon-bar {
+  width: 22px;
+  height: 22px;
+  height: 2px;
+  background-color: $secondary;
+  display: block;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.navbar-toggler {
+  border: none;
+  background: transparent !important;
+}
+
+.navbar-toggler[aria-expanded="false"] .top-bar {
+  transform: rotate(45deg);
+  transform-origin: 10% 10%;
+}
+
+.navbar-toggler[aria-expanded="false"] .middle-bar {
+  opacity: 0;
+}
+
+.navbar-toggler[aria-expanded="false"] .bottom-bar {
+  transform: rotate(-45deg);
+  transform-origin: 10% 90%;
+}
+
+.navbar-toggler[aria-expanded="true"] .top-bar {
+  transform: rotate(0);
+}
+
+.navbar-toggler[aria-expanded="true"] .middle-bar {
+  opacity: 1;
+}
+
+.navbar-toggler[aria-expanded="true"] .bottom-bar {
+  transform: rotate(0);
+}
+
+.producao-paralela {
+  background: linear-gradient(to bottom, #f1da36 0%,#f1da36 0%,#fefcea 100%) !important;
+}

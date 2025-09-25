@@ -1,0 +1,14 @@
+.pagetitle {
+  &__title {
+    color: var(--secondary);
+    font-size: 38px;
+    font-weight: 700;
+  }
+
+  &__subtitle {
+    color: var(--gray, #a9a9a9);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+}
