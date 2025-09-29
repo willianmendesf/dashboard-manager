@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router'
 import { SidebarComponent } from "./views/sidebar/sidebar.component";
-
 @Component({
   selector: 'app-root',
   imports: [

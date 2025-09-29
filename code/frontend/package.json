@@ -2,10 +2,6 @@
   "name": "frontend",
   "version": "0.0.0",
   "scripts": {
-    "dep": "npm install --legacy-peer-deps",
-    "res": "npm install ./DsB3/b3-design-system-resource.tgz --save --legacy-peer-deps",
-    "lib": "npm install ./DsB3/b3-design-system-lib.tgz --save --legacy-peer-deps",
-    "cdk": "npm install @angular/cdk --save --legacy-peer-deps",
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "build": "ng build",

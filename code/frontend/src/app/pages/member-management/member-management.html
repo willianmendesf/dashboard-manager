@@ -1,0 +1,448 @@
+<div class="page-container">
+  <pagetitle
+    title="Gerenciar Membros"
+    subtitle="Gerenciamento de membros da IPBF"
+  ></pagetitle>
+
+  <div class="actions-bar">
+    <div class="search-filters">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="filterMembers()"
+          placeholder="Buscar membros..."
+        />
+        <div class="search-icon">🔍</div>
+      </div>
+      <select [(ngModel)]="tipoCadastroFilter" (change)="filterMembers()" class="filter-select">
+        <option value="">Membros por tipo</option>
+        <option value="Membro">Membro</option>
+        <option value="Visitante">Visitante</option>
+        <option value="Seminarista">Seminarista</option>
+        <option value="Presbítero">Presbítero</option>
+        <option value="Pastor">Pastor</option>
+        <!-- Adicione mais opções conforme necessário -->
+      </select>
+      <!-- <select [(ngModel)]="estadoCivilFilter" (change)="filterMembers()" class="filter-select">
+        <option value="">Buscar por Status Civil</option>
+        <option [value]="false">Solteiro</option>
+        <option [value]="true">Casado</option>
+      </select> -->
+    </div>
+    <button class="btn-secondary" (click)="getMembers()">Atualizar</button>
+    <button class="btn-primary" (click)="openMemberModal()">+ Novo Membro</button>
+  </div>
+
+  <div class="members-table-container">
+    <table class="members-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>RG</th>
+          <th>Data de Nascimento</th>
+          <th>Estado Civil</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let member of filteredMembers" class="member-row">
+          <td>{{ member.nome }}</td>
+          <td>{{ member.cpf }}</td>
+          <td>{{ member.rg }}</td>
+          <td>{{ member.nascimento | date:'dd/MM/yyyy' }}</td>
+          <td>{{ member.estadoCivil ? 'Casado' : 'Solteiro' }}</td>
+          <td>{{ member.telefone || member.celular || member.comercial || '-' }}</td>
+          <td>{{ member.email }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action view" (click)="viewMember(member)" title="Visualizar">👁️</button>
+              <button class="btn-action edit" (click)="editMember(member)" title="Editar">✏️</button>
+              <button class="btn-action delete" (click)="deleteMember(member)" title="Excluir">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="filteredMembers.length === 0">
+      <div class="empty-icon">👤</div>
+      <h3>Nenhum membro encontrado</h3>
+      <p>Tente ajustar os filtros ou criar um novo membro</p>
+    </div>
+  </div>
+
+  <div class="pagination">
+    <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">
+      ← Anterior
+    </button>
+    <span class="pagination-info">
+      Página {{ currentPage }} de {{ totalPages }}
+    </span>
+    <button class="btn-pagination" [disabled]="currentPage === totalPages" (click)="nextPage()">
+      Próxima →
+    </button>
+  </div>
+
+  <!-- Member Modal -->
+  <div class="modal-overlay" *ngIf="showMemberModal" (click)="closeMemberModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditing ? 'Editar Membro' : 'Novo Membro' }}</h3>
+        <button class="btn-close" (click)="closeMemberModal()">×</button>
+      </div>
+
+      <form class="modal-body" (ngSubmit)="saveMember()">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Nome Completo *</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.nome"
+              name="nome"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>CPF</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.cpf"
+              name="cpf"
+              class="form-control"
+              maxlength="14"
+              placeholder="000.000.000-00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>RG</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.rg"
+              name="rg"
+              class="form-control"
+              maxlength="20"
+              placeholder="00.000.000-0"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Data de Nascimento</label>
+            <input
+              type="date"
+              [(ngModel)]="currentMember.nascimento"
+              name="nascimento"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Estado Civil *</label>
+            <select
+              [(ngModel)]="currentMember.estadoCivil"
+              name="estadoCivil"
+              class="form-control"
+              required
+            >
+              <option [value]="false">Solteiro</option>
+              <option [value]="true">Casado</option>
+            </select>
+          </div>
+
+          @if (currentMember.estadoCivil) {
+            <div class="form-group">
+              <label>Conjugue CPF</label>
+              <input
+                type="text"
+                [(ngModel)]="currentMember.conjugueCPF"
+                name="conjugueCPF"
+                class="form-control"
+                maxlength="14"
+                placeholder="000.000.000-00"
+              />
+            </div>
+          }
+
+          <div class="form-group">
+            <label>Telefone</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.telefone"
+              name="telefone"
+              class="form-control"
+              placeholder="(11)0000.0000"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Celular</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.celular"
+              name="celular"
+              class="form-control"
+              placeholder="(11)0000.0000"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Comercial</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.comercial"
+              name="comercial"
+              class="form-control"
+              placeholder="(11)0000.0000"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Email *</label>
+            <input
+              type="email"
+              [(ngModel)]="currentMember.email"
+              name="email"
+              class="form-control"
+              required
+              placeholder="email@gmail.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Comungante</label>
+            <select
+              [(ngModel)]="currentMember.comungante"
+              name="comungante"
+              class="form-control"
+            >
+              <option [value]="true">Sim</option>
+              <option [value]="false">Não</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Intercessor</label>
+            <select
+              [(ngModel)]="currentMember.intercessor"
+              name="intercessor"
+              class="form-control"
+            >
+              <option [value]="true">Sim</option>
+              <option [value]="false">Não</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Cadastro</label>
+            <select
+              [(ngModel)]="currentMember.tipoCadastro"
+              name="tipoCadastro"
+              class="form-control"
+            >
+              <option [value]="'Membro'">Membro</option>
+              <option [value]="'Visitante'">Visitante</option>
+              <option [value]="'Seminarista'">Seminarista</option>
+              <option [value]="'Presbítero'">Presbítero</option>
+              <option [value]="'Pastor'">Pastor</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>CEP</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.cep"
+              name="cep"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Logradouro</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.logradouro"
+              name="logradouro"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Número</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.numero"
+              name="numero"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Complemento</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.complemento"
+              name="complemento"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Bairro</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.bairro"
+              name="bairro"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Cidade</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.cidade"
+              name="cidade"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Estado</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.estado"
+              name="estado"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>LGPD Aceito?</label>
+            <select
+              [(ngModel)]="currentMember.lgpd"
+              name="lgpd"
+              class="form-control"
+            >
+              <option [value]="true">Sim</option>
+              <option [value]="false">Não</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>LGPD Aceito Quando?</label>
+            <input
+              type="date"
+              [(ngModel)]="currentMember.lgpdAceitoEm"
+              name="lgpdAceitoEm"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Operadora</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.operadora"
+              name="operadora"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Contato</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.contato"
+              name="contato"
+              class="form-control"
+            />
+          </div>
+
+        </div>
+      </form>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeMemberModal()">Cancelar</button>
+        <button type="button" class="btn-primary" (click)="saveMember()">
+          {{ isEditing ? 'Salvar Alterações' : 'Criar Membro' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Member Modal -->
+  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Detalhes do Membro</h3>
+        <button class="btn-close" (click)="closeViewModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="member-profile">
+          <div class="profile-avatar">{{ viewingMember?.nome?.charAt(0) || '' }}</div>
+          <div class="profile-info">
+            <h2>{{ viewingMember?.nome }}</h2>
+            <span>
+              Estado Civil: {{ viewingMember?.estadoCivil ? 'Casado' : 'Solteiro' }}
+            </span>
+            <span>Email: {{ viewingMember?.email }}</span>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>CPF</label>
+            <span>{{ viewingMember?.cpf }}</span>
+          </div>
+          <div class="detail-item">
+            <label>RG</label>
+            <span>{{ viewingMember?.rg }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Data de Nascimento</label>
+            <span>{{ viewingMember?.nascimento | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Telefone</label>
+            <span>{{ viewingMember?.telefone }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Celular</label>
+            <span>{{ viewingMember?.celular }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Comercial</label>
+            <span>{{ viewingMember?.comercial }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Logradouro</label>
+            <span>{{ viewingMember?.logradouro }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Cidade</label>
+            <span>{{ viewingMember?.cidade }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Estado</label>
+            <span>{{ viewingMember?.estado }}</span>
+          </div>
+          <!-- Inclua demais campos conforme desejar -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeViewModal()">Fechar</button>
+        <button type="button" class="btn-primary" (click)="editMember(viewingMember!)">Editar Membro</button>
+      </div>
+    </div>
+  </div>
+</div>

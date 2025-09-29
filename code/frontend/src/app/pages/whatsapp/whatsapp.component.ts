@@ -42,7 +42,7 @@ export class WhatsAppComponent implements OnInit {
   }
 
   constructor(
-    private api : ApiService
+    private api : ApiService,
   ) {}
 
   public getContacts() {
@@ -60,7 +60,9 @@ export class WhatsAppComponent implements OnInit {
         this.contacts = newList;
       },
       error: error => console.error(error),
-      complete: () => this.filter()
+      complete: () => {
+        this.filter()
+      }
     })
   }
 

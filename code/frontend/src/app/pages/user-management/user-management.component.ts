@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
+import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageTitleComponent],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss'
 })
