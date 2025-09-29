@@ -12,18 +12,24 @@ public class MemberDTO {
     private Long id;
     private String nome;
     private String email;
+    private String celular;
+    private String telefone;
     private LocalDate nascimento;
     private Integer idade;
     private String estadoCivil;
-    private String telefone;
+    private String cpf;
+    private String rg;
 
-    public MemberDTO(MemberEntity registerEntity) {
-        this.id = registerEntity.getId();
-        this.nome = registerEntity.getNome();
-        this.email = registerEntity.getEmail();
-        this.nascimento = registerEntity.getNascimento();
-        this.idade = registerEntity.getIdade();
-        this.telefone = registerEntity.getTelefone();
-        this.estadoCivil = registerEntity.getEstadoCivil();
+    public MemberDTO(MemberEntity member) {
+        this.id = member.getId();
+        this.nome = member.getNome();
+        this.email = member.getEmail();
+        this.nascimento = member.getNascimento();
+        this.idade = member.getIdade();
+        this.telefone = member.getTelefone();
+        this.celular = member.getCelular();
+        this.estadoCivil = (member.getEstadoCivil() == Boolean.FALSE) ? "Solteiro" : "Casado";
+        this.cpf = member.getCpf();
+        this.rg = member.getRg();
     }
 }

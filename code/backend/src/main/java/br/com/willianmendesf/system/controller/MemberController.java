@@ -18,13 +18,19 @@ public class MemberController {
     private final MemberService service;
 
     @GetMapping
-    public ResponseEntity<List<MemberDTO>> getAll() {
+    public ResponseEntity<List<MemberEntity>> getAll() {
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MemberDTO> getById(@PathVariable Long id) {
         MemberDTO response = service.getById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/cpf/{cpf}")
+    public ResponseEntity<MemberEntity> getByCPF(@PathVariable String cpf) {
+        MemberEntity response = service.getByCPF(cpf);
         return ResponseEntity.ok(response);
     }
 

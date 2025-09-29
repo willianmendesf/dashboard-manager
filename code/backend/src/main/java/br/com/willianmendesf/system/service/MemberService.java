@@ -5,11 +5,15 @@ import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
+import br.com.willianmendesf.system.service.utils.CPFUtil;
+import br.com.willianmendesf.system.service.utils.RGUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
@@ -18,10 +22,10 @@ public class MemberService {
 
     private final MemberRepository repository;
 
-    public List<MemberDTO> getAll() {
+    public List<MemberEntity> getAll() {
         try {
             log.info("Fetching all appointments from the database");
-            return repository.findAll().stream().map(MemberDTO::new).toList();
+            return repository.findAll().stream().map(MemberEntity::new).toList();
         } catch (Exception e) {
             throw new MembersException("Error to return values" ,e);
         }
@@ -38,21 +42,45 @@ public class MemberService {
         }
     }
 
+    public MemberEntity getByCPF(String cpf) {
+        try {
+            log.info("Getting member by CPF: {}", cpf);
+            MemberEntity entity = repository.findByCpf(CPFUtil.validateAndFormatCPF(cpf));
+            if (!isNull(entity)) return entity;
+            else return null;
+        } catch (Exception e) {
+            throw new MembersException("ID " + cpf + " not found");
+        }
+    }
+
     public void create(MemberEntity member) {
         try {
-            log.info("Creating new appointment!");
-            MemberEntity saved = repository.save(member);
-            new MemberDTO(saved);
+            log.info("Creating new member!");
+            MemberEntity existMember = null;
+
+            if(!isNull(member.getCpf())) {
+                var cpf = CPFUtil.validateAndFormatCPF(member.getCpf());
+                existMember = this.getByCPF(cpf);
+            }
+
+            if(isNull(existMember)) {
+                member.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
+                member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
+                repository.save(member);
+            }
         } catch (Exception e) {
             throw new MembersException("Error to create new appointment", e);
         }
     }
 
     public MemberEntity updateById(Long id, MemberEntity member) {
-        log.info("Updating user: {}", member.getNome());
+        log.info("Updating user: {}", member.getCpf());
         try {
             MemberEntity originalMember = repository.findById(id)
                     .orElseThrow(() -> new MembersException("User not found for id " + id));
+
+            member.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
+            member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
 
             MemberEntity updatedUser = new MemberEntity(member, originalMember);
 

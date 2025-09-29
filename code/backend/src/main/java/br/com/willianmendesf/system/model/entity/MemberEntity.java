@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -17,17 +16,35 @@ public class MemberEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nome")
+    @Column(name = "nome", nullable = false)
     private String nome;
 
-    @Column(name = "subtipo")
-    private String subtipo;
+    @Column(name = "cpf", length = 14)
+    private String cpf;
+
+    @Column(name = "rg", length = 20)
+    private String rg;
+
+    @Column(name = "conjugueCPF", length = 14)
+    private String conjugueCPF;
+
+    @Column(name = "comungante")
+    private Boolean comungante;
+
+    @Column(name = "intercessor", nullable = false)
+    private Boolean intercessor = false;
+
+    @Column(name = "tipo_cadastro")
+    private String tipoCadastro;
 
     @Column(name = "nascimento")
     private LocalDate nascimento;
 
     @Column(name = "idade")
     private Integer idade;
+
+    @Column(name = "estado_civil", nullable = false)
+    private Boolean estadoCivil;
 
     @Column(name = "cep")
     private String cep;
@@ -68,25 +85,19 @@ public class MemberEntity {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "tipo_cadastro")
-    private String tipoCadastro;
-
-    @Column(name = "estado_civil")
-    private String estadoCivil;
-
     @Column(columnDefinition = "TEXT")
     private String grupos;
 
     @Column(name = "lgpd")
-    private String lgpd;
+    private Boolean lgpd;
 
     @Column(name = "lgpd_aceito_em")
-    private LocalDateTime lgpdAceitoEm;
+    private LocalDate lgpdAceitoEm;
 
     @Column(name = "rede")
     private String rede;
 
-    @Version
+    @Version // 29 campos
     @Column(name = "version")
     private Long version;
 
@@ -95,9 +106,15 @@ public class MemberEntity {
     public MemberEntity(MemberEntity member) {
         this.id = member.getId();
         this.nome = member.getNome();
-        this.subtipo = member.getSubtipo();
+        this.cpf = member.getCpf();
+        this.rg = member.getRg();
+        this.conjugueCPF = member.getConjugueCPF();
+        this.comungante = member.getComungante();
+        this.intercessor = member.getIntercessor();
+        this.tipoCadastro = member.getTipoCadastro();
         this.nascimento = member.getNascimento();
         this.idade = member.getIdade();
+        this.estadoCivil = member.getEstadoCivil();
         this.cep = member.getCep();
         this.logradouro = member.getLogradouro();
         this.numero = member.getNumero();
@@ -111,8 +128,6 @@ public class MemberEntity {
         this.operadora = member.getOperadora();
         this.contato = member.getContato();
         this.email = member.getEmail();
-        this.tipoCadastro = member.getTipoCadastro();
-        this.estadoCivil = member.getEstadoCivil();
         this.grupos = member.getGrupos();
         this.lgpd = member.getLgpd();
         this.lgpdAceitoEm = member.getLgpdAceitoEm();
@@ -123,9 +138,15 @@ public class MemberEntity {
     public MemberEntity(MemberEntity actual, MemberEntity newValue) {
         this.id = (actual.getId() != null) ? actual.getId() : newValue.getId();
         this.nome = (isNotEmpty(actual.getNome())) ? actual.getNome() : newValue.getNome();
-        this.subtipo = (isNotEmpty(actual.getSubtipo())) ? actual.getSubtipo() : newValue.getSubtipo();
+        this.cpf = (isNotEmpty(actual.getCpf())) ? actual.getCpf() : newValue.getCpf();
+        this.rg = (isNotEmpty(actual.getRg())) ? actual.getRg() : newValue.getRg();
+        this.conjugueCPF = (isNotEmpty(actual.getConjugueCPF())) ? actual.getConjugueCPF() : newValue.getConjugueCPF();
+        this.comungante = (actual.getComungante() != null) ? actual.getComungante() : newValue.getComungante();
+        this.intercessor = (actual.getIntercessor() != null) ? actual.getIntercessor() : newValue.getIntercessor();
+        this.tipoCadastro = (isNotEmpty(actual.getTipoCadastro())) ? actual.getTipoCadastro() : newValue.getTipoCadastro();
         this.nascimento = (actual.getNascimento() != null) ? actual.getNascimento() : newValue.getNascimento();
         this.idade = (actual.getIdade() != null) ? actual.getIdade() : newValue.getIdade();
+        this.estadoCivil = (actual.getEstadoCivil() != null) ? actual.getEstadoCivil() : newValue.getEstadoCivil();
         this.cep = (isNotEmpty(actual.getCep())) ? actual.getCep() : newValue.getCep();
         this.logradouro = (isNotEmpty(actual.getLogradouro())) ? actual.getLogradouro() : newValue.getLogradouro();
         this.numero = (isNotEmpty(actual.getNumero())) ? actual.getNumero() : newValue.getNumero();
@@ -139,10 +160,8 @@ public class MemberEntity {
         this.operadora = (isNotEmpty(actual.getOperadora())) ? actual.getOperadora() : newValue.getOperadora();
         this.contato = (isNotEmpty(actual.getContato())) ? actual.getContato() : newValue.getContato();
         this.email = (isNotEmpty(actual.getEmail())) ? actual.getEmail() : newValue.getEmail();
-        this.tipoCadastro = (isNotEmpty(actual.getTipoCadastro())) ? actual.getTipoCadastro() : newValue.getTipoCadastro();
-        this.estadoCivil = (isNotEmpty(actual.getEstadoCivil())) ? actual.getEstadoCivil() : newValue.getEstadoCivil();
         this.grupos = (isNotEmpty(actual.getGrupos())) ? actual.getGrupos() : newValue.getGrupos();
-        this.lgpd = (isNotEmpty(actual.getLgpd())) ? actual.getLgpd() : newValue.getLgpd();
+        this.lgpd = (actual.getLgpd() != null) ? actual.getLgpd() : newValue.getLgpd();
         this.lgpdAceitoEm = (actual.getLgpdAceitoEm() != null) ? actual.getLgpdAceitoEm() : newValue.getLgpdAceitoEm();
         this.rede = (isNotEmpty(actual.getRede())) ? actual.getRede() : newValue.getRede();
         this.version = (actual.getVersion() != null) ? actual.getVersion() : newValue.getVersion();
@@ -151,6 +170,7 @@ public class MemberEntity {
     private boolean isNotEmpty(String str) {
         return str != null && !str.trim().isEmpty();
     }
+
 
 }
 
