@@ -125,7 +125,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   getRoleText(role: string): string {
     const roleMap = {
-      // 'root': 'Super Admin',
+      'root': 'Super Admin',
       'admin': 'Administrador',
       'manager': 'Gerente',
       'user': 'Usuário'
@@ -192,22 +192,30 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   getPermissionsForRole(role: string): string[] {
     const permissions = {
+      'root': [
+        'Acesso Total',
+        'Gerenciar usuários',
+        'Gerenciar membros',
+        'Programar Mensagens',
+        'Exportar Dados',
+        'Configurações do sistema',
+        'Logs do sistema'
+      ],
       'admin': [
         'Gerenciar usuários',
+        'Gerenciar membros',
+        'Programar Mensagens',
+        'Exportar Dados',
         'Configurações do sistema',
-        'Relatórios avançados',
-        'Backup e restauração',
         'Logs do sistema'
       ],
       'manager': [
-        'Visualizar relatórios',
-        'Gerenciar projetos',
+        'Programar Mensagens',
         'Aprovar solicitações',
         'Exportar dados'
       ],
       'user': [
         'Visualizar dashboard',
-        'Criar projetos',
         'Editar perfil'
       ]
     };

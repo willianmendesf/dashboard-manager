@@ -75,12 +75,14 @@
               <button class="btn-action view" (click)="viewUser(user)" title="Visualizar">
                 👁️
               </button>
-              <button class="btn-action edit" (click)="editUser(user)" title="Editar">
-                ✏️
-              </button>
-              <button class="btn-action delete" (click)="deleteUser(user)" title="Excluir">
-                🗑️
-              </button>
+            @if (user.role !== 'root') {
+                <button class="btn-action edit" (click)="editUser(user)" title="Editar">
+                  ✏️
+                </button>
+                <button class="btn-action delete" (click)="deleteUser(user)" title="Excluir">
+                  🗑️
+                </button>
+              }
             </div>
           </td>
         </tr>
@@ -143,6 +145,7 @@
             <label>Função *</label>
             <select [(ngModel)]="currentUser.role" name="role" class="form-control" required>
               <option value="">Selecione uma função</option>
+              <!-- <option value="root">Root</option> -->
               <option value="admin">Administrador</option>
               <option value="manager">Gerente</option>
               <option value="user">Usuário</option>
