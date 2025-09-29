@@ -17,9 +17,8 @@ public class AppointmentsController {
     private final AppointmentsService service;
 
     @GetMapping
-    public ResponseEntity<List<AppointmentsDTO>> getAll() {
-        List<AppointmentsDTO> appointments = service.getAll();
-        return ResponseEntity.ok(appointments);
+    public ResponseEntity<List<AppointmentsEntity>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/id/{id}")

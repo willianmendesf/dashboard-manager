@@ -17,10 +17,10 @@ public class AppointmentsService {
 
     private final AppointmentsRepository repository;
 
-    public List<AppointmentsDTO> getAll() {
+    public List<AppointmentsEntity> getAll() {
         log.info("Fetching all appointments from the database");
         List<AppointmentsEntity> entity = repository.findAll();
-        return entity.stream().map(AppointmentsDTO::new).collect(Collectors.toList());
+        return entity.stream().map(AppointmentsEntity::new).collect(Collectors.toList());
     }
 
     public AppointmentsDTO getByName(String name) {

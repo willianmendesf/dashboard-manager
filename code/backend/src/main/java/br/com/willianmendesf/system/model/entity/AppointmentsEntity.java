@@ -15,6 +15,7 @@ public class AppointmentsEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private String description;
     private String schedule;
     private Boolean enabled;
     private Boolean development;
@@ -25,12 +26,34 @@ public class AppointmentsEntity {
     private String endpoint;
     private Long retries;
     private Long timeout;
+    private String startDate;
+    private String endDate;
+    private String message;
 
     public AppointmentsEntity() { }
 
-    public AppointmentsEntity(Long retries, String name, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout) {
+    public AppointmentsEntity(AppointmentsEntity entity) {
+        this.retries = entity.getRetries();
+        this.name = entity.getName();
+        this.description = entity.getDescription();
+        this.schedule = entity.getSchedule();
+        this.enabled = entity.getEnabled();
+        this.development = entity.getDevelopment();
+        this.monitoring = entity.getMonitoring();
+        this.monitoringNumbers = entity.getMonitoringNumbers();
+        this.monitoringGroups = entity.getMonitoringGroups();
+        this.monitoringGroupsIds = entity.getMonitoringGroupsIds();
+        this.endpoint = entity.getEndpoint();
+        this.timeout = entity.getTimeout();
+        this.startDate = entity.getStartDate();
+        this.endDate = entity.getEndDate();
+        this.message = entity.getMessage();
+    }
+
+    public AppointmentsEntity(Long retries, String name, String description, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout, String startDate, String endDate, String message) {
         this.retries = retries;
         this.name = name;
+        this.description = description;
         this.schedule = schedule;
         this.enabled = enabled;
         this.development = development;
@@ -40,12 +63,16 @@ public class AppointmentsEntity {
         this.monitoringGroupsIds = monitoringGroupsIds;
         this.endpoint = endpoint;
         this.timeout = timeout;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.message = message;
     }
 
     @Override
     public String toString() {
         return "Appointments{" +
                 "name='" + name + '\'' +
+                ", description=" + description +
                 ", schedule='" + schedule + '\'' +
                 ", enabled=" + enabled +
                 ", development=" + development +
@@ -56,6 +83,9 @@ public class AppointmentsEntity {
                 ", endpoint='" + endpoint + '\'' +
                 ", retries=" + retries +
                 ", timeout=" + timeout +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", message=" + message +
                 '}';
     }
 }

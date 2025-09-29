@@ -1,3 +1,150 @@
-<div *ngFor="let appointment of appointments">
-  <p>{{ appointment.name }}</p>
+<div class="page-container">
+  <pagetitle
+    title="Agendamentos"
+    subtitle="Gerencie seus agendamentos"
+  ></pagetitle>
+
+  <div class="projects-grid">
+    <div class="project-card" *ngFor="let appointment of appointments">
+      <div class="project-header">
+        <h3>{{ appointment.name }}</h3>
+        <div class="project-status" [class]="appointment.name">
+          <!-- {{ getStatusText(appointment.enabled) }} -->
+        </div>
+      </div>
+
+      <div>
+        <div class="team-avatars">
+            <p class="project-description">{{ appointment.description }}</p>
+        </div>
+          <span>Quando?</span>
+          <span>{{ appointment.schedule }}</span>
+      </div>
+
+      <div class="project-footer">
+        <div class="project-dates">
+          <div class="date-item">
+            <span class="date-label">Data de início:</span>
+            <span class="date-value">{{ appointment.startDate }}</span>
+          </div>
+          <div class="date-item">
+            <span class="date-label">Data de fim:</span>
+            <span class="date-value">{{ appointment.endDate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card add-project">
+      <button class="btn-primary" (click)="openUserModal()">+ Novo Usuário</button>
+      <!-- <div class="add-project-content">
+        <div class="add-icon">+</div>
+        <h3>Novo Projeto</h3>
+        <p>Clique aqui para criar um novo projeto</p>
+      </div> -->
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal-overlay" *ngIf="showUserModal" (click)="closeUserModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
+          <button class="btn-close" (click)="closeUserModal()">×</button>
+        </div>
+
+        <form class="modal-body" (ngSubmit)="saveUser()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nome do Job</label>
+              <input
+                type="text"
+                [(ngModel)]="currentUser.name"
+                name="name"
+                class="form-control"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Descrição</label>
+              <input
+                type="text"
+                [(ngModel)]="currentUser.description"
+                name="description"
+                class="form-control"
+                placeholder=""
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Ativo para envio?</label>
+              <select
+                [(ngModel)]="currentUser.enabled"
+                name="enabled"
+                class="form-control"
+                required
+              >
+                <option [value]="true">Ligado</option>
+                <option [value]="false">Desligado</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Modo Desenvolvimento?</label>
+              <select
+                [(ngModel)]="currentUser.development"
+                name="development"
+                class="form-control"
+                required
+              >
+                <option [value]="true">Ligado</option>
+                <option [value]="false">Desligado</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Data de Inicio</label>
+              <input
+                type="date"
+                [(ngModel)]="currentUser.startDate"
+                name="startDate"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Data de Fim</label>
+              <input
+                type="date"
+                [(ngModel)]="currentUser.endDate"
+                name="endDate"
+                class="form-control"
+              />
+            </div>
+
+          </div>
+
+          <!-- <div class="permissions-section" *ngIf="currentUser.role">
+            <h4>Permissões</h4>
+            <div class="permissions-grid">
+              <label class="permission-item" *ngFor="let permission of getPermissionsForRole(currentUser.role)">
+                <input type="checkbox" [checked]="true" disabled />
+                <span>{{ permission }}</span>
+              </label>
+            </div>
+          </div> -->
+        </form>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeUserModal()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" (click)="saveUser()">
+            {{ isEditing ? 'Salvar Alterações' : 'Criar Usuário' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

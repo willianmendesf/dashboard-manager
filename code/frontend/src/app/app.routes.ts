@@ -7,10 +7,12 @@ import { MessagesComponent } from './pages/messages/messages.component';
 import { UserManagementComponent } from './pages/user-management/user-management.component';
 import { WhatsAppComponent } from './pages/whatsapp/whatsapp.component';
 import { MemberManagementComponent } from './pages/member-management/member-management.component';
+import { AppointmentsComponent } from './pages/appointments/appointments.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
+  { path: 'appointments', component: AppointmentsComponent },
   { path: 'member-management', component: MemberManagementComponent },
   { path: 'projects', component: ProjectsComponent },
   { path: 'messages', component: MessagesComponent },
