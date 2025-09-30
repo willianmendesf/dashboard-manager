@@ -24,7 +24,7 @@ public class MemberService {
 
     public List<MemberEntity> getAll() {
         try {
-            log.info("Fetching all appointments from the database");
+            log.info("Getting all members from database");
             return repository.findAll().stream().map(MemberEntity::new).toList();
         } catch (Exception e) {
             throw new MembersException("Error to return values" ,e);
@@ -33,7 +33,7 @@ public class MemberService {
 
     public MemberDTO getById(Long id) {
         try {
-            log.info("Fetching appointment with ID: {}", id);
+            log.info("Getting member by ID: {}", id);
             MemberEntity entity = repository.findById(id).orElse(null);
             if (entity == null) throw new MembersException("Cadastro not found for ID: " + id);
             return new MemberDTO(entity);
@@ -92,8 +92,8 @@ public class MemberService {
 
     public void delete(Long id) {
         try {
-            log.info("Deleting appointment with ID: {}", id);
-            if (!repository.existsById(id)) throw new RuntimeException("Cadastro não encontrado para o ID: " + id);
+            log.info("Deleting member by ID: {}", id);
+            if (!repository.existsById(id)) throw new RuntimeException("Not found with this ID: " + id);
             repository.deleteById(id);
         } catch (Exception e) {
             throw new MembersException("Error to delete appointment with ID: " + id, e);
