@@ -1,21 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/service/api.service';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { Subject, takeUntil } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, PageTitleComponent],
   styleUrl: "./home.scss",
-  templateUrl: './home.html'
+  templateUrl: './home.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
 export class HomeComponent implements OnInit {
   private unsubscribe$ = new Subject<void>();
-  public members : [] = [];
-
+  
+  public members : any[] = [];
   public stats : any[] = [];
 
   recentActivities = [
@@ -32,11 +33,9 @@ export class HomeComponent implements OnInit {
     {label: 'Serviço Whatsapp', value: '100%', status: 'online'}
   ];
 
-  constructor(
-    private api : ApiService
-  ) {
+  //private toastr = inject(ToastrService)
+  private api = inject(ApiService)
 
-  }
   ngOnInit(): void {
     this.getValues()
     this.stats = [
@@ -47,14 +46,16 @@ export class HomeComponent implements OnInit {
     ]
   }
 
-  private getValues(){
-    this.api.get("members")
+  private async getValues(){
+    await this.api.get("members")
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: res => this.members = res,
-      error: error => {},
-      complete: () => console.log('Complete')
+      next: res => {
+        this.members = res
+        console.log(this.members.length)
+      },
+      error: error => console.error(error),
+      complete: () => {}//this.toastr.info("Completado")
     })
   }
-
 }

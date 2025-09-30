@@ -5,7 +5,11 @@ import { Appointment } from './model/appointment.model';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { FormsModule } from '@angular/forms';
-
+export interface ChecklistItem {
+  id: number;
+  nome: string;
+  selecionado: boolean; // Esta propriedade controlará se o checkbox está marcado
+}
 @Component({
   selector: 'appointments',
   standalone: true,
@@ -18,6 +22,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   public appointments : Appointment[] = [];
 
   users: Appointment[] = [];
+  groups: Group[] = []
 
   showUserModal = false;
   showViewModal = false;
@@ -25,14 +30,43 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   currentUser: any = {};
   viewingUser: Appointment | null = null;
 
-  constructor(private api : ApiService) { }
-  ngOnDestroy(): void {
-    throw new Error('Method not implemented.');
+  itensChecklist: ChecklistItem[] = [
+    { id: 1, nome: 'Comprar Leite', selecionado: false },
+    { id: 2, nome: 'Pagar Contas', selecionado: false },
+    { id: 3, nome: 'Estudar Angular', selecionado: false },
+    { id: 4, nome: 'Fazer Exercício', selecionado: false },
+  ];
+
+  handleCheckboxChange(item: Group) {
+    console.log(`Status de ${item.name}: ${item.selected}`);
+    
+    this.groups.forEach(group => {
+      if (group.id == item.id) group.selected = item.selected
+    })
   }
+
+  constructor(private api : ApiService) { }
+  
+  ngOnDestroy(): void { }
 
   ngOnInit(): void {
     this.getAll();
-    console.log(this.appointments)
+    this.getGroups();
+    console.log(this.groups)
+  }
+
+  public getGroups() {
+    console.log('getGroups')
+    this.api.get("whatsapp/groups")
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => {
+        this.groups = res
+        this.groups.forEach(item => item.selected = false)
+      },
+      error: error => console.error(error),
+      complete: () => {}
+    })
   }
 
   public getAll() {
@@ -99,12 +133,25 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.openUserModal(user);
   }
 
-  public createUser(user : Appointment) {
-    let newUser = {
-
+  public create(appointment : Appointment) {
+    let newAppointment = {
+      "name": appointment.name,
+      "description": appointment.description,
+      "schedule": appointment.schedule,
+      "enabled": appointment.enabled,
+      "development": appointment.development,
+      "monitoringNumbers": appointment.monitoringNumbers,
+      "monitoringGroups": appointment.monitoringGroups,
+      "monitoringGroupsIds": appointment.monitoringGroupsIds,
+      "enpoint": appointment.enpoint,
+      "retries": appointment.retries,
+      "timeout": appointment.retries,
+      "startDate": appointment.startDate,
+      "endDate": appointment.endDate,
+      "message": appointment.message
     };
 
-    this.api.post("/users", newUser)
+    this.api.post("/appointments", newAppointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getAll(),
@@ -113,12 +160,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     })
   }
 
-  public updateUser(user : Appointment) {
-    let newUser = {
-
-    };
-
-    this.api.update(`/users/${user.id}` , newUser)
+  public updateUser(appointment : Appointment) {
+    this.api.update(`/appointments/${appointment.id}` , appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getAll(),
@@ -127,7 +170,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     })
   }
 
-  saveUser() {
+  save() {
+    console.log("save activated")
     if (this.isEditing) {
       const index = this.users.findIndex(u => u.id === this.currentUser.id);
       if (index !== -1) this.users[index] = { ...this.currentUser };
@@ -138,7 +182,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
         id: Math.max(...this.users.map(u => u.id)) + 1,
         createdAt: new Date().toLocaleDateString('pt-BR')
       };
-      this.createUser(newUser);
+      this.create(newUser);
     }
     this.closeUserModal();
   }
