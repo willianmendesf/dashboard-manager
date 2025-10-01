@@ -5,13 +5,15 @@ export class Appointment {
   "schedule": string;
   "enabled": boolean;
   "development": boolean;
-  "monitoringNumbers": [];
+  "monitoringNumbers": string[];
   "monitoringGroups": boolean;
-  "monitoringGroupsIds": [];
+  "monitoringGroupsIds": string[];
   "enpoint": string;
   "retries": number;
   "timeout": number;
   "startDate": Date;
   "endDate": Date;
-  "message": String
+  "message": string;
+  "sendTo": string[];
+  "sendToGroups": string[];
 }

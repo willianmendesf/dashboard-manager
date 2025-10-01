@@ -22,11 +22,11 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   public appointments : Appointment[] = [];
   public groups: Group[] = []
 
-  showUserModal = false;
+  showAppointmentModal = false;
   showViewModal = false;
   isEditing = false;
   currentAppointment: any = {};
-  viewingUser: Appointment | null = null;
+  viewingAppointment: Appointment | null = null;
 
   itensChecklist: ChecklistItem[] = [
     { id: 1, nome: 'Comprar Leite', selecionado: false },
@@ -57,9 +57,14 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   toggleMonitoring() {
-    this.cdr.markForCheck()
-    console.log(this.currentAppointment.monitoringGroups)
+    console.log(this.currentAppointment.monitoringNumbers)
     //this.currentAppointment.monitoringGroups = !this.currentAppointment.monitoringGroups;
+  }
+
+  handleChangeGroupsNumber(item: any) {
+    console.log('antes', this.currentAppointment)
+    this.currentAppointment.monitoringNumbers.push(this.currentAppointment.monitoringNumbers)
+    console.log('depois', this.currentAppointment)
   }
 
   public getGroups() {
@@ -68,6 +73,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
+        console.log(res)
         this.groups = res
         this.groups.forEach(item => item.selected = false)
       },
@@ -98,11 +104,11 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     return statusMap[status] || status;
   }
 
-  openUserModal(user?: Appointment) {
+  openAppointmentModal(appointment?: Appointment) {
     this.cdr.markForCheck()
-    this.showUserModal = true;
-    this.isEditing = !!user;
-    this.currentAppointment = user ? { ...user } : {
+    this.showAppointmentModal = true;
+    this.isEditing = !!appointment;
+    this.currentAppointment = appointment ? { ...appointment } : {
       id: '',
       name: '',
       description: '',
@@ -117,28 +123,30 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       timeout: 30000,
       startDate: '',
       endDate: '',
-      message: ''
+      message: '',
+      sendTo: [],
+      sendToGroups: []
     };
   }
 
   closeViewModal() {
     this.showViewModal = false;
-    this.viewingUser = null;
+    this.viewingAppointment = null;
   }
 
   closeModal() {
-    this.showUserModal = false;
+    this.showAppointmentModal = false;
     this.currentAppointment = {};
   }
 
   view(appointment: Appointment) {
-    this.viewingUser = appointment;
+    this.viewingAppointment = appointment;
     this.showViewModal = true;
   }
 
   edit(appointment: Appointment) {
     this.closeViewModal();
-    this.openUserModal(appointment);
+    this.openAppointmentModal(appointment);
   }
 
   deleteItem(appointment: Appointment) {
@@ -152,14 +160,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     if (this.isEditing) {
       const index = this.appointments.findIndex(u => u.id === this.currentAppointment.id);
       if (index !== -1) this.appointments[index] = { ...this.currentAppointment };
+      console.log(this.appointments[index])
       this.update(this.appointments[index])
     } else {
-      const newUser: Appointment = {
+      const newAppointment: Appointment = {
         ...this.currentAppointment,
         id: Math.max(...this.appointments.map(u => u.id)) + 1,
         createdAt: new Date().toLocaleDateString('pt-BR')
       };
-      this.create(newUser);
+      this.create(newAppointment);
     }
     this.closeModal();
   }

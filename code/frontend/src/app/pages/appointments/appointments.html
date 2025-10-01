@@ -36,13 +36,12 @@
         </div>
       </div>
       <div class="action-buttons">
-        <button class="btn-action view" (click)="view(appointment)" title="Visualizar">👁️</button>
         <button class="btn-action edit" (click)="edit(appointment)" title="Editar">✏️</button>
         <button class="btn-action delete" (click)="deleteItem(appointment)" title="Excluir">🗑️</button>
       </div>
     </div>
 
-    <button class="btn-primary" (click)="openUserModal()">+ Novo Agendamento</button>
+    <button class="btn-primary" (click)="openAppointmentModal()">+ Novo Agendamento</button>
     <!--<div class="project-card add-project">
       <div class="add-project-content">
         <div class="add-icon">+</div>
@@ -51,8 +50,8 @@
       </div> 
     </div>-->
 
-    <!-- User Modal -->
-    <div class="modal-overlay" *ngIf="showUserModal" (click)="closeModal()">
+    <!-- Appointment Modal -->
+    <div class="modal-overlay" *ngIf="showAppointmentModal" (click)="closeModal()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h3>{{ isEditing ? 'Editar Agendamentos' : 'Novo Agendamento' }}</h3>
@@ -130,19 +129,35 @@
                 name="monitoringGroups"
                 class="form-control"
                 required
-                (click)="toggleMonitoring()"
               >
                 <option [value]="true">Sim</option>
                 <option [value]="false">Não</option>
               </select>
             </div>
+          </div>
 
-            @if (!currentAppointment.monitoringGroups) {
-              <div>
-                <label>Enviar mensagens de Monitoraramento Para o(s) Grupo(s):</label>
+          @if (currentAppointment.monitoringGroups) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Enviar Para o(s) Grupo(s):</label>
+                <select
+                  [(ngModel)]="currentAppointment.monitoringGroupsIds"
+                  name="monitoringGroupsIds"
+                  class="form-control"
+                  multiple  required
+                >
+                  <option
+                    *ngFor="let item of groups"
+                    [ngValue]="item.id"
+                  >
+                    {{ item.name }}
+                  </option>
+                </select>
               </div>
-            }
+            </div>
+          }
 
+          <div class="form-grid">
             <div class="form-group">
               <label>Data de Inicio</label>
               <input
@@ -163,26 +178,24 @@
               />
             </div>
           </div>
+
           <div class="form-group">
             <label>Enviar Para o(s) Grupo(s):</label>
-            <ul><!--
-              @for (group of groups; track group.id) {
-                <li>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      [(ngModel)]="group.selected"
-                      (change)="handleCheckboxChange(group)"
-                      [value]="true"
-                    >
-                    {{ group.name }} 
-                  </label>
-                </li>
-              } @empty {
-                <li>Nenhum grupo na lista para checar.</li>
-              }-->
-            </ul>
+            <select
+              [(ngModel)]="currentAppointment.sendToGroups"
+              name="sendToGroups"
+              class="form-control"
+              multiple  required
+            >
+              <option
+                *ngFor="let item of groups"
+                [ngValue]="item.id"
+              >
+                {{ item.name }}
+              </option>
+            </select>
           </div>
+
           <div class="form-grid">
             <div class="form-group">
               <label>Mensagem a ser enviada:</label>
