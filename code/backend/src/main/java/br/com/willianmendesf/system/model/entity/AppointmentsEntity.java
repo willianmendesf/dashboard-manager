@@ -33,6 +33,7 @@ public class AppointmentsEntity {
     public AppointmentsEntity() { }
 
     public AppointmentsEntity(AppointmentsEntity entity) {
+        this.id = entity.getId();
         this.retries = entity.getRetries();
         this.name = entity.getName();
         this.description = entity.getDescription();
@@ -71,7 +72,8 @@ public class AppointmentsEntity {
     @Override
     public String toString() {
         return "Appointments{" +
-                "name='" + name + '\'' +
+                "id= '" + id + '\'' +
+                ", name='" + name + '\'' +
                 ", description=" + description +
                 ", schedule='" + schedule + '\'' +
                 ", enabled=" + enabled +
