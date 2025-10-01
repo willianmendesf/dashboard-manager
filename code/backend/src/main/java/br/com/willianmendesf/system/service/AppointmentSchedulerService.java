@@ -1,42 +1,40 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.cache.AppointmentCache;
+import br.com.willianmendesf.system.exception.WhatsappMessageException;
+import br.com.willianmendesf.system.model.WhatsappSender;
 import br.com.willianmendesf.system.model.entity.AppointmentsEntity;
+import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
 import br.com.willianmendesf.system.repository.AppointmentsRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static java.util.Objects.isNull;
+
 @Service
 @Slf4j
+@AllArgsConstructor
 public class AppointmentSchedulerService {
-    private final AppointmentsRepository appointmentsRepository;
+
     private final AppointmentCache appointmentCache;
+    private final AppointmentsRepository appointmentsRepository;
+    private final WhatsappMessageService whatsapp;
 
-    @Autowired
-    public AppointmentSchedulerService(
-            AppointmentsRepository appointmentsRepository,
-            AppointmentCache appointmentCache
-    ) {
-        this.appointmentsRepository = appointmentsRepository;
-        this.appointmentCache = appointmentCache;
-    }
-
-    /**
-     * Carrega todos os agendamentos ativos para o cache em memória
-     */
     public void loadAppointmentsToCache() {
-        log.info("Carregando agendamentos para o cache");
+        log.info("Loading all appointments to cache");
         List<AppointmentsEntity> activeAppointments = appointmentsRepository.findByEnabledTrue();
         appointmentCache.loadAppointments(activeAppointments);
-        log.info("Carregados {} agendamentos para o cache", activeAppointments.size());
+        log.info("Loaded {} appointments to cache", activeAppointments.size());
     }
 
     /**
@@ -61,26 +59,24 @@ public class AppointmentSchedulerService {
 
         try {
             // Verificar datas de início e fim se estiverem definidas
-            if (appointment.getStartDate() != null && !appointment.getStartDate().isEmpty()) {
+            if (!isNull(appointment.getStartDate()) && !appointment.getStartDate().isEmpty()) {
                 LocalDate startDate = LocalDate.parse(appointment.getStartDate());
                 if (now.toLocalDate().isBefore(startDate)) {
                     return false;
                 }
             }
 
-            if (appointment.getEndDate() != null && !appointment.getEndDate().isEmpty()) {
+            if (!isNull(appointment.getEndDate()) && !appointment.getEndDate().isEmpty()) {
                 LocalDate endDate = LocalDate.parse(appointment.getEndDate());
                 if (now.toLocalDate().isAfter(endDate)) {
                     return false;
                 }
             }
 
-            // Usar a implementação correta do Spring para expressões cron
-            org.springframework.scheduling.support.CronExpression cronExpression =
-                    org.springframework.scheduling.support.CronExpression.parse(appointment.getSchedule());
+            CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
 
             // Obter a última execução ou usar uma data antiga se for a primeira execução
-            LocalDateTime lastExecTime = appointment.getLastExecution() != null ?
+            LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
                     appointment.getLastExecution().toLocalDateTime() :
                     LocalDateTime.of(1970, 1, 1, 0, 0);
 
@@ -141,9 +137,35 @@ public class AppointmentSchedulerService {
      * Executa uma mensagem de WhatsApp
      */
     private void executeWhatsAppMessage(AppointmentsEntity appointment) {
-        // Implementar lógica para enviar mensagem de WhatsApp
-        log.info("Enviando mensagem WhatsApp para: {}", appointment.getMonitoringNumbers());
-        // Sua lógica aqui...
+        log.info("Enviando mensagem WhatsApp para: {}", appointment.getSendToGroups());
+
+        List<WhatsappSender> messageList = new ArrayList<WhatsappSender>();
+
+        if(appointment.getRecipientType() == RecipientType.INDIVIDUAL) {
+            if(!isNull(appointment.getSendTo()) && !appointment.getSendTo().isEmpty()) {
+                appointment.getSendTo().forEach(individual -> {
+                    WhatsappSender message = new WhatsappSender();
+                    message.setPhone(individual);
+                    message.setMessage(appointment.getMessage());
+                    messageList.add(message);
+                });
+
+                messageList.forEach(this.whatsapp::sendMessage);
+            } else throw new WhatsappMessageException("Individual List is empty!");
+        }
+
+        if(appointment.getRecipientType() == RecipientType.GROUP) {
+            if(!isNull(appointment.getSendToGroups()) && !appointment.getSendToGroups().isEmpty()) {
+                appointment.getSendToGroups().forEach(group -> {
+                    WhatsappSender message = new WhatsappSender();
+                    message.setPhone(group);
+                    message.setMessage(appointment.getMessage());
+                    messageList.add(message);
+                });
+
+                messageList.forEach(this.whatsapp::sendMessage);
+            } else throw new WhatsappMessageException("Groups List is empty!");
+        }
     }
 
     /**

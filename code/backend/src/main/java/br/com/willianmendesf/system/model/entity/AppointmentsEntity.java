@@ -1,5 +1,6 @@
 package br.com.willianmendesf.system.model.entity;
 
+import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
 import br.com.willianmendesf.system.model.enums.TaskType;
 import jakarta.persistence.*;
@@ -34,6 +35,9 @@ public class AppointmentsEntity {
     private String message;
     private List<String> sendTo;
     private List<String> sendToGroups;
+
+    @Column(name = "recipient_type")
+    private RecipientType recipientType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "task_type")
@@ -70,9 +74,32 @@ public class AppointmentsEntity {
         this.lastStatus = entity.getLastStatus();
         this.sendTo = entity.getSendTo();
         this.sendToGroups = entity.getSendToGroups();
+        this.recipientType = entity.getRecipientType();
     }
 
-    public AppointmentsEntity(Long retries, String name, String description, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout, String startDate, String endDate, String message, TaskType taskType, Timestamp lastExecution, TaskStatus lastStatus,  List<String> sendTo, List<String> sendToGroups) {
+    public AppointmentsEntity(
+            Long retries,
+            String name,
+            String description,
+            String schedule,
+            Boolean enabled,
+            Boolean development,
+            Boolean monitoring,
+            List<String> monitoringNumbers,
+            Boolean monitoringGroups,
+            List<String> monitoringGroupsIds,
+            String endpoint,
+            Long timeout,
+            String startDate,
+            String endDate,
+            String message,
+            TaskType taskType,
+            Timestamp lastExecution,
+            TaskStatus lastStatus,
+            List<String> sendTo,
+            List<String> sendToGroups,
+            RecipientType recipientType
+    ) {
         this.retries = retries;
         this.name = name;
         this.description = description;
@@ -93,6 +120,7 @@ public class AppointmentsEntity {
         this.lastStatus = lastStatus;
         this.sendTo = sendTo;
         this.sendToGroups = sendToGroups;
+        this.recipientType = recipientType;
     }
 
     @Override
@@ -119,6 +147,7 @@ public class AppointmentsEntity {
                 ", lastStatus=" + lastStatus +
                 ", sendTo=" + sendTo +
                 ", sendToGroups=" + sendToGroups +
+                ", recipientType=" + recipientType +
                 '}';
     }
 }
