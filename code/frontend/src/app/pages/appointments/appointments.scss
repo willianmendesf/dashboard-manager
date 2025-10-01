@@ -621,6 +621,15 @@
   font-weight: 600;
 }
 
+.form-group textarea {
+  min-height: 200px;
+}
+
+.form-group .info {
+  font-size: 12px;
+  margin: -10px 0 0 0;
+}
+
 .form-control {
   padding: 12px;
   border: 1px solid #D1D5DB;

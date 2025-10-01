@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ApiService } from '../../shared/service/api.service';
 import { CommonModule } from '@angular/common';
 import { Appointment } from './model/appointment.model';
@@ -43,7 +43,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     })
   }
 
-  constructor(private api : ApiService) { }
+  constructor(
+    private api : ApiService,
+    private cdr: ChangeDetectorRef
+  ) { }
   
   ngOnDestroy(): void { }
 
@@ -51,6 +54,12 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.getAll();
     this.getGroups();
     console.log(this.groups)
+  }
+
+  toggleMonitoring() {
+    this.cdr.markForCheck()
+    console.log(this.currentAppointment.monitoringGroups)
+    //this.currentAppointment.monitoringGroups = !this.currentAppointment.monitoringGroups;
   }
 
   public getGroups() {
@@ -90,6 +99,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   openUserModal(user?: Appointment) {
+    this.cdr.markForCheck()
     this.showUserModal = true;
     this.isEditing = !!user;
     this.currentAppointment = user ? { ...user } : {

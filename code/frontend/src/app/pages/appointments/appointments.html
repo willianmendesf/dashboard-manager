@@ -86,7 +86,7 @@
 
             <div class="form-group">
               <label>Quando Enviar?</label>
-              <span>Duvidas? <a href="https://crontab.guru/" target="_blank">[Entenda]</a></span>
+              <span class="info">Duvidas? <a href="https://crontab.guru/" target="_blank">Entenda como preencher!</a></span>
               <input
                 type="text"
                 [(ngModel)]="currentAppointment.schedule"
@@ -95,27 +95,6 @@
                 placeholder=""
                 required
               />
-            </div>
-            
-            <div>
-              <label>Enviar Para o(s) Grupo(s):</label>
-              <ul><!--
-                @for (group of groups; track group.id) {
-                  <li>
-                    <label>
-                      <input 
-                        type="checkbox" 
-                        [(ngModel)]="group.selected"
-                        (change)="handleCheckboxChange(group)"
-                        [value]="true"
-                      >
-                      {{ group.name }} 
-                    </label>
-                  </li>
-                } @empty {
-                  <li>Nenhum grupo na lista para checar.</li>
-                }-->
-              </ul>
             </div>
 
             <div class="form-group">
@@ -151,13 +130,14 @@
                 name="monitoringGroups"
                 class="form-control"
                 required
+                (click)="toggleMonitoring()"
               >
                 <option [value]="true">Sim</option>
                 <option [value]="false">Não</option>
               </select>
             </div>
 
-            @if (currentAppointment.monitoringGroups) {
+            @if (!currentAppointment.monitoringGroups) {
               <div>
                 <label>Enviar mensagens de Monitoraramento Para o(s) Grupo(s):</label>
               </div>
@@ -182,15 +162,36 @@
                 class="form-control"
               />
             </div>
-
+          </div>
+          <div class="form-group">
+            <label>Enviar Para o(s) Grupo(s):</label>
+            <ul><!--
+              @for (group of groups; track group.id) {
+                <li>
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      [(ngModel)]="group.selected"
+                      (change)="handleCheckboxChange(group)"
+                      [value]="true"
+                    >
+                    {{ group.name }} 
+                  </label>
+                </li>
+              } @empty {
+                <li>Nenhum grupo na lista para checar.</li>
+              }-->
+            </ul>
+          </div>
+          <div class="form-grid">
             <div class="form-group">
               <label>Mensagem a ser enviada:</label>
               <textarea
-                type="date"
-                [(ngModel)]="currentAppointment.message"
-                [ngModelOptions]="{standalone: true}"
-                name="endDate"
                 class="form-control"
+                type="textarea"
+                [ngModelOptions]="{standalone: true}"
+                [(ngModel)]="currentAppointment.message"
+                name="message"
               ></textarea>
             </div>
           </div>
