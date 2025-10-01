@@ -1,9 +1,12 @@
 package br.com.willianmendesf.system.model.entity;
 
+import br.com.willianmendesf.system.model.enums.TaskStatus;
+import br.com.willianmendesf.system.model.enums.TaskType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 @Entity
@@ -30,6 +33,17 @@ public class AppointmentsEntity {
     private String endDate;
     private String message;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "task_type")
+    private TaskType taskType; // WHATSAPP_MESSAGE, API_CALL
+
+    @Column(name = "last_execution")
+    private Timestamp lastExecution;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "last_status")
+    private TaskStatus lastStatus; // SUCCESS, FAILURE, PENDING
+
     public AppointmentsEntity() { }
 
     public AppointmentsEntity(AppointmentsEntity entity) {
@@ -49,9 +63,12 @@ public class AppointmentsEntity {
         this.startDate = entity.getStartDate();
         this.endDate = entity.getEndDate();
         this.message = entity.getMessage();
+        this.taskType = entity.getTaskType();
+        this.lastExecution = entity.getLastExecution();
+        this.lastStatus = entity.getLastStatus();
     }
 
-    public AppointmentsEntity(Long retries, String name, String description, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout, String startDate, String endDate, String message) {
+    public AppointmentsEntity(Long retries, String name, String description, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout, String startDate, String endDate, String message, TaskType taskType, Timestamp lastExecution, TaskStatus lastStatus) {
         this.retries = retries;
         this.name = name;
         this.description = description;
@@ -67,6 +84,9 @@ public class AppointmentsEntity {
         this.startDate = startDate;
         this.endDate = endDate;
         this.message = message;
+        this.taskType = taskType;
+        this.lastExecution = lastExecution;
+        this.lastStatus = lastStatus;
     }
 
     @Override
@@ -88,6 +108,9 @@ public class AppointmentsEntity {
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", message=" + message +
+                ", taskType=" + taskType +
+                ", lastExecution=" + lastExecution +
+                ", lastStatus=" + lastStatus +
                 '}';
     }
 }
