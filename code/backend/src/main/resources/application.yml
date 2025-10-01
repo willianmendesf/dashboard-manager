@@ -28,3 +28,7 @@ server:
 
 file:
   temp-dir: /tmp/files
+
+scheduler:
+  cron:
+    scheduleTimeLoad: ${LOAD_SCHEDULE}
