@@ -32,6 +32,8 @@ public class AppointmentsEntity {
     private String startDate;
     private String endDate;
     private String message;
+    private List<String> sendTo;
+    private List<String> sendToGroups;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "task_type")
@@ -66,9 +68,11 @@ public class AppointmentsEntity {
         this.taskType = entity.getTaskType();
         this.lastExecution = entity.getLastExecution();
         this.lastStatus = entity.getLastStatus();
+        this.sendTo = entity.getSendTo();
+        this.sendToGroups = entity.getSendToGroups();
     }
 
-    public AppointmentsEntity(Long retries, String name, String description, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout, String startDate, String endDate, String message, TaskType taskType, Timestamp lastExecution, TaskStatus lastStatus) {
+    public AppointmentsEntity(Long retries, String name, String description, String schedule, Boolean enabled, Boolean development, Boolean monitoring, List<String> monitoringNumbers, Boolean monitoringGroups, List<String> monitoringGroupsIds, String endpoint, Long timeout, String startDate, String endDate, String message, TaskType taskType, Timestamp lastExecution, TaskStatus lastStatus,  List<String> sendTo, List<String> sendToGroups) {
         this.retries = retries;
         this.name = name;
         this.description = description;
@@ -87,6 +91,8 @@ public class AppointmentsEntity {
         this.taskType = taskType;
         this.lastExecution = lastExecution;
         this.lastStatus = lastStatus;
+        this.sendTo = sendTo;
+        this.sendToGroups = sendToGroups;
     }
 
     @Override
@@ -111,6 +117,8 @@ public class AppointmentsEntity {
                 ", taskType=" + taskType +
                 ", lastExecution=" + lastExecution +
                 ", lastStatus=" + lastStatus +
+                ", sendTo=" + sendTo +
+                ", sendToGroups=" + sendToGroups +
                 '}';
     }
 }
