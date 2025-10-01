@@ -2,8 +2,8 @@ package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.model.WhatsappMessageSender;
 import br.com.willianmendesf.system.model.WhatsappSender;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import br.com.willianmendesf.system.service.utils.WhatsappExtractor;
+import br.com.willianmendesf.system.service.utils.WhatsappSenderService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
@@ -14,10 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,35 +23,45 @@ import java.util.Map;
 @AllArgsConstructor
 public class WhatsappMessageService {
 
+    private final WhatsappSenderService whatsappSender;
+
     private final String SEND_MESSAGE = "/send/";
     private final String GET_GROUPS = "/user/my/groups";
     private final String GET_CONTACTS = "/user/my/contacts";
 
-    private final String apiNodeUrl;
-    private final RestTemplate restTemplate;
-
-    private <T> HttpEntity<T> createRequestEntity(T body) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return new HttpEntity<>(body, headers);
+    public List<Map<String, String>> getContacts() {
+        HttpEntity<Void> request = whatsappSender.createRequestEntity(null);
+        ResponseEntity<String> response = whatsappSender.sendRequest(GET_CONTACTS, request);
+        String jsonResponse = response.getBody();
+        return WhatsappExtractor.extractContactsList(jsonResponse);
     }
 
-    private ResponseEntity<String> sendRequest(String endpoint, HttpEntity<?> requestEntity) {
-        try {
-            ResponseEntity<String> response;
+    public List<Map<String, String>> getGroups() {
+        HttpEntity<Void> request = whatsappSender.createRequestEntity(null);
+        ResponseEntity<String> response = whatsappSender.sendRequest(GET_GROUPS, request);
+        String jsonResponse = response.getBody();
+        return WhatsappExtractor.extractGroupList(jsonResponse);
+    }
 
-            if (requestEntity.getBody() == null)
-                response = restTemplate.getForEntity(apiNodeUrl + endpoint, String.class, requestEntity, String.class);
-            else
-                response = restTemplate.postForEntity(apiNodeUrl + endpoint, requestEntity, String.class);
+    public List<Map<String, String>> getHistory(String jid) {
+        HttpEntity<Void> request = whatsappSender.createRequestEntity(null);
+        ResponseEntity<String> response = whatsappSender.sendRequest("/chat/" + jid + "/messages", request);
+        String jsonResponse = response.getBody();
+        return WhatsappExtractor.extractMessageHistory(jsonResponse);
+    }
 
-            if (!response.getStatusCode().is2xxSuccessful())
-                throw new RuntimeException("Fail to send message: " + response.getStatusCode());
+    public void sendMessage(WhatsappSender message) {
+        if (message.getMedia() == null || message.getMedia().isEmpty()) sendTextMessage(message);
+        else sendMediaMessage(message);
+    }
 
-            return response;
-        } catch (RestClientException e) {
-            throw new RuntimeException("Error: " + e.getMessage(), e);
-        }
+    private void sendTextMessage(WhatsappSender message) {
+        log.info("Sending Text Message!");
+        WhatsappMessageSender textMessage = new WhatsappMessageSender(message);
+        validateMessage(textMessage);
+        HttpEntity<WhatsappMessageSender> request = whatsappSender.createRequestEntity(textMessage);
+        whatsappSender.sendRequest(SEND_MESSAGE + "message", request);
+        log.info("Message text sent!");
     }
 
     private void validateMessage(WhatsappMessageSender message) {
@@ -64,43 +71,7 @@ public class WhatsappMessageService {
             throw new IllegalArgumentException("Message is null");
     }
 
-    public List<Map<String, String>> getHistory(String jid) {
-        HttpEntity<Void> request = createRequestEntity(null);
-        ResponseEntity<String> response = sendRequest("/chat/" + jid + "/messages", request);
-        String jsonResponse = response.getBody();
-        List<Map<String, String>> result = extractMessageHistory(jsonResponse);
-        return result;
-    }
-
-    public List<Map<String, String>> getContacts() {
-        HttpEntity<Void> request = createRequestEntity(null);
-        ResponseEntity<String> response = sendRequest(GET_CONTACTS, request);
-        String jsonResponse = response.getBody();
-        return extractContactsList(jsonResponse);
-    }
-
-    public List<Map<String, String>> getGroups() {
-        HttpEntity<Void> request = createRequestEntity(null);
-        ResponseEntity<String> response = sendRequest(GET_GROUPS, request);
-        String jsonResponse = response.getBody();
-        return extractGroupList(jsonResponse);
-    }
-
-    public void sendMessage(WhatsappSender message) {
-        if (message.getMedia() == null || message.getMedia().isEmpty()) sendTextMessage(message);
-        else sendMediaMessage(message);
-    }
-
-    public void sendTextMessage(WhatsappSender message) {
-        log.info("Sending Text Message!");
-        WhatsappMessageSender textMessage = new WhatsappMessageSender(message);
-        validateMessage(textMessage);
-        HttpEntity<WhatsappMessageSender> request = createRequestEntity(textMessage);
-        sendRequest(SEND_MESSAGE + "message", request);
-        log.info("Message text sent!");
-    }
-
-    public void sendMediaMessage(WhatsappSender message) {
+    private void sendMediaMessage(WhatsappSender message) {
         log.info("Sending media message!");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -108,7 +79,7 @@ public class WhatsappMessageService {
         var body = createMidiaMessage(message);
 
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
-        sendRequest(SEND_MESSAGE + message.getMediaType().getDesc(), request);
+        whatsappSender.sendRequest(SEND_MESSAGE + message.getMediaType().getDesc(), request);
         log.info("Message media sent!");
     }
 
@@ -123,70 +94,6 @@ public class WhatsappMessageService {
         body.add(message.getMediaType().getDesc(), new FileSystemResource(message.getMedia()));
 
         return body;
-    }
-
-    public List<Map<String, String>> extractMessageHistory(String jsonResponse) {
-        List<Map<String, String>> contactsList = new ArrayList<>();
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(jsonResponse);
-            JsonNode groups = root.path("results").path("data");
-
-            if (groups.isArray()) {
-                for (JsonNode group : groups) {
-                    String id = group.path("chat_jid").asText();
-                    String timestamp = group.path("timestamp").asText();
-                    String message = group.path("content").asText();
-                    contactsList.add(Map.of("id", id, "timestamp", timestamp, "message", message));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse contacts JSON", e);
-        }
-        return contactsList;
-    }
-
-    public List<Map<String, String>> extractContactsList(String jsonResponse) {
-        List<Map<String, String>> contactsList = new ArrayList<>();
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(jsonResponse);
-            JsonNode groups = root.path("results").path("data");
-
-            if (groups.isArray()) {
-                for (JsonNode group : groups) {
-                    String jid = group.path("jid").asText();
-                    String name = group.path("name").asText();
-                    contactsList.add(Map.of("id", jid, "name", name));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse contacts JSON", e);
-        }
-        return contactsList;
-    }
-
-    public List<Map<String, String>> extractGroupList(String jsonResponse) {
-        List<Map<String, String>> groupsList = new ArrayList<>();
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(jsonResponse);
-            JsonNode groups = root.path("results").path("data");
-
-            if (groups.isArray()) {
-                for (JsonNode group : groups) {
-                    String jid = group.path("JID").asText();
-                    String name = group.path("Name").asText();
-                    groupsList.add(Map.of("id", jid, "name", name));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse groups JSON", e);
-        }
-        return groupsList;
     }
 }
 
