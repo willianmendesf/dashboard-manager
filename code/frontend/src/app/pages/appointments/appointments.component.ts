@@ -20,14 +20,12 @@ export interface ChecklistItem {
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   public appointments : Appointment[] = [];
-
-  users: Appointment[] = [];
-  groups: Group[] = []
+  public groups: Group[] = []
 
   showUserModal = false;
   showViewModal = false;
   isEditing = false;
-  currentUser: any = {};
+  currentAppointment: any = {};
   viewingUser: Appointment | null = null;
 
   itensChecklist: ChecklistItem[] = [
@@ -94,7 +92,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   openUserModal(user?: Appointment) {
     this.showUserModal = true;
     this.isEditing = !!user;
-    this.currentUser = user ? { ...user } : {
+    this.currentAppointment = user ? { ...user } : {
       id: '',
       name: '',
       description: '',
@@ -105,22 +103,12 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       monitoringGroups: false,
       monitoringGroupsIds: [],
       enpoint: '',
-      retries: '',
-      timeout: '',
+      retries: 3,
+      timeout: 30000,
       startDate: '',
       endDate: '',
       message: ''
     };
-  }
-
-  closeUserModal() {
-    this.showUserModal = false;
-    this.currentUser = {};
-  }
-
-  viewUser(user: Appointment) {
-    this.viewingUser = user;
-    this.showViewModal = true;
   }
 
   closeViewModal() {
@@ -128,9 +116,42 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.viewingUser = null;
   }
 
-  editUser(user: Appointment) {
+  closeModal() {
+    this.showUserModal = false;
+    this.currentAppointment = {};
+  }
+
+  view(appointment: Appointment) {
+    this.viewingUser = appointment;
+    this.showViewModal = true;
+  }
+
+  edit(appointment: Appointment) {
     this.closeViewModal();
-    this.openUserModal(user);
+    this.openUserModal(appointment);
+  }
+
+  deleteItem(appointment: Appointment) {
+    if (confirm(`Tem certeza que deseja excluir o membro "${appointment.name}"?`)) {
+      this.delete(appointment.id);
+      this.appointments = this.appointments.filter(m => m.id !== appointment.id);
+    }
+  }
+
+  save() {
+    if (this.isEditing) {
+      const index = this.appointments.findIndex(u => u.id === this.currentAppointment.id);
+      if (index !== -1) this.appointments[index] = { ...this.currentAppointment };
+      this.update(this.appointments[index])
+    } else {
+      const newUser: Appointment = {
+        ...this.currentAppointment,
+        id: Math.max(...this.appointments.map(u => u.id)) + 1,
+        createdAt: new Date().toLocaleDateString('pt-BR')
+      };
+      this.create(newUser);
+    }
+    this.closeModal();
   }
 
   public create(appointment : Appointment) {
@@ -151,7 +172,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       "message": appointment.message
     };
 
-    this.api.post("/appointments", newAppointment)
+    this.api.post("appointments", newAppointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getAll(),
@@ -160,30 +181,23 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     })
   }
 
-  public updateUser(appointment : Appointment) {
-    this.api.update(`/appointments/${appointment.id}` , appointment)
+  public update(appointment : Appointment) {
+    this.api.post(`appointments/${appointment.id}` , appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: res => this.getAll(),
-      error: error => console.error(error),
-      complete: () => this.getAll()
+      next: () => this.getAll(),
+      complete: () => this.getAll(),
+      error: error => console.error(error)
     })
   }
 
-  save() {
-    console.log("save activated")
-    if (this.isEditing) {
-      const index = this.users.findIndex(u => u.id === this.currentUser.id);
-      if (index !== -1) this.users[index] = { ...this.currentUser };
-      this.updateUser(this.users[index])
-    } else {
-      const newUser: Appointment = {
-        ...this.currentUser,
-        id: Math.max(...this.users.map(u => u.id)) + 1,
-        createdAt: new Date().toLocaleDateString('pt-BR')
-      };
-      this.create(newUser);
-    }
-    this.closeUserModal();
+  public delete(id: number) {
+    this.api.delete("appointments/" + id)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => this.getAll(),
+        error: error => console.error(error),
+        complete: () => this.getAll()
+      });
   }
 }

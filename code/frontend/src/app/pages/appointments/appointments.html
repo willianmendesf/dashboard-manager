@@ -17,12 +17,14 @@
         <div class="team-avatars">
             <p class="project-description">{{ appointment.description }}</p>
         </div>
-          <span>Quando?</span>
-          <span>{{ appointment.schedule }}</span>
       </div>
 
       <div class="project-footer">
         <div class="project-dates">
+          <div class="date-item">
+            <span class="date-label">Quando Enviar?</span>
+            <span class="date-value">{{ appointment.schedule }}</span>
+          </div>
           <div class="date-item">
             <span class="date-label">Data de início:</span>
             <span class="date-value">{{ appointment.startDate }}</span>
@@ -32,6 +34,11 @@
             <span class="date-value">{{ appointment.endDate }}</span>
           </div>
         </div>
+      </div>
+      <div class="action-buttons">
+        <button class="btn-action view" (click)="view(appointment)" title="Visualizar">👁️</button>
+        <button class="btn-action edit" (click)="edit(appointment)" title="Editar">✏️</button>
+        <button class="btn-action delete" (click)="deleteItem(appointment)" title="Excluir">🗑️</button>
       </div>
     </div>
 
@@ -45,20 +52,20 @@
     </div>-->
 
     <!-- User Modal -->
-    <div class="modal-overlay" *ngIf="showUserModal" (click)="closeUserModal()">
+    <div class="modal-overlay" *ngIf="showUserModal" (click)="closeModal()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
-          <button class="btn-close" (click)="closeUserModal()">×</button>
+          <h3>{{ isEditing ? 'Editar Agendamentos' : 'Novo Agendamento' }}</h3>
+          <button class="btn-close" (click)="closeModal()">×</button>
         </div>
 
         <form class="modal-body" (ngSubmit)="save()">
           <div class="form-grid">
             <div class="form-group">
-              <label>Nome do Job</label>
+              <label>Nome do Agendamento</label>
               <input
                 type="text"
-                [(ngModel)]="currentUser.name"
+                [(ngModel)]="currentAppointment.name"
                 name="name"
                 class="form-control"
                 required
@@ -69,17 +76,30 @@
               <label>Descrição</label>
               <input
                 type="text"
-                [(ngModel)]="currentUser.description"
+                [(ngModel)]="currentAppointment.description"
                 name="description"
                 class="form-control"
                 placeholder=""
                 required
               />
             </div>
-            
+
             <div class="form-group">
-              <label>Enviar Para o Grupo(s):</label>
-              <ul>
+              <label>Quando Enviar?</label>
+              <span>Duvidas? <a href="https://crontab.guru/" target="_blank">[Entenda]</a></span>
+              <input
+                type="text"
+                [(ngModel)]="currentAppointment.schedule"
+                name="schedule"
+                class="form-control"
+                placeholder=""
+                required
+              />
+            </div>
+            
+            <div>
+              <label>Enviar Para o(s) Grupo(s):</label>
+              <ul><!--
                 @for (group of groups; track group.id) {
                   <li>
                     <label>
@@ -94,14 +114,14 @@
                   </li>
                 } @empty {
                   <li>Nenhum grupo na lista para checar.</li>
-                }
+                }-->
               </ul>
             </div>
 
             <div class="form-group">
               <label>Ativo para envio?</label>
               <select
-                [(ngModel)]="currentUser.enabled"
+                [(ngModel)]="currentAppointment.enabled"
                 name="enabled"
                 class="form-control"
                 required
@@ -114,7 +134,7 @@
             <div class="form-group">
               <label>Modo Desenvolvimento?</label>
               <select
-                [(ngModel)]="currentUser.development"
+                [(ngModel)]="currentAppointment.development"
                 name="development"
                 class="form-control"
                 required
@@ -124,11 +144,30 @@
               </select>
             </div>
 
+             <div class="form-group">
+              <label>Modo Monitoraramento?</label>
+              <select
+                [(ngModel)]="currentAppointment.monitoringGroups"
+                name="monitoringGroups"
+                class="form-control"
+                required
+              >
+                <option [value]="true">Sim</option>
+                <option [value]="false">Não</option>
+              </select>
+            </div>
+
+            @if (currentAppointment.monitoringGroups) {
+              <div>
+                <label>Enviar mensagens de Monitoraramento Para o(s) Grupo(s):</label>
+              </div>
+            }
+
             <div class="form-group">
               <label>Data de Inicio</label>
               <input
                 type="date"
-                [(ngModel)]="currentUser.startDate"
+                [(ngModel)]="currentAppointment.startDate"
                 name="startDate"
                 class="form-control"
               />
@@ -138,18 +177,27 @@
               <label>Data de Fim</label>
               <input
                 type="date"
-                [(ngModel)]="currentUser.endDate"
+                [(ngModel)]="currentAppointment.endDate"
                 name="endDate"
                 class="form-control"
               />
+            </div>
+
+            <div class="form-group">
+              <label>Mensagem a ser enviada:</label>
+              <textarea
+                type="date"
+                [(ngModel)]="currentAppointment.message"
+                [ngModelOptions]="{standalone: true}"
+                name="endDate"
+                class="form-control"
+              ></textarea>
             </div>
           </div>
         </form>
 
         <div class="modal-footer">
-          <button type="button" class="btn-secondary" (click)="closeUserModal()">
-            Cancelar
-          </button>
+          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
           <button type="button" class="btn-primary" (click)="save()">
             {{ isEditing ? 'Salvar Alterações' : 'Criar Agendamento' }}
           </button>
