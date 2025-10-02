@@ -16,7 +16,7 @@ COPY . .
 
 # Compila a aplicação Angular para produção
 # ATENÇÃO: Verifique o comando "npm run build" e o caminho de saída (dist/nome-do-projeto)
-RUN npm run build -- --output-path ./dist --configuration production --base-href /
+RUN npm run build -- --output-path ./dist/dashboard --configuration production --base-href /
 
 # --- ESTÁGIO 2: SERVIDOR WEB FINAL (NGINX) ---
 # Usa uma imagem Nginx leve para servir os arquivos estáticos.
@@ -27,7 +27,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copia APENAS os arquivos compilados do estágio anterior
 # ATENÇÃO: SUBSTITUA 'seu-projeto-angular' pelo nome real da pasta de saída do seu build!
-COPY --from=builder /app/dist/ /usr/share/nginx/html
+COPY --from=builder /app/dist/dashboard /usr/share/nginx/html
 
 # Porta padrão de serviço do Nginx
 EXPOSE 80
