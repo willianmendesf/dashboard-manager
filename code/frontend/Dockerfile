@@ -33,4 +33,4 @@ COPY --from=builder /app/dist/dashboard/browser /usr/share/nginx/html
 EXPOSE 80
 
 # Comando para iniciar o Nginx
-CMD ["nginx", "-g", "daemon off;"]
+#CMD ["nginx", "-g", "daemon off;"]
