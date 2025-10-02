@@ -12,6 +12,6 @@
     "re-run": "docker-compose up -d --build --force-recreate"
   },
   "keywords": [],
-  "author": "",
+  "author": "willianmendesf",
   "license": "ISC"
 }
