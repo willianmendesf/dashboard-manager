@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Instala as dependências
-RUN npm install --force
+RUN npm install  --force
 
 # Copia o código-fonte restante
 COPY . .
@@ -28,7 +28,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copia APENAS os arquivos compilados do estágio anterior
 # ATENÇÃO: SUBSTITUA 'seu-projeto-angular' pelo nome real da pasta de saída do seu build!
-COPY --from=builder /app/dist/seu-projeto-angular /usr/share/nginx/html
+COPY --from=builder /app/dist/dashboard /usr/share/nginx/html
 
 # Porta padrão de serviço do Nginx
 EXPOSE 80
