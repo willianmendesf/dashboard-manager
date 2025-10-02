@@ -1,0 +1,29 @@
+version: '2.4'
+services:
+  angular-frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    restart: always
+    networks:
+      - app-network
+
+  backend-app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - angular-frontend
+    networks:
+      - app-network
+      
+networks:
+  app-network:
+    driver: bridge
