@@ -8,7 +8,7 @@ export class Appointment {
   "monitoringNumbers": string[];
   "monitoringGroups": boolean;
   "monitoringGroupsIds": string[];
-  "enpoint": string;
+  "endpoint": string;
   "retries": number;
   "timeout": number;
   "startDate": Date;
