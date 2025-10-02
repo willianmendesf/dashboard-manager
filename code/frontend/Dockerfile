@@ -2,9 +2,6 @@
 # Usa a imagem oficial do Node 20 LTS (Lightweight Alpine) para o build.
 FROM node:20-slim as builder
 
-# INSTALAR DEPENDÊNCIAS DE COMPATIBILIDADE PARA ALPINE
-RUN apk add libc6-compat
-
 # Define o diretório de trabalho
 WORKDIR /app
 
