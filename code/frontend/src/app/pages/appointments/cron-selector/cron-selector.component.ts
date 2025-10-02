@@ -21,11 +21,11 @@ export class CronSelectorComponent implements OnInit {
         diaDaSemana: '*'
     };
 
-    public segundoOptions: string[] = Array.from({ length: 60 }, (_, i) => i.toString()); // 0 a 59
-    public minutoOptions: string[] = Array.from({ length: 60 }, (_, i) => i.toString()); // 0 a 59
-    public horaOptions: string[] = Array.from({ length: 24 }, (_, i) => i.toString()); // 0 a 23
-    public diaDoMesOptions: (string | number)[] = ['*'].concat(Array.from({ length: 31 }, (_, i) => (i + 1).toString())); // 1 a 31
-    public mesOptions: (string | number)[] = ['*'].concat(Array.from({ length: 12 }, (_, i) => (i + 1).toString())); // 1 a 12
+    public segundoOptions: string[] = Array.from({ length: 60 }, (_, i) => i).flatMap(num => [num.toString(), `*/${num}`]); // 0 a 59
+    public minutoOptions: string[] = Array.from({ length: 60 }, (_, i) => i).flatMap(num => [num.toString(), `*/${num}`]); // 0 a 59
+    public horaOptions: string[] = Array.from({ length: 23 }, (_, i) => i).flatMap(num => [num.toString(), `*/${num}`]); // 0 a 23
+    public diaDoMesOptions: (string | number)[] = ['*'].concat(Array.from({ length: 31 }, (_, i) => i).flatMap(num => [num.toString(), `*/${num}`])); // 1 a 31
+    public mesOptions: (string | number)[] = ['*'].concat(Array.from({ length: 12 }, (_, i) => i).flatMap(num => [num.toString(), `*/${num}`])); // 1 a 12
     public diaDaSemanaOptions: { value: string, label: string }[] = [
         { value: '*', label: 'Qualquer' },
         { value: '7', label: 'Domingo' },

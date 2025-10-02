@@ -92,30 +92,7 @@
                 <option [value]="false">Não</option>
               </select>
             </div>
-
-            <div class="form-group">
-              <label>Modo Monitoraramento?</label>
-              <select [(ngModel)]="currentAppointment.monitoringGroups" name="monitoringGroups" class="form-control"
-                required>
-                <option [value]="true">Sim</option>
-                <option [value]="false">Não</option>
-              </select>
-            </div>
           </div>
-
-          @if (currentAppointment.monitoringGroups) {
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Enviar Para o(s) Grupo(s):</label>
-              <select [(ngModel)]="currentAppointment.monitoringGroupsIds" [ngModelOptions]="{standalone: true}" name="monitoringGroupsIds"
-                class="form-control" multiple required>
-                <option *ngFor="let item of groups" [ngValue]="item.id">
-                  {{ item.name }}
-                </option>
-              </select>
-            </div>
-          </div>
-          }
 
           <div class="form-grid">
             <div class="form-group">
@@ -162,6 +139,31 @@
             </div>
           </div>
           }
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Modo Monitoraramento?</label>
+              <select [(ngModel)]="currentAppointment.monitoringGroups" name="monitoringGroups" class="form-control"
+                required>
+                <option [value]="true">Sim</option>
+                <option [value]="false">Não</option>
+              </select>
+            </div>
+
+            @if (currentAppointment.monitoringGroups) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Monitorar no(s) Grupo(s):</label>
+                <select [(ngModel)]="currentAppointment.monitoringGroupsIds" [ngModelOptions]="{standalone: true}" name="monitoringGroupsIds"
+                  class="form-control" multiple required>
+                  <option *ngFor="let item of groups" [ngValue]="item.id">
+                    {{ item.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            }
+          </div>
         </form>
 
         <div class="modal-footer">
