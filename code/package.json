@@ -6,10 +6,8 @@
   "scripts": {
     "install:frontend": "cd frontend && ng serve --host 0.0.0.0",    
     "install:backend": "cd backend && java -jar ./target/system-0.0.1-SNAPSHOT.jar --spring.config.location=file:/root/dashboard-manager/code/backend/.env",
-    
     "start:frontend": "cd frontend && ng serve --host 0.0.0.0",
     "start:backend": "cd backend && java -jar ./target/system-0.0.1-SNAPSHOT.jar --spring.config.location=file:/root/dashboard-manager/code/backend/.env",
-
     "install":"concurrently \"npm run install:backend\" \"npm run install:frontend\"",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
   },
