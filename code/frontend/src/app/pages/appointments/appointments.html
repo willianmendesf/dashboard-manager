@@ -1,8 +1,5 @@
 <div class="page-container">
-  <pagetitle
-    title="Agendamentos"
-    subtitle="Gerencie seus agendamentos"
-  ></pagetitle>
+  <pagetitle title="Agendamentos" subtitle="Gerencie seus agendamentos"></pagetitle>
 
   <div class="projects-grid">
     <div class="project-card" *ngFor="let appointment of appointments">
@@ -15,7 +12,7 @@
 
       <div>
         <div class="team-avatars">
-            <p class="project-description">{{ appointment.description }}</p>
+          <p class="project-description">{{ appointment.description }}</p>
         </div>
       </div>
 
@@ -62,45 +59,27 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Nome do Agendamento</label>
-              <input
-                type="text"
-                [(ngModel)]="currentAppointment.name"
-                name="name"
-                class="form-control"
-                required
-              />
+              <input type="text" [(ngModel)]="currentAppointment.name" name="name" class="form-control" required />
             </div>
 
             <div class="form-group">
               <label>Descrição</label>
-              <input
-                type="text"
-                [(ngModel)]="currentAppointment.description"
-                name="description"
-                class="form-control"
-                placeholder=""
-                required
-              />
+              <input type="text" [(ngModel)]="currentAppointment.description" name="description" class="form-control"
+                placeholder="" required />
             </div>
           </div>
-          
+
           <div class="form-grid">
             <div class="form-group">
-              <cron-selector 
-                [(currentAppointment)]="currentAppointment">
+              <cron-selector [(currentAppointment)]="currentAppointment">
               </cron-selector>
-            </div>            
+            </div>
           </div>
 
           <div class="form-grid">
             <div class="form-group">
               <label>Ativo para envio?</label>
-              <select
-                [(ngModel)]="currentAppointment.enabled"
-                name="enabled"
-                class="form-control"
-                required
-              >
+              <select [(ngModel)]="currentAppointment.enabled" name="enabled" class="form-control" required>
                 <option [value]="true">Sim</option>
                 <option [value]="false">Não</option>
               </select>
@@ -108,25 +87,16 @@
 
             <div class="form-group">
               <label>Modo Desenvolvimento?</label>
-              <select
-                [(ngModel)]="currentAppointment.development"
-                name="development"
-                class="form-control"
-                required
-              >
+              <select [(ngModel)]="currentAppointment.development" name="development" class="form-control" required>
                 <option [value]="true">Sim</option>
                 <option [value]="false">Não</option>
               </select>
             </div>
 
-             <div class="form-group">
+            <div class="form-group">
               <label>Modo Monitoraramento?</label>
-              <select
-                [(ngModel)]="currentAppointment.monitoringGroups"
-                name="monitoringGroups"
-                class="form-control"
-                required
-              >
+              <select [(ngModel)]="currentAppointment.monitoringGroups" name="monitoringGroups" class="form-control"
+                required>
                 <option [value]="true">Sim</option>
                 <option [value]="false">Não</option>
               </select>
@@ -134,77 +104,64 @@
           </div>
 
           @if (currentAppointment.monitoringGroups) {
-            <div class="form-grid">
-              <div class="form-group">
-                <label>Enviar Para o(s) Grupo(s):</label>
-                <select
-                  [(ngModel)]="currentAppointment.monitoringGroupsIds"
-                  name="monitoringGroupsIds"
-                  class="form-control"
-                  multiple  required
-                >
-                  <option
-                    *ngFor="let item of groups"
-                    [ngValue]="item.id"
-                  >
-                    {{ item.name }}
-                  </option>
-                </select>
-              </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Enviar Para o(s) Grupo(s):</label>
+              <select [(ngModel)]="currentAppointment.monitoringGroupsIds" [ngModelOptions]="{standalone: true}" name="monitoringGroupsIds"
+                class="form-control" multiple required>
+                <option *ngFor="let item of groups" [ngValue]="item.id">
+                  {{ item.name }}
+                </option>
+              </select>
             </div>
+          </div>
           }
 
           <div class="form-grid">
             <div class="form-group">
               <label>Data de Inicio</label>
-              <input
-                type="date"
-                [(ngModel)]="currentAppointment.startDate"
-                name="startDate"
-                class="form-control"
-              />
+              <input type="date" [(ngModel)]="currentAppointment.startDate" name="startDate" class="form-control" />
             </div>
 
             <div class="form-group">
               <label>Data de Fim</label>
-              <input
-                type="date"
-                [(ngModel)]="currentAppointment.endDate"
-                name="endDate"
-                class="form-control"
-              />
+              <input type="date" [(ngModel)]="currentAppointment.endDate" name="endDate" class="form-control" />
             </div>
           </div>
 
           <div class="form-group">
             <label>Enviar Para o(s) Grupo(s):</label>
-            <select
-              [(ngModel)]="currentAppointment.sendToGroups"
-              name="sendToGroups"
-              class="form-control"
-              multiple  required
-            >
-              <option
-                *ngFor="let item of groups"
-                [ngValue]="item.id"
-              >
+            <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
+              required>
+              <option *ngFor="let item of groups" [ngValue]="item.id">
                 {{ item.name }}
               </option>
             </select>
           </div>
 
+          <div class="form-group">
+            <label>Tipo de Envio?</label>
+            <select [(ngModel)]="currentAppointment.taskType" name="monitoringGroups" class="form-control"
+              required>
+              <option [value]="'WHATSAPP_MESSAGE'">Whatsapp Message</option>
+              <option [value]="'API_CALL'">Acionar uma Api</option>
+            </select>
+          </div>
+
+          @if (currentAppointment.taskType == "API_CALL") {
+          <div class="form-group">
+            <label>Nome do Agendamento</label>
+            <input type="text" [(ngModel)]="currentAppointment.endpoint" name="endpoint" class="form-control"/>
+          </div>
+          } @else {
           <div class="form-grid">
             <div class="form-group">
               <label>Mensagem a ser enviada:</label>
-              <textarea
-                class="form-control"
-                type="textarea"
-                [ngModelOptions]="{standalone: true}"
-                [(ngModel)]="currentAppointment.message"
-                name="message"
-              ></textarea>
+              <textarea class="form-control" type="textarea" [ngModelOptions]="{standalone: true}"
+                [(ngModel)]="currentAppointment.message" name="message"></textarea>
             </div>
           </div>
+          }
         </form>
 
         <div class="modal-footer">

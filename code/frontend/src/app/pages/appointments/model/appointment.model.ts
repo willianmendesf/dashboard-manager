@@ -17,4 +17,5 @@ export class Appointment {
   "sendTo": string[];
   "sendToGroups": string[];
   "recipientType": string;
+  "taskType": string;
 }

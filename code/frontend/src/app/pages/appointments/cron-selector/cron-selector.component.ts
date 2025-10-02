@@ -52,10 +52,7 @@ export class CronSelectorComponent implements OnInit {
         const { segundos, minutos, horas, diaDoMes, mes, diaDaSemana } = this.cronFields;
         const newCronString = `${segundos} ${minutos} ${horas} ${diaDoMes} ${mes} ${diaDaSemana}`;
         this.currentAppointment.schedule = newCronString;
-        console.log(this.segundoOptions)
         this.currentAppointmentChange.emit(this.currentAppointment);
-
-        console.log('Cron Atualizado:', newCronString);
     }
 
     private parseCronString(cron: string): void {

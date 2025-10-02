@@ -36,14 +36,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     { id: 4, nome: 'Fazer Exercício', selecionado: false },
   ];
 
-  handleCheckboxChange(item: Group) {
-    console.log(`Status de ${item.name}: ${item.selected}`);
-    
-    this.groups.forEach(group => {
-      if (group.id == item.id) group.selected = item.selected
-    })
-  }
-
   constructor(
     private api : ApiService,
     private cdr: ChangeDetectorRef
@@ -54,27 +46,13 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.getAll();
     this.getGroups();
-    console.log(this.groups)
-  }
-
-  toggleMonitoring() {
-    console.log(this.currentAppointment.monitoringNumbers)
-    //this.currentAppointment.monitoringGroups = !this.currentAppointment.monitoringGroups;
-  }
-
-  handleChangeGroupsNumber(item: any) {
-    console.log('antes', this.currentAppointment)
-    this.currentAppointment.monitoringNumbers.push(this.currentAppointment.monitoringNumbers)
-    console.log('depois', this.currentAppointment)
   }
 
   public getGroups() {
-    console.log('getGroups')
     this.api.get("whatsapp/groups")
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
-        console.log(res)
         this.groups = res
         this.groups.forEach(item => item.selected = false)
       },
@@ -89,10 +67,9 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: appointments => {
         this.appointments = appointments
-        console.log(this.appointments)
       },
-      error: error => console.log(error),
-      complete: () => console.log('Complete')
+      error: error => console.error(error),
+      complete: () => console.log()
   });
   }
 
@@ -115,15 +92,16 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       description: '',
       schedule: '',
       enabled: false,
-      development: false,
+      development: true,
       monitoringNumbers: [],
       monitoringGroups: false,
       monitoringGroupsIds: [],
-      enpoint: '',
+      endpoint: '',
       retries: 3,
       timeout: 30000,
       startDate: '',
       endDate: '',
+      taskType: '',
       message: '',
       sendTo: [],
       sendToGroups: [],
@@ -159,10 +137,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   save() {
+    console.log(this.currentAppointment)
     if (this.isEditing) {
       const index = this.appointments.findIndex(u => u.id === this.currentAppointment.id);
       if (index !== -1) this.appointments[index] = { ...this.currentAppointment };
-      console.log(this.appointments[index])
       this.update(this.appointments[index])
     } else {
       const newAppointment: Appointment = {
@@ -176,29 +154,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   public create(appointment : Appointment) {
-    let newAppointment = {
-      "name": appointment.name,
-      "description": appointment.description,
-      "schedule": appointment.schedule,
-      "enabled": appointment.enabled,
-      "development": appointment.development,
-      "monitoringNumbers": appointment.monitoringNumbers,
-      "monitoringGroups": appointment.monitoringGroups,
-      "monitoringGroupsIds": appointment.monitoringGroupsIds,
-      "enpoint": appointment.enpoint,
-      "retries": appointment.retries,
-      "timeout": appointment.retries,
-      "startDate": appointment.startDate,
-      "endDate": appointment.endDate,
-      "message": appointment.message
-    };
-
-    this.api.post("appointments", newAppointment)
+    this.api.post("appointments", appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getAll(),
       error: error => console.error(error),
-      complete: () => this.getAll()
+      complete: () => {
+        console.log('Created!')
+        this.getAll()
+      }
     })
   }
 
@@ -208,7 +172,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: () => this.getAll(),
       complete: () => this.getAll(),
-      error: error => console.error(error)
+      error: error => {
+        console.log('Updated')
+        console.error(error)
+      }
     })
   }
 
@@ -218,7 +185,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => this.getAll(),
         error: error => console.error(error),
-        complete: () => this.getAll()
+        complete: () => {
+          console.log('Deleted!')
+          this.getAll()
+        }
       });
   }
 }
