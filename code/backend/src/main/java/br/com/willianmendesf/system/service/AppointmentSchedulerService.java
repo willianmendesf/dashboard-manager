@@ -8,6 +8,7 @@ import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
 import br.com.willianmendesf.system.repository.AppointmentRepository;
 import br.com.willianmendesf.system.service.utils.ApiRequest;
+import br.com.willianmendesf.system.service.utils.MessagesUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.support.CronExpression;
@@ -178,26 +179,26 @@ public class AppointmentSchedulerService {
     private void executeMonitoringMessage(AppointmentEntity appointment) {
         if(Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
             log.info("Monitoring message for numbers start send!");
-            WhatsappSender message = new WhatsappSender();
 
             appointment.getMonitoringNumbers().forEach(number -> {
+                WhatsappSender message = new WhatsappSender();
                 message.setPhone(number);
-                message.setMessage(appointment.getMessage());
-            });
+                message.setMessage(MessagesUtils.generateMonitoringMessage(appointment));
 
-            whatsapp.sendMessage(message);
+                whatsapp.sendMessage(message);
+            });
             log.info("Monitoring message for numbers sent!");
         }
 
         if(Boolean.TRUE.equals(appointment.getMonitoringGroups()) && !isNull(appointment.getMonitoringGroupsIds())) {
             log.info("Monitoring message for groups start send!");
-            WhatsappSender message = new WhatsappSender();
             appointment.getMonitoringGroupsIds().forEach(group -> {
+                WhatsappSender message = new WhatsappSender();
                 message.setPhone(group);
-                message.setMessage(appointment.getMessage());
-            });
+                message.setMessage(MessagesUtils.generateMonitoringMessage(appointment));
 
-            whatsapp.sendMessage(message);
+                whatsapp.sendMessage(message);
+            });
             log.info("Monitoring message for groups sent!");
         }
     }
