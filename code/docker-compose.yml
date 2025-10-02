@@ -16,6 +16,8 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ./backend/.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Sao_Paulo
     ports:
       - "8080:8080"
     restart: always
