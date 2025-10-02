@@ -1,6 +1,6 @@
 # --- ESTÁGIO 1: BUILD DA APLICAÇÃO ---
 # Usa a imagem oficial do Node 20 LTS (Lightweight Alpine) para o build.
-FROM node:20-alpine as builder
+FROM node:20-slim as builder
 
 # INSTALAR DEPENDÊNCIAS DE COMPATIBILIDADE PARA ALPINE
 RUN apk add libc6-compat
