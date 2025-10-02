@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.suaapp.com'
+  apiUrl: 'http://backend-app:8080/api/v1/'
 };
