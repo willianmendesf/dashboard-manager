@@ -37,7 +37,8 @@ public class AppointmentsService {
 
     public void create(AppointmentsEntity appointment) {
         log.info("Creating new appointment!");
-        repository.save(appointment);
+        AppointmentsEntity entity = new AppointmentsEntity(repository.findMaxId() + 1, appointment);
+        repository.save(entity);
     }
 
     public void update(Long id, AppointmentsEntity updatedAppointment) {

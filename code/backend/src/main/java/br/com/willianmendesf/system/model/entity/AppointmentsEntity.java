@@ -50,7 +50,36 @@ public class AppointmentsEntity {
     @Column(name = "last_status")
     private TaskStatus lastStatus; // SUCCESS, FAILURE, PENDING
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     public AppointmentsEntity() { }
+
+    public AppointmentsEntity(Long id, AppointmentsEntity entity) {
+        this.id = id;
+        this.retries = entity.getRetries();
+        this.name = entity.getName();
+        this.description = entity.getDescription();
+        this.schedule = entity.getSchedule();
+        this.enabled = entity.getEnabled();
+        this.development = entity.getDevelopment();
+        this.monitoring = entity.getMonitoring();
+        this.monitoringNumbers = entity.getMonitoringNumbers();
+        this.monitoringGroups = entity.getMonitoringGroups();
+        this.monitoringGroupsIds = entity.getMonitoringGroupsIds();
+        this.endpoint = entity.getEndpoint();
+        this.timeout = entity.getTimeout();
+        this.startDate = entity.getStartDate();
+        this.endDate = entity.getEndDate();
+        this.message = entity.getMessage();
+        this.taskType = entity.getTaskType();
+        this.lastExecution = entity.getLastExecution();
+        this.lastStatus = entity.getLastStatus();
+        this.sendTo = entity.getSendTo();
+        this.sendToGroups = entity.getSendToGroups();
+        this.recipientType = entity.getRecipientType();
+    }
 
     public AppointmentsEntity(AppointmentsEntity entity) {
         this.id = entity.getId();
