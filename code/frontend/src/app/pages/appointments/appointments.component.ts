@@ -48,6 +48,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.getGroups();
   }
 
+  public getStatus(status: boolean): string {
+    return status == true ? 'Ativo' : 'Pausado';
+  }
+
   public getGroups() {
     this.api.get("whatsapp/groups")
     .pipe(takeUntil(this.unsubscribe$))
@@ -67,6 +71,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: appointments => {
         this.appointments = appointments
+        console.log(this.appointments)
       },
       error: error => console.error(error),
       complete: () => console.log()

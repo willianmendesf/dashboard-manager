@@ -5,9 +5,15 @@
     <div class="project-card" *ngFor="let appointment of appointments">
       <div class="project-header">
         <h3>{{ appointment.name }}</h3>
-        <div class="project-status" [class]="appointment.name">
-          <!-- {{ getStatusText(appointment.enabled) }} -->
-        </div>
+        @if(appointment.enabled) {
+          <div class="project-status" style="background: #DEF7EC; color: #047857;">
+            {{ getStatus(appointment.enabled) }}
+          </div>
+        } @else {
+          <div class="project-status" style="background: #FEF3C7; color: #B45309;">
+            {{ getStatus(appointment.enabled) }}
+          </div>
+        }
       </div>
 
       <div>
