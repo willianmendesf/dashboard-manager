@@ -1,8 +1,8 @@
 {
-  "name": "code",
+  "name": "dashboard-manager",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "",
   "scripts": {
     "start": "docker-compose up",
     "install": "npm run docker:start -- --build", 
