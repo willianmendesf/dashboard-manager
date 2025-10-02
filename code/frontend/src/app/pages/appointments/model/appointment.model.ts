@@ -16,4 +16,5 @@ export class Appointment {
   "message": string;
   "sendTo": string[];
   "sendToGroups": string[];
+  "recipientType": string;
 }

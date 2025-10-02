@@ -82,20 +82,17 @@
                 required
               />
             </div>
-
+          </div>
+          
+          <div class="form-grid">
             <div class="form-group">
-              <label>Quando Enviar?</label>
-              <span class="info">Duvidas? <a href="https://crontab.guru/" target="_blank">Entenda como preencher!</a></span>
-              <input
-                type="text"
-                [(ngModel)]="currentAppointment.schedule"
-                name="schedule"
-                class="form-control"
-                placeholder=""
-                required
-              />
-            </div>
+              <cron-selector 
+                [(currentAppointment)]="currentAppointment">
+              </cron-selector>
+            </div>            
+          </div>
 
+          <div class="form-grid">
             <div class="form-group">
               <label>Ativo para envio?</label>
               <select

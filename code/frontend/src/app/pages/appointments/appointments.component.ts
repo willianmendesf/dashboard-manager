@@ -5,6 +5,7 @@ import { Appointment } from './model/appointment.model';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { FormsModule } from '@angular/forms';
+import { CronSelectorComponent } from './cron-selector/cron-selector.component';
 export interface ChecklistItem {
   id: number;
   nome: string;
@@ -15,7 +16,7 @@ export interface ChecklistItem {
   standalone: true,
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent]
+  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent]
 })
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
@@ -125,7 +126,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       endDate: '',
       message: '',
       sendTo: [],
-      sendToGroups: []
+      sendToGroups: [],
+      recipientType: "INDIVIDUAL"
     };
   }
 
