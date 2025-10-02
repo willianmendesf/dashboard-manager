@@ -1,0 +1,17 @@
+{
+  "name": "code",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "docker-compose up",
+    "install": "npm run docker:start -- --build", 
+    "docker:start": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "re-run": "docker-compose up -d --build --force-recreate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
