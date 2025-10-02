@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @Table(name = "appointments")
-public class AppointmentsEntity {
+public class AppointmentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -54,34 +54,7 @@ public class AppointmentsEntity {
     @Column(name = "version")
     private Long version;
 
-    public AppointmentsEntity() { }
-
-    public AppointmentsEntity(Long id, AppointmentsEntity entity) {
-        this.id = id;
-        this.retries = entity.getRetries();
-        this.name = entity.getName();
-        this.description = entity.getDescription();
-        this.schedule = entity.getSchedule();
-        this.enabled = entity.getEnabled();
-        this.development = entity.getDevelopment();
-        this.monitoring = entity.getMonitoring();
-        this.monitoringNumbers = entity.getMonitoringNumbers();
-        this.monitoringGroups = entity.getMonitoringGroups();
-        this.monitoringGroupsIds = entity.getMonitoringGroupsIds();
-        this.endpoint = entity.getEndpoint();
-        this.timeout = entity.getTimeout();
-        this.startDate = entity.getStartDate();
-        this.endDate = entity.getEndDate();
-        this.message = entity.getMessage();
-        this.taskType = entity.getTaskType();
-        this.lastExecution = entity.getLastExecution();
-        this.lastStatus = entity.getLastStatus();
-        this.sendTo = entity.getSendTo();
-        this.sendToGroups = entity.getSendToGroups();
-        this.recipientType = entity.getRecipientType();
-    }
-
-    public AppointmentsEntity(AppointmentsEntity entity) {
+    public void setAppointmentEntity(AppointmentEntity entity) {
         this.id = entity.getId();
         this.retries = entity.getRetries();
         this.name = entity.getName();
@@ -106,7 +79,59 @@ public class AppointmentsEntity {
         this.recipientType = entity.getRecipientType();
     }
 
-    public AppointmentsEntity(
+    public AppointmentEntity() { }
+
+    public AppointmentEntity(Long id, AppointmentEntity entity) {
+        this.id = id;
+        this.retries = entity.getRetries();
+        this.name = entity.getName();
+        this.description = entity.getDescription();
+        this.schedule = entity.getSchedule();
+        this.enabled = entity.getEnabled();
+        this.development = entity.getDevelopment();
+        this.monitoring = entity.getMonitoring();
+        this.monitoringNumbers = entity.getMonitoringNumbers();
+        this.monitoringGroups = entity.getMonitoringGroups();
+        this.monitoringGroupsIds = entity.getMonitoringGroupsIds();
+        this.endpoint = entity.getEndpoint();
+        this.timeout = entity.getTimeout();
+        this.startDate = entity.getStartDate();
+        this.endDate = entity.getEndDate();
+        this.message = entity.getMessage();
+        this.taskType = entity.getTaskType();
+        this.lastExecution = entity.getLastExecution();
+        this.lastStatus = entity.getLastStatus();
+        this.sendTo = entity.getSendTo();
+        this.sendToGroups = entity.getSendToGroups();
+        this.recipientType = entity.getRecipientType();
+    }
+
+    public AppointmentEntity(AppointmentEntity entity) {
+        this.id = entity.getId();
+        this.retries = entity.getRetries();
+        this.name = entity.getName();
+        this.description = entity.getDescription();
+        this.schedule = entity.getSchedule();
+        this.enabled = entity.getEnabled();
+        this.development = entity.getDevelopment();
+        this.monitoring = entity.getMonitoring();
+        this.monitoringNumbers = entity.getMonitoringNumbers();
+        this.monitoringGroups = entity.getMonitoringGroups();
+        this.monitoringGroupsIds = entity.getMonitoringGroupsIds();
+        this.endpoint = entity.getEndpoint();
+        this.timeout = entity.getTimeout();
+        this.startDate = entity.getStartDate();
+        this.endDate = entity.getEndDate();
+        this.message = entity.getMessage();
+        this.taskType = entity.getTaskType();
+        this.lastExecution = entity.getLastExecution();
+        this.lastStatus = entity.getLastStatus();
+        this.sendTo = entity.getSendTo();
+        this.sendToGroups = entity.getSendToGroups();
+        this.recipientType = entity.getRecipientType();
+    }
+
+    public AppointmentEntity(
             Long retries,
             String name,
             String description,

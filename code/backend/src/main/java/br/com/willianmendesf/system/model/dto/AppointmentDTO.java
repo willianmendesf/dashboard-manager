@@ -1,19 +1,19 @@
 package br.com.willianmendesf.system.model.dto;
 
-import br.com.willianmendesf.system.model.entity.AppointmentsEntity;
+import br.com.willianmendesf.system.model.entity.AppointmentEntity;
 import lombok.Data;
 
 @Data
-public class AppointmentsDTO {
+public class AppointmentDTO {
     private String name;
     private String schedule;
     private Boolean enabled;
     private Boolean development;
     private Boolean monitoring;
 
-    public AppointmentsDTO () {}
+    public AppointmentDTO() {}
 
-    public AppointmentsDTO(AppointmentsEntity entity) {
+    public AppointmentDTO(AppointmentEntity entity) {
         this.name = entity.getName();
         this.schedule = entity.getSchedule();
         this.enabled = entity.getEnabled();

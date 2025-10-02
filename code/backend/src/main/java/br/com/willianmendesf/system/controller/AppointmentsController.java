@@ -1,8 +1,8 @@
 package br.com.willianmendesf.system.controller;
 
-import br.com.willianmendesf.system.model.dto.AppointmentsDTO;
-import br.com.willianmendesf.system.model.entity.AppointmentsEntity;
-import br.com.willianmendesf.system.service.AppointmentsService;
+import br.com.willianmendesf.system.model.dto.AppointmentDTO;
+import br.com.willianmendesf.system.model.entity.AppointmentEntity;
+import br.com.willianmendesf.system.service.AppointmentService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,33 +14,33 @@ import java.util.List;
 @RequestMapping("/appointments")
 public class AppointmentsController {
 
-    private final AppointmentsService service;
+    private final AppointmentService service;
 
     @GetMapping
-    public ResponseEntity<List<AppointmentsEntity>> getAll() {
+    public ResponseEntity<List<AppointmentEntity>> getAll() {
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<AppointmentsDTO> getById(@PathVariable Long id) {
-        AppointmentsDTO appointment = service.getById(id);
+    public ResponseEntity<AppointmentDTO> getById(@PathVariable Long id) {
+        AppointmentDTO appointment = service.getById(id);
         return ResponseEntity.ok(appointment);
     }
 
     @GetMapping("/{name}")
-    public ResponseEntity<AppointmentsDTO> getByName(@PathVariable String name) {
-        AppointmentsDTO appointment = service.getByName(name);
+    public ResponseEntity<AppointmentDTO> getByName(@PathVariable String name) {
+        AppointmentDTO appointment = service.getByName(name);
         return ResponseEntity.ok(appointment);
     }
 
     @PostMapping
-    public ResponseEntity<Void> create(@RequestBody AppointmentsEntity appointment) {
+    public ResponseEntity<Void> create(@RequestBody AppointmentEntity appointment) {
         service.create(appointment);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody AppointmentsEntity updatedAppointment) {
+    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody AppointmentEntity updatedAppointment) {
         service.update(id, updatedAppointment);
         return ResponseEntity.ok().build();
     }

@@ -3,10 +3,10 @@ package br.com.willianmendesf.system.service;
 import br.com.willianmendesf.system.cache.AppointmentCache;
 import br.com.willianmendesf.system.exception.WhatsappMessageException;
 import br.com.willianmendesf.system.model.WhatsappSender;
-import br.com.willianmendesf.system.model.entity.AppointmentsEntity;
+import br.com.willianmendesf.system.model.entity.AppointmentEntity;
 import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
-import br.com.willianmendesf.system.repository.AppointmentsRepository;
+import br.com.willianmendesf.system.repository.AppointmentRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.support.CronExpression;
@@ -27,12 +27,12 @@ import static java.util.Objects.isNull;
 public class AppointmentSchedulerService {
 
     private final AppointmentCache appointmentCache;
-    private final AppointmentsRepository appointmentsRepository;
+    private final AppointmentRepository appointmentsRepository;
     private final WhatsappMessageService whatsapp;
 
     public void loadAppointmentsToCache() {
         log.info("Loading all appointments to cache");
-        List<AppointmentsEntity> activeAppointments = appointmentsRepository.findByEnabledTrue();
+        List<AppointmentEntity> activeAppointments = appointmentsRepository.findByEnabledTrue();
         appointmentCache.loadAppointments(activeAppointments);
         log.info("Loaded {} appointments to cache", activeAppointments.size());
     }
@@ -41,7 +41,7 @@ public class AppointmentSchedulerService {
      * Verifica e executa os agendamentos programados para o momento atual
      */
     public void checkAndExecuteScheduledAppointments() {
-        Collection<AppointmentsEntity> appointments = appointmentCache.getAllAppointments();
+        Collection<AppointmentEntity> appointments = appointmentCache.getAllAppointments();
         LocalDateTime now = LocalDateTime.now();
 
         appointments.stream()
@@ -52,7 +52,7 @@ public class AppointmentSchedulerService {
     /**
      * Verifica se um agendamento deve ser executado no momento atual
      */
-    private boolean isAppointmentDueForExecution(AppointmentsEntity appointment, LocalDateTime now) {
+    private boolean isAppointmentDueForExecution(AppointmentEntity appointment, LocalDateTime now) {
         if (!Boolean.TRUE.equals(appointment.getEnabled())) {
             return false;
         }
@@ -100,7 +100,7 @@ public class AppointmentSchedulerService {
     /**
      * Executa um agendamento específico
      */
-    private void executeAppointment(AppointmentsEntity appointment) {
+    private void executeAppointment(AppointmentEntity appointment) {
         log.info("Executando agendamento: {}", appointment.getName());
 
         try {
@@ -136,7 +136,7 @@ public class AppointmentSchedulerService {
     /**
      * Executa uma mensagem de WhatsApp
      */
-    private void executeWhatsAppMessage(AppointmentsEntity appointment) {
+    private void executeWhatsAppMessage(AppointmentEntity appointment) {
         log.info("Enviando mensagem WhatsApp para: {}", appointment.getSendToGroups());
 
         List<WhatsappSender> messageList = new ArrayList<WhatsappSender>();
@@ -171,7 +171,7 @@ public class AppointmentSchedulerService {
     /**
      * Executa uma chamada de API
      */
-    private void executeApiCall(AppointmentsEntity appointment) {
+    private void executeApiCall(AppointmentEntity appointment) {
         // Implementar lógica para chamada de API
         log.info("Fazendo chamada de API para: {}", appointment.getEndpoint());
         // Sua lógica aqui...
