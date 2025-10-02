@@ -19,8 +19,7 @@ COPY . .
 
 # Compila a aplicação Angular para produção
 # ATENÇÃO: Verifique o comando "npm run build" e o caminho de saída (dist/nome-do-projeto)
-RUN npm run build -- --output-path ./dist --configuration production
-
+RUN npm run build -- --output-path ./dist --configuration production --max-workers=1
 
 # --- ESTÁGIO 2: SERVIDOR WEB FINAL (NGINX) ---
 # Usa uma imagem Nginx leve para servir os arquivos estáticos.
