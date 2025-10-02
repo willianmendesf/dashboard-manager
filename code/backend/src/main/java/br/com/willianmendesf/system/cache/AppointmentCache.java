@@ -25,7 +25,7 @@ public class AppointmentCache {
         return cache.get(id);
     }
 
-    public void updateAppointment(AppointmentEntity appointment) {
+    public void updateCacheAppointment(AppointmentEntity appointment) {
         cache.put(appointment.getId(), appointment);
     }
 }

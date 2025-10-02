@@ -17,6 +17,7 @@ import org.springframework.util.MultiValueMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -34,6 +35,21 @@ public class WhatsappMessageService {
         ResponseEntity<String> response = whatsappSender.sendRequest(GET_CONTACTS, request);
         String jsonResponse = response.getBody();
         return WhatsappExtractor.extractContactsList(jsonResponse);
+    }
+
+
+    public Map<String, String> getGroupById(String id) {
+        HttpEntity<Void> request = whatsappSender.createRequestEntity(null);
+        ResponseEntity<String> response = whatsappSender.sendRequest(GET_GROUPS, request);
+        String jsonResponse = response.getBody();
+
+        List<Map<String, String>> groupsList = WhatsappExtractor.extractGroupList(jsonResponse);
+
+        Optional<Map<String, String>> groupFiltered = groupsList.stream()
+                .filter(group -> id.equals(group.get("id")))
+                .findFirst();
+
+        return groupFiltered.orElse(null);
     }
 
     public List<Map<String, String>> getGroups() {

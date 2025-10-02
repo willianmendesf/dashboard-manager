@@ -39,9 +39,6 @@ public class AppointmentSchedulerService {
         log.info("Loaded {} appointments to cache", activeAppointments.size());
     }
 
-    /**
-     * Verifica e executa os agendamentos programados para o momento atual
-     */
     public void checkAndExecuteScheduledAppointments() {
         Collection<AppointmentEntity> appointments = appointmentCache.getAllAppointments();
         LocalDateTime now = LocalDateTime.now();
@@ -51,16 +48,12 @@ public class AppointmentSchedulerService {
                 .forEach(this::executeAppointment);
     }
 
-    /**
-     * Verifica se um agendamento deve ser executado no momento atual
-     */
     private boolean isAppointmentDueForExecution(AppointmentEntity appointment, LocalDateTime now) {
         if (!Boolean.TRUE.equals(appointment.getEnabled())) {
             return false;
         }
 
         try {
-            // Verificar datas de início e fim se estiverem definidas
             if (!isNull(appointment.getStartDate()) && !appointment.getStartDate().isEmpty()) {
                 LocalDate startDate = LocalDate.parse(appointment.getStartDate());
                 if (now.toLocalDate().isBefore(startDate)) {
@@ -86,9 +79,8 @@ public class AppointmentSchedulerService {
             LocalDateTime nextExecution = cronExpression.next(lastExecTime);
 
             // Se não houver próxima execução ou se o próximo horário for após o momento atual
-            if (nextExecution == null) {
+            if (nextExecution == null)
                 return false;
-            }
 
             // Verificar se o próximo horário de execução já chegou ou passou
             return !nextExecution.isAfter(now);
@@ -116,7 +108,6 @@ public class AppointmentSchedulerService {
                     break;
             }
 
-            // Atualizar status de execução
             appointment.setLastExecution(new Timestamp(System.currentTimeMillis()));
             appointment.setLastStatus(TaskStatus.SUCCESS);
         } catch (Exception e) {
@@ -125,16 +116,10 @@ public class AppointmentSchedulerService {
             appointment.setLastStatus(TaskStatus.FAILURE);
         }
 
-        // Persistir o status no banco de dados
         appointmentsRepository.save(appointment);
-
-        // Atualizar o cache
-        appointmentCache.updateAppointment(appointment);
+        appointmentCache.updateCacheAppointment(appointment);
     }
 
-    /**
-     * Executa uma mensagem de WhatsApp
-     */
     private void executeWhatsAppMessage(AppointmentEntity appointment) {
         List<WhatsappSender> messageList = new ArrayList<WhatsappSender>();
 
@@ -177,29 +162,30 @@ public class AppointmentSchedulerService {
     }
 
     private void executeMonitoringMessage(AppointmentEntity appointment) {
-        if(Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
+        if (Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
             log.info("Monitoring message for numbers start send!");
-
-            appointment.getMonitoringNumbers().forEach(number -> {
-                WhatsappSender message = new WhatsappSender();
-                message.setPhone(number);
-                message.setMessage(MessagesUtils.generateMonitoringMessage(appointment));
-
-                whatsapp.sendMessage(message);
-            });
+            sendMonitoringMessages(appointment, appointment.getMonitoringNumbers());
             log.info("Monitoring message for numbers sent!");
         }
 
-        if(Boolean.TRUE.equals(appointment.getMonitoringGroups()) && !isNull(appointment.getMonitoringGroupsIds())) {
+        if (Boolean.TRUE.equals(appointment.getMonitoringGroups()) && !isNull(appointment.getMonitoringGroupsIds())) {
             log.info("Monitoring message for groups start send!");
-            appointment.getMonitoringGroupsIds().forEach(group -> {
-                WhatsappSender message = new WhatsappSender();
-                message.setPhone(group);
-                message.setMessage(MessagesUtils.generateMonitoringMessage(appointment));
-
-                whatsapp.sendMessage(message);
-            });
+            sendMonitoringMessages(appointment, appointment.getMonitoringGroupsIds());
             log.info("Monitoring message for groups sent!");
         }
+    }
+
+    private void sendMonitoringMessages(AppointmentEntity appointment, Collection<String> recipients) {
+        if (recipients == null || recipients.isEmpty())
+            return;
+
+        String monitoringMessage = MessagesUtils.generateMonitoringMessage(appointment);
+
+        recipients.forEach(recipient -> {
+            WhatsappSender message = new WhatsappSender();
+            message.setPhone(recipient);
+            message.setMessage(monitoringMessage);
+            whatsapp.sendMessage(message);
+        });
     }
 }
