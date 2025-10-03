@@ -12,7 +12,7 @@ import java.time.Duration;
 @Slf4j
 public class ApiRequest {
 
-    public static void post(String endpoint) {
+    public static void post(String endpoint, String requestBody) {
         HttpClient client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .connectTimeout(Duration.ofSeconds(10))
@@ -20,8 +20,8 @@ public class ApiRequest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
-                //.POST(HttpRequest.BodyPublishers.ofString(null))
-                //.header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody != null ? requestBody : ""))
+                .header("Content-Type", "application/json")
                 .build();
 
         try {

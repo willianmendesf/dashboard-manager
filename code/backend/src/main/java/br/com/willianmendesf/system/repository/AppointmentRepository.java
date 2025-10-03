@@ -11,5 +11,10 @@ import java.util.List;
 public interface AppointmentRepository extends JpaRepository<AppointmentEntity, Long> {
     @Query("SELECT COALESCE(MAX(u.id), 0) FROM AppointmentEntity u")
     Long findMaxId();
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM AppointmentEntity a WHERE a.enabled = true AND a.schedule ...")
+    List<AppointmentEntity> findEnabledAndReadyToExecute();
+
     List<AppointmentEntity> findByEnabledTrue();
 }
