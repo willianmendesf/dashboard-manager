@@ -28,8 +28,8 @@ public class ApiRequest {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                log.error("Success Status: {}", response.statusCode());
-                log.error("Success Response: {}", response.body());
+                log.info("Success Status: {}", response.statusCode());
+                log.info("Success Response: {}", response.body());
             } else {
                 log.error("Error in requisition, Status: {}", response.statusCode());
                 log.error("Error body: {}", response.body());
