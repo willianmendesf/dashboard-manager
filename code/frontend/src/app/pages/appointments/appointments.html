@@ -113,16 +113,6 @@
           </div>
 
           <div class="form-group">
-            <label>Enviar Para o(s) Grupo(s):</label>
-            <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
-              required>
-              <option *ngFor="let item of groups" [ngValue]="item.id">
-                {{ item.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
             <label>Tipo de Envio?</label>
             <select [(ngModel)]="currentAppointment.taskType" name="monitoringGroups" class="form-control"
               required>
@@ -137,6 +127,15 @@
             <input type="text" [(ngModel)]="currentAppointment.endpoint" name="endpoint" class="form-control"/>
           </div>
           } @else {
+          <div class="form-group">
+            <label>Enviar Para o(s) Grupo(s):</label>
+            <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
+              required>
+              <option *ngFor="let item of groups" [ngValue]="item.id">
+                {{ item.name }}
+              </option>
+            </select>
+          </div>
           <div class="form-grid">
             <div class="form-group">
               <label>Mensagem a ser enviada:</label>
