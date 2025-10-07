@@ -35,6 +35,7 @@ public class AppointmentEntity {
     private String message;
     private List<String> sendTo;
     private List<String> sendToGroups;
+    private String imageToSend;
 
     @Column(name = "recipient_type")
     private RecipientType recipientType;
@@ -77,6 +78,8 @@ public class AppointmentEntity {
         this.sendTo = entity.getSendTo();
         this.sendToGroups = entity.getSendToGroups();
         this.recipientType = entity.getRecipientType();
+        this.imageToSend = entity.getImageToSend();
+        this.version = entity.getVersion();
     }
 
     public AppointmentEntity() { }
@@ -104,6 +107,8 @@ public class AppointmentEntity {
         this.sendTo = entity.getSendTo();
         this.sendToGroups = entity.getSendToGroups();
         this.recipientType = entity.getRecipientType();
+        this.imageToSend = entity.getImageToSend();
+        this.version = entity.getVersion();
     }
 
     public AppointmentEntity(AppointmentEntity entity) {
@@ -129,6 +134,8 @@ public class AppointmentEntity {
         this.sendTo = entity.getSendTo();
         this.sendToGroups = entity.getSendToGroups();
         this.recipientType = entity.getRecipientType();
+        this.imageToSend = entity.getImageToSend();
+        this.version = entity.getVersion();
     }
 
     public AppointmentEntity(
@@ -152,7 +159,8 @@ public class AppointmentEntity {
             TaskStatus lastStatus,
             List<String> sendTo,
             List<String> sendToGroups,
-            RecipientType recipientType
+            RecipientType recipientType,
+            String imageToSend
     ) {
         this.retries = retries;
         this.name = name;
@@ -175,6 +183,7 @@ public class AppointmentEntity {
         this.sendTo = sendTo;
         this.sendToGroups = sendToGroups;
         this.recipientType = recipientType;
+        this.imageToSend = imageToSend;
     }
 
     @Override
@@ -202,6 +211,7 @@ public class AppointmentEntity {
                 ", sendTo=" + sendTo +
                 ", sendToGroups=" + sendToGroups +
                 ", recipientType=" + recipientType +
+                ", imageToSend='" + imageToSend + '\'' +
                 '}';
     }
 }

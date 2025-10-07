@@ -27,6 +27,8 @@ server:
       context-path: /api/v1
 
 file:
+  #images-dir: /opt/app/images
+  images-dir: C:\Temp
   temp-dir: /tmp/files
 
 scheduler:
