@@ -19,40 +19,64 @@ public class AppointmentService {
     private final AppointmentRepository repository;
 
     public List<AppointmentEntity> getAll() {
-        log.info("Fetching all appointments from the database");
-        List<AppointmentEntity> entity = repository.findAll();
-        return entity.stream().map(AppointmentEntity::new).collect(Collectors.toList());
+        try {
+            log.info("Fetching all appointments from the database");
+            List<AppointmentEntity> entity = repository.findAll();
+            return entity.stream().map(AppointmentEntity::new).collect(Collectors.toList());
+        } catch(Exception e) {
+            throw new AppointmentException(e.getMessage());
+        }
     }
 
     public AppointmentDTO getByName(String name) {
-        log.info("Fetching appointment with name: {}", name);
-        AppointmentEntity entity = repository.findAll().stream().filter(a -> a.getName().equals(name)).findFirst().orElse(null);
-        return new AppointmentDTO(entity);
+        try {
+            log.info("Fetching appointment with name: {}", name);
+            AppointmentEntity entity = repository.findAll().stream().filter(a -> a.getName().equals(name)).findFirst().orElse(null);
+            assert entity != null;
+            return new AppointmentDTO(entity);
+        } catch(Exception e) {
+            throw new AppointmentException(e.getMessage());
+        }
     }
 
     public AppointmentDTO getById(Long id) {
-        log.info("Fetching appointment with ID: {}", id);
-        AppointmentEntity entity = repository.findById(id).orElse(null);
-        return new AppointmentDTO(entity);
+        try {
+            log.info("Fetching appointment with ID: {}", id);
+            AppointmentEntity entity = repository.findById(id).orElse(null);
+            assert entity != null;
+            return new AppointmentDTO(entity);
+        } catch(Exception e) {
+            throw new AppointmentException(e.getMessage());
+        }
     }
 
     public void create(AppointmentEntity appointment) {
-        log.info("Creating new appointment!");
-        repository.save(appointment);
+        try {
+            log.info("Creating new appointment!");
+            repository.save(appointment);
+        } catch(Exception e) {
+            throw new AppointmentException(e.getMessage());
+        }
     }
 
     public void update(Long id, AppointmentEntity updatedAppointment) {
-        log.info("Updating appointment with ID: {}", id);
-        AppointmentEntity updateAppointment = repository.findById(id)
-                .orElseThrow(() -> new AppointmentException("Appointment not found for id: " + id));
-
-        updateAppointment.setAppointmentEntity(updatedAppointment);
-
-        repository.save(updateAppointment);
+        try {
+            log.info("Updating appointment with ID: {}", id);
+            AppointmentEntity updateAppointment = repository.findById(id)
+                    .orElseThrow(() -> new AppointmentException("Appointment not found for id: " + id));
+            updateAppointment.setAppointmentEntity(updatedAppointment);
+            repository.save(updateAppointment);
+        } catch(Exception e) {
+            throw new AppointmentException(e.getMessage());
+        }
     }
 
     public void delete(Long id) {
-        log.info("Deleting appointment with ID: {}", id);
-        repository.deleteById(id);
+        try {
+            log.info("Deleting appointment with ID: {}", id);
+            repository.deleteById(id);
+        } catch(Exception e) {
+            throw new AppointmentException(e.getMessage());
+        }
     }
 }

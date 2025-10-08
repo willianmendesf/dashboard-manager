@@ -42,7 +42,7 @@ public class AppointmentsController {
     @PostMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody AppointmentEntity updatedAppointment) {
         service.update(id, updatedAppointment);
-        return ResponseEntity.ok().build();
+            return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
