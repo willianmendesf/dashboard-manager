@@ -23,21 +23,26 @@ public class ImageService {
 
     public String uploadImage(MultipartFile file) {
         try {
+            Path uploadPath = Paths.get(uploadDir);
+            Files.createDirectories(uploadPath);
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filepath = Paths.get(uploadDir, filename);
+            Path filepath = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), filepath, StandardCopyOption.REPLACE_EXISTING);
             return filename;
         } catch (Exception e) {
-            throw new ImageException("Error ao upload image", e);
+            throw new ImageException("Erro ao fazer upload da imagem", e);
         }
     }
 
     public Resource getImage(String filename) {
         try {
             Path filepath = Paths.get(uploadDir, filename);
+            if (!Files.exists(filepath)) {
+                throw new ImageException("Imagem não encontrada: " + filename, null);
+            }
             return new UrlResource(filepath.toUri());
         } catch (Exception e) {
-            throw new ImageException("Error to get image", e);
+            throw new ImageException("Erro ao obter a imagem", e);
         }
     }
 }
