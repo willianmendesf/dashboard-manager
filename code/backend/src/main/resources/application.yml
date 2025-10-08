@@ -26,11 +26,10 @@ server:
     servlet:
       context-path: /api/v1
 
-file:
-  #images-dir: /opt/app/images
-  images-dir: C:\Temp
-  temp-dir: /tmp/files
-
 scheduler:
   cron:
     scheduleTimeLoad: ${LOAD_SCHEDULE}
+
+file:
+  images-dir: ${DIR_IMAGE}
+  temp-dir: ${DIR_TEMP}
