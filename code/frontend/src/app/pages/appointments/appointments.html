@@ -6,13 +6,13 @@
       <div class="project-header">
         <h3>{{ appointment.name }}</h3>
         @if(appointment.enabled) {
-          <div class="project-status" style="background: #DEF7EC; color: #047857;">
-            {{ getStatus(appointment.enabled) }}
-          </div>
+        <div class="project-status" style="background: #DEF7EC; color: #047857;">
+          {{ getStatus(appointment.enabled) }}
+        </div>
         } @else {
-          <div class="project-status" style="background: #FEF3C7; color: #B45309;">
-            {{ getStatus(appointment.enabled) }}
-          </div>
+        <div class="project-status" style="background: #FEF3C7; color: #B45309;">
+          {{ getStatus(appointment.enabled) }}
+        </div>
         }
       </div>
 
@@ -45,14 +45,7 @@
     </div>
 
     <button class="btn-primary" (click)="openAppointmentModal()">+ Novo Agendamento</button>
-    <!--<div class="project-card add-project">
-      <div class="add-project-content">
-        <div class="add-icon">+</div>
-        <h3>Novo Projeto</h3>
-        <p>Clique aqui para criar um novo projeto</p>
-      </div> 
-    </div>-->
-
+   
     <!-- Appointment Modal -->
     <div class="modal-overlay" *ngIf="showAppointmentModal" (click)="closeModal()">
       <div class="modal-content" (click)="$event.stopPropagation()">
@@ -111,43 +104,84 @@
               <input type="date" [(ngModel)]="currentAppointment.endDate" name="endDate" class="form-control" />
             </div>
           </div>
-
-          <div class="form-group">
-            <label>Tipo de Envio?</label>
-            <select [(ngModel)]="currentAppointment.taskType" name="monitoringGroups" class="form-control"
-              required>
-              <option [value]="'WHATSAPP_MESSAGE'">Whatsapp Message</option>
-              <option [value]="'API_CALL'">Acionar uma Api</option>
-            </select>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tipo de Envio?</label>
+              <select [(ngModel)]="currentAppointment.taskType" name="monitoringGroups" class="form-control" required>
+                <option [value]="'WHATSAPP_MESSAGE'">Whatsapp Message</option>
+                <option [value]="'API_CALL'">Acionar uma Api</option>
+              </select>
+            </div>
           </div>
 
           @if (currentAppointment.taskType == "API_CALL") {
-          <div class="form-group">
-            <label>Nome do Agendamento</label>
-            <input type="text" [(ngModel)]="currentAppointment.endpoint" name="endpoint" class="form-control"/>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Link da Api:</label>
+              <input type="text" [(ngModel)]="currentAppointment.endpoint" name="endpoint" class="form-control" />
+            </div>
           </div>
           } @else {
-          <div class="form-group">
-            <label>Enviar Para o(s) Grupo(s):</label>
-            <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
-              required>
-              <option *ngFor="let item of groups" [ngValue]="item.id">
-                {{ item.name }}
-              </option>
-            </select>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Enviar Para o(s) Grupo(s):</label>
+              <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
+                required>
+                <option *ngFor="let item of groups" [ngValue]="item.id">
+                  {{ item.name }}
+                </option>
+              </select>
+            </div>
           </div>
           <div class="form-grid">
             <div class="form-group">
               <label>Mensagem a ser enviada:</label>
               <textarea class="form-control" type="textarea" [ngModelOptions]="{standalone: true}"
                 [(ngModel)]="currentAppointment.message" name="message"></textarea>
+
+              <div class="form-group">
+                <label>Enviar Imagem?</label>
+                <select [(ngModel)]="currentAppointment.sendImage" name="monitoringGroups" class="form-control"
+                  required>
+                  <option [value]="true">Sim</option>
+                  <option [value]="false">Não</option>
+                </select>
+              </div>
+              @if (currentAppointment.sendImage) {
+              <image-upload (imagePath)="onImageUploaded($event)"></image-upload>
+              <img [src]="env + 'images/' + currentAppointment.imageToSend">
+              }
             </div>
           </div>
           }
 
           <div class="form-grid">
             <div class="form-group">
-              <label>Modo Monitoraramento?</label>
+              <label>Modo Monitoraramento via Individual?</label>
+              <select [(ngModel)]="currentAppointment.monitoring" name="monitoring" class="form-control" required>
+                <option [value]="true">Sim</option>
+                <option [value]="false">Não</option>
+              </select>
+            </div>
+
+            @if (currentAppointment.monitoring) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Monitorar no(s) Grupo(s):</label>
+                <select [(ngModel)]="currentAppointment.monitoringNumbers" [ngModelOptions]="{standalone: true}"
+                  name="monitoringNumbers" class="form-control" multiple required>
+                  <option *ngFor="let item of contacts" [ngValue]="item.id">
+                    {{ item.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            }
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Modo Monitoraramento via Grupo?</label>
               <select [(ngModel)]="currentAppointment.monitoringGroups" name="monitoringGroups" class="form-control"
                 required>
                 <option [value]="true">Sim</option>
@@ -159,8 +193,8 @@
             <div class="form-grid">
               <div class="form-group">
                 <label>Monitorar no(s) Grupo(s):</label>
-                <select [(ngModel)]="currentAppointment.monitoringGroupsIds" [ngModelOptions]="{standalone: true}" name="monitoringGroupsIds"
-                  class="form-control" multiple required>
+                <select [(ngModel)]="currentAppointment.monitoringGroupsIds" [ngModelOptions]="{standalone: true}"
+                  name="monitoringGroupsIds" class="form-control" multiple required>
                   <option *ngFor="let item of groups" [ngValue]="item.id">
                     {{ item.name }}
                   </option>

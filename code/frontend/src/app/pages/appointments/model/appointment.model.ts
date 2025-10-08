@@ -5,6 +5,7 @@ export class Appointment {
   "schedule": string;
   "enabled": boolean;
   "development": boolean;
+  "monitoring": boolean;
   "monitoringNumbers": string[];
   "monitoringGroups": boolean;
   "monitoringGroupsIds": string[];
@@ -18,4 +19,6 @@ export class Appointment {
   "sendToGroups": string[];
   "recipientType": string;
   "taskType": string;
+  "sendImage": boolean;
+  "imageToSend": string;
 }

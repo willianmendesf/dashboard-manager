@@ -5,23 +5,27 @@ import { Appointment } from './model/appointment.model';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { FormsModule } from '@angular/forms';
-import { CronSelectorComponent } from './cron-selector/cron-selector.component';
+import { CronSelectorComponent } from '../../shared/modules/cron-selector/cron-selector.component';
+import { ImageUploadComponent } from "../../shared/modules/image-upload/image-upload.component";
+import { environment } from '../../../environments/environment';
 export interface ChecklistItem {
   id: number;
   nome: string;
-  selecionado: boolean; // Esta propriedade controlará se o checkbox está marcado
+  selecionado: boolean;
 }
 @Component({
   selector: 'appointments',
   standalone: true,
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent]
+  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent, ImageUploadComponent]
 })
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   public appointments : Appointment[] = [];
   public groups: Group[] = []
+  public contacts: Contact[] = []
+  public env = environment.apiUrl;
 
   showAppointmentModal = false;
   showViewModal = false;
@@ -45,11 +49,29 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.getAll();
+    this.getContacts();
     this.getGroups();
+  }
+
+  onImageUploaded(path: string) {
+    this.currentAppointment.imageToSend = path;
   }
 
   public getStatus(status: boolean): string {
     return status == true ? 'Ativo' : 'Pausado';
+  }
+
+  public getContacts() {
+    this.api.get("whatsapp/contacts")
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => {
+        this.contacts = res
+        this.contacts.forEach(item => item.selected = false)
+      },
+      error: error => console.error(error),
+      complete: () => {}
+    })
   }
 
   public getGroups() {
@@ -98,6 +120,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       schedule: '',
       enabled: false,
       development: true,
+      monitoring: false,
       monitoringNumbers: [],
       monitoringGroups: false,
       monitoringGroupsIds: [],
@@ -110,7 +133,9 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       message: '',
       sendTo: [],
       sendToGroups: [],
-      recipientType: "INDIVIDUAL"
+      recipientType: "INDIVIDUAL",
+      sendImage: false,
+      imageToSend: ''
     };
   }
 
