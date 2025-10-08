@@ -30,7 +30,7 @@ public class ImageService {
             Files.copy(file.getInputStream(), filepath, StandardCopyOption.REPLACE_EXISTING);
             return filename;
         } catch (Exception e) {
-            throw new ImageException("Erro ao fazer upload da imagem", e);
+            throw new ImageException("Error to upload image", e);
         }
     }
 
@@ -38,11 +38,11 @@ public class ImageService {
         try {
             Path filepath = Paths.get(uploadDir, filename);
             if (!Files.exists(filepath)) {
-                throw new ImageException("Imagem não encontrada: " + filename, null);
+                throw new ImageException("Image not found: " + filename, null);
             }
             return new UrlResource(filepath.toUri());
         } catch (Exception e) {
-            throw new ImageException("Erro ao obter a imagem", e);
+            throw new ImageException("Error to get image", e);
         }
     }
 }
