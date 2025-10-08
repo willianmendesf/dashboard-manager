@@ -10,7 +10,6 @@ import lombok.Data;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Objects;
 
 import static java.util.Objects.isNull;
 
@@ -63,27 +62,27 @@ public class AppointmentEntity {
     public void setAppointmentEntity(AppointmentEntity entity) {
         if (isNull(entity)) throw new AppointmentException("AppointmentEntity input be not null.");
 
-        this.id = Objects.requireNonNullElse(entity.getId(), this.id);
-        this.name = Objects.requireNonNullElse(entity.getName(), this.name);
-        this.description = Objects.requireNonNullElse(entity.getDescription(), this.description);
-        this.schedule = Objects.requireNonNullElse(entity.getSchedule(), this.schedule);
-        this.development = Objects.requireNonNullElse(entity.getDevelopment(), this.development);
-        this.monitoring = Objects.requireNonNullElse(entity.getMonitoring(), this.monitoring);
-        this.monitoringNumbers = Objects.requireNonNullElse(entity.getMonitoringNumbers(), this.monitoringNumbers);
-        this.monitoringGroups = Objects.requireNonNullElse(entity.getMonitoringGroups(), this.monitoringGroups);
-        this.monitoringGroupsIds = Objects.requireNonNullElse(entity.getMonitoringGroupsIds(), this.monitoringGroupsIds);
-        this.endpoint = Objects.requireNonNullElse(entity.getEndpoint(), this.endpoint);
-        this.startDate = Objects.requireNonNullElse(entity.getStartDate(), this.startDate);
-        this.endDate = Objects.requireNonNullElse(entity.getEndDate(), this.endDate);
-        this.message = Objects.requireNonNullElse(entity.getMessage(), this.message);
-        this.taskType = Objects.requireNonNullElse(entity.getTaskType(), this.taskType);
-        this.lastExecution = Objects.requireNonNullElse(entity.getLastExecution(), this.lastExecution);
-        this.lastStatus = Objects.requireNonNullElse(entity.getLastStatus(), this.lastStatus);
-        this.sendTo = Objects.requireNonNullElse(entity.getSendTo(), this.sendTo);
-        this.sendToGroups = Objects.requireNonNullElse(entity.getSendToGroups(), this.sendToGroups);
-        this.recipientType = Objects.requireNonNullElse(entity.getRecipientType(), this.recipientType);
-        this.imageToSend = Objects.requireNonNullElse(entity.getImageToSend(), this.imageToSend);
-        this.version = Objects.requireNonNullElse(entity.getVersion(), this.version);
+        this.id = entity.getId() != null ? entity.getId() : this.id;
+        this.name = entity.getName() != null ? entity.getName() : this.name;
+        this.description = entity.getDescription() != null ? entity.getDescription() : this.description;
+        this.schedule = entity.getSchedule() != null ? entity.getSchedule() : this.schedule;
+        this.development = entity.getDevelopment() != null ? entity.getDevelopment() : this.development;
+        this.monitoring = entity.getMonitoring() != null ? entity.getMonitoring() : this.monitoring;
+        this.monitoringNumbers = entity.getMonitoringNumbers() != null ? entity.getMonitoringNumbers() : this.monitoringNumbers;
+        this.monitoringGroups = entity.getMonitoringGroups() != null ? entity.getMonitoringGroups() : this.monitoringGroups;
+        this.monitoringGroupsIds = entity.getMonitoringGroupsIds() != null ? entity.getMonitoringGroupsIds() : this.monitoringGroupsIds;
+        this.endpoint = entity.getEndpoint() != null ? entity.getEndpoint() : this.endpoint;
+        this.startDate = entity.getStartDate() != null ? entity.getStartDate() : this.startDate;
+        this.endDate = entity.getEndDate() != null ? entity.getEndDate() : this.endDate;
+        this.message = entity.getMessage() != null ? entity.getMessage() : this.message;
+        this.taskType = entity.getTaskType() != null ? entity.getTaskType() : this.taskType;
+        this.lastExecution = entity.getLastExecution() != null ? entity.getLastExecution() : this.lastExecution;
+        this.lastStatus = entity.getLastStatus() != null ? entity.getLastStatus() : this.lastStatus;
+        this.sendTo = entity.getSendTo() != null ? entity.getSendTo() : this.sendTo;
+        this.sendToGroups = entity.getSendToGroups() != null ? entity.getSendToGroups() : this.sendToGroups;
+        this.recipientType = entity.getRecipientType() != null ? entity.getRecipientType() : this.recipientType;
+        this.imageToSend = entity.getImageToSend() != null ? entity.getImageToSend() : this.imageToSend;
+        this.version = entity.getVersion() != null ? entity.getVersion() : this.version;
 
         if (entity.getRetries() != null) this.retries = entity.getRetries();
         if (entity.getEnabled() != null) this.enabled = entity.getEnabled();

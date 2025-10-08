@@ -140,7 +140,7 @@ public class AppointmentSchedulerService {
 
     private void executeApiCall(AppointmentEntity appointment) {
         log.info("Starting call request to: {}", appointment.getEndpoint());
-        ApiRequest.post(appointment.getEndpoint());
+        ApiRequest.post(appointment.getEndpoint(), null);
     }
 
     private void executeMonitoringMessage(AppointmentEntity appointment) {
