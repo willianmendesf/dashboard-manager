@@ -166,8 +166,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     }
   }
 
-  save() {
-    console.log(this.currentAppointment)
+  public save() {
     if (this.isEditing) {
       const index = this.appointments.findIndex(u => u.id === this.currentAppointment.id);
       if (index !== -1) this.appointments[index] = { ...this.currentAppointment };
@@ -175,7 +174,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     } else {
       const newAppointment: Appointment = {
         ...this.currentAppointment,
-        id: Math.max(...this.appointments.map(u => u.id)) + 1,
         createdAt: new Date().toLocaleDateString('pt-BR')
       };
       this.create(newAppointment);
@@ -183,7 +181,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.closeModal();
   }
 
-  public create(appointment : Appointment) {
+  private create(appointment : Appointment) {
+    console.log(appointment)
     this.api.post("appointments", appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
@@ -196,7 +195,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     })
   }
 
-  public update(appointment : Appointment) {
+  private update(appointment : Appointment) {
     this.api.post(`appointments/${appointment.id}` , appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
@@ -209,7 +208,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     })
   }
 
-  public delete(id: number) {
+  private delete(id: number) {
     this.api.delete("appointments/" + id)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({

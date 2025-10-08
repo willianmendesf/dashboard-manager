@@ -124,17 +124,6 @@
           } @else {
           <div class="form-grid">
             <div class="form-group">
-              <label>Enviar Para o(s) Grupo(s):</label>
-              <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
-                required>
-                <option *ngFor="let item of groups" [ngValue]="item.id">
-                  {{ item.name }}
-                </option>
-              </select>
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
               <label>Mensagem a ser enviada:</label>
               <textarea class="form-control" type="textarea" [ngModelOptions]="{standalone: true}"
                 [(ngModel)]="currentAppointment.message" name="message"></textarea>
@@ -151,6 +140,17 @@
               <image-upload (imagePath)="onImageUploaded($event)"></image-upload>
               <img [src]="env + 'images/' + currentAppointment.imageToSend">
               }
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Enviar Para o(s) Grupo(s):</label>
+              <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple
+                required>
+                <option *ngFor="let item of groups" [ngValue]="item.id">
+                  {{ item.name }}
+                </option>
+              </select>
             </div>
           </div>
           }
