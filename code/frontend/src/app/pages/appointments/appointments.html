@@ -14,6 +14,11 @@
           {{ getStatus(appointment.enabled) }}
         </div>
         }
+        @if(appointment.development) {
+        <div class="project-status" style="background: #9e9e9e; color: #fff;">
+          {{ getDevelopment(appointment.development) }}
+        </div>
+        } 
       </div>
 
       <div>

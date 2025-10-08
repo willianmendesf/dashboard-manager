@@ -46,8 +46,8 @@ export class HomeComponent implements OnInit {
     ]
   }
 
-  private async getValues(){
-    await this.api.get("members")
+  private getValues(){
+    this.api.get("members")
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
@@ -55,7 +55,7 @@ export class HomeComponent implements OnInit {
         console.log(this.members.length)
       },
       error: error => console.error(error),
-      complete: () => {}//this.toastr.info("Completado")
+      complete: () => {}
     })
   }
 }

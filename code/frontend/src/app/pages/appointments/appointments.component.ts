@@ -61,6 +61,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     return status == true ? 'Ativo' : 'Pausado';
   }
 
+  public getDevelopment(status: boolean): string {
+    return status == true ? 'Dev' : '';
+  }
+
   public getContacts() {
     this.api.get("whatsapp/contacts")
     .pipe(takeUntil(this.unsubscribe$))
@@ -93,10 +97,9 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: appointments => {
         this.appointments = appointments
-        console.log(this.appointments)
       },
       error: error => console.error(error),
-      complete: () => console.log()
+      complete: () => console.log("Get all suscess!")
   });
   }
 
@@ -182,7 +185,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   private create(appointment : Appointment) {
-    console.log(appointment)
     this.api.post("appointments", appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({

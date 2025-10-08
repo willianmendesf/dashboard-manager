@@ -15,7 +15,7 @@ import { RouterModule } from '@angular/router';
 export class SidebarComponent {
   menuItems = [
     { path: '/home', label: 'Home', icon: '🏠', exact: false },
-    { path: '/projects', label: 'Projetos', icon: '📂', exact: true },
+    //{ path: '/projects', label: 'Projetos', icon: '📂', exact: true },
     { path: '/appointments', label: 'Agendamentos', icon: '💬', exact: true },
     { path: '/whatsapp', label: 'WhatsApp', icon: '💬', exact: true },
     { path: '/member-management', label: 'Membros', icon: '👤', exact: true },
