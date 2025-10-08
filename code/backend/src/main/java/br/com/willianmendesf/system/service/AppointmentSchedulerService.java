@@ -6,6 +6,7 @@ import br.com.willianmendesf.system.model.WhatsappSender;
 import br.com.willianmendesf.system.model.entity.AppointmentEntity;
 import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
+import br.com.willianmendesf.system.model.enums.WhatsappMediaType;
 import br.com.willianmendesf.system.repository.AppointmentRepository;
 import br.com.willianmendesf.system.service.utils.ApiRequest;
 import br.com.willianmendesf.system.service.utils.MessagesUtils;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -111,7 +111,7 @@ public class AppointmentSchedulerService {
             appointment.setLastExecution(new Timestamp(System.currentTimeMillis()));
             appointment.setLastStatus(TaskStatus.SUCCESS);
         } catch (Exception e) {
-            log.error("Erro ao executar agendamento {}: {}", appointment.getId(), e.getMessage(), e);
+            log.error("Error ao executar agendamento {}: {}", appointment.getId(), e.getMessage(), e);
             appointment.setLastExecution(new Timestamp(System.currentTimeMillis()));
             appointment.setLastStatus(TaskStatus.FAILURE);
         }
@@ -121,37 +121,19 @@ public class AppointmentSchedulerService {
     }
 
     private void executeWhatsAppMessage(AppointmentEntity appointment) {
-        List<WhatsappSender> messageList = new ArrayList<WhatsappSender>();
-
         if(appointment.getRecipientType() == RecipientType.INDIVIDUAL) {
             log.info("Individual message start send!");
             if(!isNull(appointment.getSendTo()) && !appointment.getSendTo().isEmpty()) {
-                appointment.getSendTo().forEach(individual -> {
-                    WhatsappSender message = new WhatsappSender();
-                    message.setPhone(individual);
-                    message.setMessage(appointment.getMessage());
-                    messageList.add(message);
-                });
-
+                sendMessages("individual", appointment, appointment.getSendTo());
                 log.info("Send message whatsApp to: {}", appointment.getSendTo());
-
-                messageList.forEach(this.whatsapp::sendMessage);
             } else throw new WhatsappMessageException("Individual List is empty!");
         }
 
         if(appointment.getRecipientType() == RecipientType.GROUP) {
             log.info("Group message start send!");
             if(!isNull(appointment.getSendToGroups()) && !appointment.getSendToGroups().isEmpty()) {
-                appointment.getSendToGroups().forEach(group -> {
-                    WhatsappSender message = new WhatsappSender();
-                    message.setPhone(group);
-                    message.setMessage(appointment.getMessage());
-                    messageList.add(message);
-                });
-
+                sendMessages("group", appointment, appointment.getSendToGroups());
                 log.info("Send message whatsApp to GroupsList: {}", appointment.getSendToGroups());
-
-                messageList.forEach(this.whatsapp::sendMessage);
             } else throw new WhatsappMessageException("Groups List is empty!");
         }
     }
@@ -164,18 +146,18 @@ public class AppointmentSchedulerService {
     private void executeMonitoringMessage(AppointmentEntity appointment) {
         if (Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
             log.info("Monitoring message for numbers start send!");
-            sendMonitoringMessages(appointment, appointment.getMonitoringNumbers());
+            sendMessages("monitoring", appointment, appointment.getMonitoringNumbers());
             log.info("Monitoring message for numbers sent!");
         }
 
         if (Boolean.TRUE.equals(appointment.getMonitoringGroups()) && !isNull(appointment.getMonitoringGroupsIds())) {
             log.info("Monitoring message for groups start send!");
-            sendMonitoringMessages(appointment, appointment.getMonitoringGroupsIds());
+            sendMessages("monitoring", appointment, appointment.getMonitoringGroupsIds());
             log.info("Monitoring message for groups sent!");
         }
     }
 
-    private void sendMonitoringMessages(AppointmentEntity appointment, Collection<String> recipients) {
+    private void sendMessages(String type, AppointmentEntity appointment, Collection<String> recipients) {
         if (recipients == null || recipients.isEmpty())
             return;
 
@@ -183,8 +165,18 @@ public class AppointmentSchedulerService {
 
         recipients.forEach(recipient -> {
             WhatsappSender message = new WhatsappSender();
-            message.setPhone(recipient);
-            message.setMessage(monitoringMessage);
+
+            if(!type.equals("monitoring")) {
+                if(Boolean.TRUE.equals(appointment.getSendImage()) && !isNull(appointment.getImageToSend())) {
+                    message.setMedia(appointment.getImageToSend());
+                    message.setMediaType(WhatsappMediaType.IMAGE);
+                }
+                message.setPhone(recipient);
+                message.setMessage(appointment.getMessage());
+            } else {
+                message.setPhone(recipient);
+                message.setMessage(monitoringMessage);
+            }
             whatsapp.sendMessage(message);
         });
     }

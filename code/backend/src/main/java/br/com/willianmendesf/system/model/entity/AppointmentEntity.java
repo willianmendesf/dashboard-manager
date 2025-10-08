@@ -1,5 +1,6 @@
 package br.com.willianmendesf.system.model.entity;
 
+import br.com.willianmendesf.system.exception.AppointmentException;
 import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
 import br.com.willianmendesf.system.model.enums.TaskType;
@@ -9,6 +10,9 @@ import lombok.Data;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
+
+import static java.util.Objects.isNull;
 
 @Entity
 @Data
@@ -35,6 +39,7 @@ public class AppointmentEntity {
     private String message;
     private List<String> sendTo;
     private List<String> sendToGroups;
+    private Boolean sendImage;
     private String imageToSend;
 
     @Column(name = "recipient_type")
@@ -53,33 +58,37 @@ public class AppointmentEntity {
 
     @Version
     @Column(name = "version")
-    private Long version;
+    private Long version = 0L;
 
     public void setAppointmentEntity(AppointmentEntity entity) {
-        this.id = entity.getId();
-        this.retries = entity.getRetries();
-        this.name = entity.getName();
-        this.description = entity.getDescription();
-        this.schedule = entity.getSchedule();
-        this.enabled = entity.getEnabled();
-        this.development = entity.getDevelopment();
-        this.monitoring = entity.getMonitoring();
-        this.monitoringNumbers = entity.getMonitoringNumbers();
-        this.monitoringGroups = entity.getMonitoringGroups();
-        this.monitoringGroupsIds = entity.getMonitoringGroupsIds();
-        this.endpoint = entity.getEndpoint();
-        this.timeout = entity.getTimeout();
-        this.startDate = entity.getStartDate();
-        this.endDate = entity.getEndDate();
-        this.message = entity.getMessage();
-        this.taskType = entity.getTaskType();
-        this.lastExecution = entity.getLastExecution();
-        this.lastStatus = entity.getLastStatus();
-        this.sendTo = entity.getSendTo();
-        this.sendToGroups = entity.getSendToGroups();
-        this.recipientType = entity.getRecipientType();
-        this.imageToSend = entity.getImageToSend();
-        this.version = entity.getVersion();
+        if (isNull(entity)) throw new AppointmentException("AppointmentEntity input be not null.");
+
+        this.id = Objects.requireNonNullElse(entity.getId(), this.id);
+        this.name = Objects.requireNonNullElse(entity.getName(), this.name);
+        this.description = Objects.requireNonNullElse(entity.getDescription(), this.description);
+        this.schedule = Objects.requireNonNullElse(entity.getSchedule(), this.schedule);
+        this.development = Objects.requireNonNullElse(entity.getDevelopment(), this.development);
+        this.monitoring = Objects.requireNonNullElse(entity.getMonitoring(), this.monitoring);
+        this.monitoringNumbers = Objects.requireNonNullElse(entity.getMonitoringNumbers(), this.monitoringNumbers);
+        this.monitoringGroups = Objects.requireNonNullElse(entity.getMonitoringGroups(), this.monitoringGroups);
+        this.monitoringGroupsIds = Objects.requireNonNullElse(entity.getMonitoringGroupsIds(), this.monitoringGroupsIds);
+        this.endpoint = Objects.requireNonNullElse(entity.getEndpoint(), this.endpoint);
+        this.startDate = Objects.requireNonNullElse(entity.getStartDate(), this.startDate);
+        this.endDate = Objects.requireNonNullElse(entity.getEndDate(), this.endDate);
+        this.message = Objects.requireNonNullElse(entity.getMessage(), this.message);
+        this.taskType = Objects.requireNonNullElse(entity.getTaskType(), this.taskType);
+        this.lastExecution = Objects.requireNonNullElse(entity.getLastExecution(), this.lastExecution);
+        this.lastStatus = Objects.requireNonNullElse(entity.getLastStatus(), this.lastStatus);
+        this.sendTo = Objects.requireNonNullElse(entity.getSendTo(), this.sendTo);
+        this.sendToGroups = Objects.requireNonNullElse(entity.getSendToGroups(), this.sendToGroups);
+        this.recipientType = Objects.requireNonNullElse(entity.getRecipientType(), this.recipientType);
+        this.imageToSend = Objects.requireNonNullElse(entity.getImageToSend(), this.imageToSend);
+        this.version = Objects.requireNonNullElse(entity.getVersion(), this.version);
+
+        if (entity.getRetries() != null) this.retries = entity.getRetries();
+        if (entity.getEnabled() != null) this.enabled = entity.getEnabled();
+        if (entity.getTimeout() != null) this.timeout = entity.getTimeout();
+        if (entity.getSendImage() != null) this.sendImage = entity.getSendImage();
     }
 
     public AppointmentEntity() { }
@@ -107,6 +116,7 @@ public class AppointmentEntity {
         this.sendTo = entity.getSendTo();
         this.sendToGroups = entity.getSendToGroups();
         this.recipientType = entity.getRecipientType();
+        this.sendImage = entity.getSendImage();
         this.imageToSend = entity.getImageToSend();
         this.version = entity.getVersion();
     }
@@ -134,8 +144,8 @@ public class AppointmentEntity {
         this.sendTo = entity.getSendTo();
         this.sendToGroups = entity.getSendToGroups();
         this.recipientType = entity.getRecipientType();
+        this.sendImage = entity.getSendImage();
         this.imageToSend = entity.getImageToSend();
-        this.version = entity.getVersion();
     }
 
     public AppointmentEntity(
@@ -160,6 +170,7 @@ public class AppointmentEntity {
             List<String> sendTo,
             List<String> sendToGroups,
             RecipientType recipientType,
+            Boolean sendImage,
             String imageToSend
     ) {
         this.retries = retries;
@@ -183,6 +194,7 @@ public class AppointmentEntity {
         this.sendTo = sendTo;
         this.sendToGroups = sendToGroups;
         this.recipientType = recipientType;
+        this.sendImage = sendImage;
         this.imageToSend = imageToSend;
     }
 
@@ -211,6 +223,7 @@ public class AppointmentEntity {
                 ", sendTo=" + sendTo +
                 ", sendToGroups=" + sendToGroups +
                 ", recipientType=" + recipientType +
+                ", sendImage=" + sendImage +
                 ", imageToSend='" + imageToSend + '\'' +
                 '}';
     }

@@ -2,10 +2,12 @@ package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.model.WhatsappMessageSender;
 import br.com.willianmendesf.system.model.WhatsappSender;
+import br.com.willianmendesf.system.model.enums.WhatsappMediaType;
 import br.com.willianmendesf.system.service.utils.WhatsappExtractor;
 import br.com.willianmendesf.system.service.utils.WhatsappSenderService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,16 +21,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 @Service
 @AllArgsConstructor
 public class WhatsappMessageService {
 
-    private final WhatsappSenderService whatsappSender;
+    @Value("${file.images-dir}")
+    private String uploadDir;
 
     private final String SEND_MESSAGE = "/send/";
     private final String GET_GROUPS = "/user/my/groups";
     private final String GET_CONTACTS = "/user/my/contacts";
+
+    private final WhatsappSenderService whatsappSender;
 
     public List<Map<String, String>> getContacts() {
         HttpEntity<Void> request = whatsappSender.createRequestEntity(null);
@@ -67,8 +74,10 @@ public class WhatsappMessageService {
     }
 
     public void sendMessage(WhatsappSender message) {
-        if (message.getMedia() == null || message.getMedia().isEmpty()) sendTextMessage(message);
-        else sendMediaMessage(message);
+        if (isNull(message.getMedia()) || message.getMedia().isEmpty())
+            sendTextMessage(message);
+        else
+            sendMediaMessage(message);
     }
 
     private void sendTextMessage(WhatsappSender message) {
@@ -92,22 +101,25 @@ public class WhatsappMessageService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        var body = createMidiaMessage(message);
+        var body = createMediaMessage(message);
 
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
         whatsappSender.sendRequest(SEND_MESSAGE + message.getMediaType().getDesc(), request);
         log.info("Message media sent!");
     }
 
-    private MultiValueMap<String, Object> createMidiaMessage(WhatsappSender message) {
+    private MultiValueMap<String, Object> createMediaMessage(WhatsappSender message) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
+        if(message.getMediaType().equals(WhatsappMediaType.IMAGE)) {
+            //body.add("message", message.getMessage());
+            body.add("caption", message.getMessage());
+        }
+
         body.add("phone", message.getPhone());
-        body.add("message", message.getMessage());
-        body.add("caption", message.getCaption());
         body.add("view_once", message.getView_once());
         body.add("compress", message.getCompress());
-        body.add(message.getMediaType().getDesc(), new FileSystemResource(message.getMedia()));
+        body.add(message.getMediaType().getDesc(), new FileSystemResource(uploadDir + "/" + message.getMedia()));
 
         return body;
     }
