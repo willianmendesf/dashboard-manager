@@ -46,7 +46,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   public getMembers() {
-    this.api.get("/members")
+    this.api.get("members")
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: res => {
@@ -59,7 +59,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   public createMember(member: Member) {
-    this.api.post("/members", member)
+    this.api.post("members", member)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => this.getMembers(),
@@ -69,7 +69,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   public updateMember(member: Member) {
-    this.api.update(`/members/${member.id}`, member)
+    this.api.update(`members/${member.id}`, member)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => this.getMembers(),
@@ -79,7 +79,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   public delete(id: number) {
-    this.api.delete("/members/" + id)
+    this.api.delete("members/" + id)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => this.getMembers(),

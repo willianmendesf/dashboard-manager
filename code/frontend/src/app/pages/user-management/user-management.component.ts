@@ -49,7 +49,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   public getUsers() {
-    this.api.get("/users")
+    this.api.get("users")
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
@@ -71,7 +71,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       status: user.status == 'active' ? 1 : 0,
     };
 
-    this.api.post("/users", newUser)
+    this.api.post("users", newUser)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getUsers(),
@@ -90,7 +90,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       status: user.status == 'active' ? 1 : 0,
     };
 
-    this.api.update(`/users/${user.id}` , newUser)
+    this.api.update(`users/${user.id}` , newUser)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getUsers(),
@@ -100,7 +100,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   public delete(id: number) {
-    this.api.delete("/users/" + id)
+    this.api.delete("users/" + id)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getUsers(),
