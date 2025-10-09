@@ -15,7 +15,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
-      - ./backend/.env
+      - ./backend/.env.prod
     environment:
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Sao_Paulo
     ports:
@@ -25,7 +25,10 @@ services:
       - angular-frontend
     networks:
       - app-network
-      
+    volumes:
+      - images_volume:/opt/app/images
+      - files_volume:/opt/app/files
+
 networks:
   app-network:
     driver: bridge
