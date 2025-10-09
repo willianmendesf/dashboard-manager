@@ -32,3 +32,9 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  images_volume:
+    driver: local
+  files_volume:
+    driver: local
