@@ -8,10 +8,12 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -24,13 +26,30 @@ public class ImageService {
     public String uploadImage(MultipartFile file) {
         try {
             Path uploadPath = Paths.get(uploadDir);
-            Files.createDirectories(uploadPath);
+
+            if (Files.notExists(uploadPath)) {
+                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
+                FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(perms);
+
+                try {
+                    Files.createDirectories(uploadPath, fileAttributes);
+                } catch (UnsupportedOperationException e) {
+                    Files.createDirectories(uploadPath);
+                    System.err.println("Atenção: Sistema de arquivos não suporta POSIX. Permissões não foram definidas.");
+                } catch (AccessDeniedException e) {
+                    throw new AccessDeniedException("Falha ao criar o diretório. Verifique as permissões de escrita no diretório pai.");
+                }
+            }
+
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path filepath = uploadPath.resolve(filename);
+
             Files.copy(file.getInputStream(), filepath, StandardCopyOption.REPLACE_EXISTING);
             return filename;
+        } catch (IOException e) {
+            throw new ImageException("Erro de I/O (permissão ou disco) ao fazer upload: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new ImageException("Error to upload image", e);
+            throw new ImageException("Erro ao fazer upload da imagem", e);
         }
     }
 
