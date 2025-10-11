@@ -7,3 +7,10 @@ services:
     ports:
       - "8080:8080"
     restart: always
+    volumes:
+      - app_images_data:/opt/app/images
+      - app_temp_data:/tmp/files
+
+volumes:
+  app_images_data:
+  app_temp_data:
