@@ -24,6 +24,7 @@ public class ImageService {
     private String uploadDir;
 
     public String uploadImage(MultipartFile file) {
+        log.info("Uploading file: {}", file.getOriginalFilename());
         try {
             Path uploadPath = Paths.get(uploadDir);
 
@@ -45,6 +46,8 @@ public class ImageService {
             Path filepath = uploadPath.resolve(filename);
 
             Files.copy(file.getInputStream(), filepath, StandardCopyOption.REPLACE_EXISTING);
+
+            log.info("File uploaded successfully: {}", file.getOriginalFilename());
             return filename;
         } catch (IOException e) {
             throw new ImageException("Erro de I/O (permissão ou disco) ao fazer upload: " + e.getMessage(), e);
@@ -54,11 +57,11 @@ public class ImageService {
     }
 
     public Resource getImage(String filename) {
+        log.info("Retrieving file: {}", filename);
         try {
             Path filepath = Paths.get(uploadDir, filename);
-            if (!Files.exists(filepath)) {
-                throw new ImageException("Image not found: " + filename, null);
-            }
+            if (!Files.exists(filepath)) throw new ImageException("Image not found: " + filename, null);
+            log.info("File retrieved successfully: {}", filename);
             return new UrlResource(filepath.toUri());
         } catch (Exception e) {
             throw new ImageException("Error to get image", e);
