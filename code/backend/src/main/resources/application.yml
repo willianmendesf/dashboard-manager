@@ -27,6 +27,9 @@ server:
       context-path: /api/v1
 
 scheduler:
+  max:
+    backlog:
+      minutes: ${MAX_BACKLOG_MINUTES}
   cron:
     scheduleTimeLoad: ${LOAD_SCHEDULE}
 

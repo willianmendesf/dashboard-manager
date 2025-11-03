@@ -40,12 +40,16 @@ public class AppointmentSchedulerService {
     @Value("${scheduler.max.backlog.minutes:5}")
     private int maxBacklogMinutes;
 
+    /**
+     * Carrega todos os agendamentos ativos para o cache
+     * Atualiza a última execução para evitar processamento de agendamentos antigos
+     */
     public void loadAppointmentsToCache() {
         log.info("Loading all appointments to cache");
         List<AppointmentEntity> activeAppointments = appointmentsRepository.findByEnabledTrue();
 
         // Atualizar a última execução para agendamentos antigos
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(5);
+        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(maxBacklogMinutes);
 
         activeAppointments.forEach(appointment -> {
             if (appointment.getLastExecution() == null ||
@@ -69,12 +73,17 @@ public class AppointmentSchedulerService {
                 .forEach(this::executeAppointment);
     }
 
+    /**
+     * Verifica se um agendamento deve ser executado no momento atual
+     * Implementa a lógica de janela de tempo e verificação de execuções anteriores
+     */
     private boolean isAppointmentDueForExecution(AppointmentEntity appointment, LocalDateTime now) {
         if (!Boolean.TRUE.equals(appointment.getEnabled())) {
             return false;
         }
 
         try {
+            // Verificar data de início
             if (!isNull(appointment.getStartDate()) && !appointment.getStartDate().isEmpty()) {
                 LocalDate startDate = LocalDate.parse(appointment.getStartDate());
                 if (now.toLocalDate().isBefore(startDate)) {
@@ -82,6 +91,7 @@ public class AppointmentSchedulerService {
                 }
             }
 
+            // Verificar data de fim
             if (!isNull(appointment.getEndDate()) && !appointment.getEndDate().isEmpty()) {
                 LocalDate endDate = LocalDate.parse(appointment.getEndDate());
                 if (now.toLocalDate().isAfter(endDate)) {
@@ -91,14 +101,12 @@ public class AppointmentSchedulerService {
 
             CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
 
-            // Obter a última execução ou usar uma data antiga se for a primeira execução
+            // Obter a última execução com limite de tempo para evitar execuções muito antigas
             LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
                     appointment.getLastExecution().toLocalDateTime() :
                     now.minusMinutes(maxBacklogMinutes);
-                    //LocalDateTime.of(1970, 1, 1, 0, 0);
 
-            // Se a última execução for muito antiga, use um limite máximo
-            // Isso evita processamento de agendamentos muito antigos após reinicialização
+            // Aplicar limite de tempo para execuções antigas
             LocalDateTime cutoffTime = now.minusMinutes(maxBacklogMinutes);
             if (lastExecTime.isBefore(cutoffTime)) {
                 lastExecTime = cutoffTime;
@@ -125,40 +133,35 @@ public class AppointmentSchedulerService {
         }
     }
 
+    /**
+     * Executa um agendamento específico
+     * Registra a execução para evitar duplicações
+     */
     private void executeAppointment(AppointmentEntity appointment) {
         log.info("Start execute appointment: {}", appointment.getName());
         LocalDateTime now = LocalDateTime.now();
 
-        // Verificar se este agendamento específico já foi executado neste horário específico
-        CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
-        LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
-                appointment.getLastExecution().toLocalDateTime() :
-                now.minusMinutes(maxBacklogMinutes);
-                //LocalDateTime.of(1970, 1, 1, 0, 0);
-
-        // Aplicar limite de tempo para execuções antigas
-        if (lastExecTime.isBefore(now.minusMinutes(maxBacklogMinutes))) {
-            lastExecTime = now.minusMinutes(maxBacklogMinutes);
-        }
-
-        LocalDateTime scheduledTime = cronExpression.next(lastExecTime);
-
-        // Verificar se já existe um registro de execução para este agendamento neste horário específico
-        boolean alreadyExecuted = executionRepository.existsByAppointmentIdAndScheduledTime(
-                appointment.getId(), scheduledTime);
-
-        if (alreadyExecuted) {
-            log.info("Agendamento {} já foi executado para o horário {}", appointment.getId(), scheduledTime);
-            return;
-        }
-
-        // Criar registro de execução
-        AppointmentExecution execution = new AppointmentExecution();
-        execution.setAppointmentId(appointment.getId());
-        execution.setScheduledTime(scheduledTime);
-        execution.setExecutionTime(now);
-
         try {
+            // Calcular o horário agendado específico que está sendo executado
+            CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
+            LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
+                    appointment.getLastExecution().toLocalDateTime() :
+                    now.minusMinutes(maxBacklogMinutes);
+
+            // Aplicar limite de tempo para execuções antigas
+            if (lastExecTime.isBefore(now.minusMinutes(maxBacklogMinutes))) {
+                lastExecTime = now.minusMinutes(maxBacklogMinutes);
+            }
+
+            LocalDateTime scheduledTime = cronExpression.next(lastExecTime);
+
+            // Criar registro de execução
+            AppointmentExecution execution = new AppointmentExecution();
+            execution.setAppointmentId(appointment.getId());
+            execution.setScheduledTime(scheduledTime);
+            execution.setExecutionTime(now);
+
+            // Executar a tarefa conforme o tipo
             switch (appointment.getTaskType()) {
                 case WHATSAPP_MESSAGE:
                     executeWhatsAppMessage(appointment);
@@ -172,7 +175,8 @@ public class AppointmentSchedulerService {
                     log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
                     break;
             }
-            // Atualizar status
+
+            // Atualizar status de sucesso
             appointment.setLastExecution(Timestamp.valueOf(now));
             appointment.setLastStatus(TaskStatus.SUCCESS);
             execution.setStatus(TaskStatus.SUCCESS);
@@ -181,6 +185,7 @@ public class AppointmentSchedulerService {
             appointmentsRepository.save(appointment);
             executionRepository.save(execution);
             appointmentCache.updateCacheAppointment(appointment);
+
         } catch (Exception e) {
             log.error("Error ao executar agendamento {}: {}", appointment.getId(), e.getMessage(), e);
 
@@ -190,13 +195,18 @@ public class AppointmentSchedulerService {
 
             // Criar registro de execução com falha
             try {
-                cronExpression = CronExpression.parse(appointment.getSchedule());
-                lastExecTime = !isNull(appointment.getLastExecution()) ?
+                CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
+                LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
                         appointment.getLastExecution().toLocalDateTime() :
                         now.minusMinutes(maxBacklogMinutes);
-                scheduledTime = cronExpression.next(lastExecTime);
 
-                execution = new AppointmentExecution();
+                if (lastExecTime.isBefore(now.minusMinutes(maxBacklogMinutes))) {
+                    lastExecTime = now.minusMinutes(maxBacklogMinutes);
+                }
+
+                LocalDateTime scheduledTime = cronExpression.next(lastExecTime);
+
+                AppointmentExecution execution = new AppointmentExecution();
                 execution.setAppointmentId(appointment.getId());
                 execution.setScheduledTime(scheduledTime);
                 execution.setExecutionTime(now);
@@ -208,17 +218,12 @@ public class AppointmentSchedulerService {
 
             appointmentsRepository.save(appointment);
             appointmentCache.updateCacheAppointment(appointment);
-
-            //appointment.setLastExecution(Timestamp.valueOf(now));
-            //appointment.setLastStatus(TaskStatus.FAILURE);
-            //execution.setStatus(TaskStatus.FAILURE);
         }
-
-        //appointmentsRepository.save(appointment);
-        //executionRepository.save(execution);
-        //appointmentCache.updateCacheAppointment(appointment);
     }
 
+    /**
+     * Executa o envio de mensagens WhatsApp
+     */
     private void executeWhatsAppMessage(AppointmentEntity appointment) {
         if(appointment.getRecipientType() == RecipientType.INDIVIDUAL) {
             log.info("Individual message start send!");
@@ -237,11 +242,17 @@ public class AppointmentSchedulerService {
         }
     }
 
+    /**
+     * Executa chamada de API
+     */
     private void executeApiCall(AppointmentEntity appointment) {
         log.info("Starting call request to: {}", appointment.getEndpoint());
         ApiRequest.post(appointment.getEndpoint(), null);
     }
 
+    /**
+     * Executa o envio de mensagens de monitoramento
+     */
     private void executeMonitoringMessage(AppointmentEntity appointment) {
         if (Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
             log.info("Monitoring message for numbers start send!");
@@ -256,6 +267,9 @@ public class AppointmentSchedulerService {
         }
     }
 
+    /**
+     * Envia mensagens para os destinatários
+     */
     private void sendMessages(String type, AppointmentEntity appointment, Collection<String> recipients) {
         if (recipients == null || recipients.isEmpty())
             return;
