@@ -2,7 +2,7 @@
   <pagetitle title="Agendamentos" subtitle="Gerencie seus agendamentos"></pagetitle>
 
   <div class="projects-grid">
-    <div class="project-card" *ngFor="let appointment of appointments">
+    <div class="project-card" *ngFor="let appointment of appointments" (click)="view(appointment)" style="cursor: pointer;">
       <div class="project-header">
         <h3>{{ appointment.name }}</h3>
         @if(appointment.enabled) {
@@ -43,7 +43,7 @@
           </div>
         </div>
       </div>
-      <div class="action-buttons">
+      <div class="action-buttons" (click)="$event.stopPropagation()">
         <button class="btn-action view" (click)="view(appointment)" title="Visualizar">👁️</button>
         <button class="btn-action edit" (click)="edit(appointment)" title="Editar">✏️</button>
         <button class="btn-action delete" (click)="deleteItem(appointment)" title="Excluir">🗑️</button>
