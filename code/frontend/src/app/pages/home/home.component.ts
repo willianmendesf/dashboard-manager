@@ -35,6 +35,7 @@ export class HomeComponent implements OnInit {
 
   //private toastr = inject(ToastrService)
   private api = inject(ApiService)
+  private cdr = inject(ChangeDetectorRef)
 
   ngOnInit(): void {
     this.getValues()
@@ -52,6 +53,12 @@ export class HomeComponent implements OnInit {
     .subscribe({
       next: res => {
         this.members = res
+        this.stats = [
+          {icon: '👥', value: this.members.length, label: 'Membros'},
+          {icon: '💰', value: 'R$ 18.2K', label: 'Receita Mensal', change: '+8%', trend: 'positive'},
+          {icon: '⏱️', value: '2.4s', label: 'Tempo de Carregamento', change: '+5%', trend: 'negative'}
+        ]
+        this.cdr.markForCheck()
         console.log(this.members.length)
       },
       error: error => console.error(error),

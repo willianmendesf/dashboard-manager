@@ -7,7 +7,14 @@
     {
       "type": "pwa-chrome",
       "request": "launch",
-      "name": "Dashboard",
+      "name": "dashboard-web (Chrome)",
+      "url": "http://localhost/",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "msedge",
+      "request": "launch",
+      "name": "dashboard-web (Edge)",
       "url": "http://localhost/",
       "webRoot": "${workspaceFolder}"
     }

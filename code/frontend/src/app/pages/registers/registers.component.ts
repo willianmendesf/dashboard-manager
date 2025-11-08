@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../shared/service/api.service';
 import { Register } from './model/register.model';
@@ -18,7 +18,8 @@ export class Registers implements OnInit {
 
   constructor(
     private api : ApiService,
-    private wtz : WhatsappsService
+    private wtz : WhatsappsService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -31,10 +32,14 @@ export class Registers implements OnInit {
     this.api.get("register").subscribe({
     next: registers => {
       this.registers = registers
+      this.cdr.markForCheck()
       console.log(this.registers)
     },
     error: error => console.log(error),
-    complete: () => console.log('Complete')
+    complete: () => {
+      this.cdr.markForCheck()
+      console.log('Complete')
+    }
   });
   }
 

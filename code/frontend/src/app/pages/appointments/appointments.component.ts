@@ -72,6 +72,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       next: res => {
         this.contacts = res
         this.contacts.forEach(item => item.selected = false)
+        this.cdr.markForCheck()
       },
       error: error => console.error(error),
       complete: () => {}
@@ -85,6 +86,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       next: res => {
         this.groups = res
         this.groups.forEach(item => item.selected = false)
+        this.cdr.markForCheck()
       },
       error: error => console.error(error),
       complete: () => {}
@@ -97,6 +99,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .subscribe({
       next: appointments => {
         this.appointments = appointments
+        this.cdr.markForCheck()
       },
       error: error => console.error(error),
       complete: () => console.log("Get all suscess!")

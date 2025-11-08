@@ -55,9 +55,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       next: res => {
         this.users = res
         this.filterUsers();
+        this.cdr.markForCheck()
       },
       error: error => console.error(error),
-      complete: () => this.filterUsers()
+      complete: () => {
+        this.filterUsers()
+        this.cdr.markForCheck()
+      }
     })
   }
 

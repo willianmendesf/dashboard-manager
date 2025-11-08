@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/service/api.service';
@@ -43,6 +43,7 @@ export class WhatsAppComponent implements OnInit {
 
   constructor(
     private api : ApiService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   public getContacts() {
@@ -58,10 +59,12 @@ export class WhatsAppComponent implements OnInit {
           newList.push(item)
         })
         this.contacts = newList;
+        this.cdr.markForCheck()
       },
       error: error => console.error(error),
       complete: () => {
         this.filter()
+        this.cdr.markForCheck()
       }
     })
   }
@@ -70,7 +73,10 @@ export class WhatsAppComponent implements OnInit {
     this.api.get("whatsapp/history/" + jid)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: res => this.messages = res,
+      next: res => {
+        this.messages = res
+        this.cdr.markForCheck()
+      },
       error: error => console.error(error),
       complete: () => console.log()
     })
@@ -80,9 +86,15 @@ export class WhatsAppComponent implements OnInit {
     this.api.get("whatsapp/groups")
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: res => this.groups = res,
+      next: res => {
+        this.groups = res
+        this.cdr.markForCheck()
+      },
       error: error => console.error(error),
-      complete: () => this.filter()
+      complete: () => {
+        this.filter()
+        this.cdr.markForCheck()
+      }
     })
   }
 

@@ -50,11 +50,15 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: res => {
-          this.filterMembers();
           this.members = res;
+          this.filterMembers();
+          this.cdr.markForCheck();
         },
         error: error => console.error(error),
-        complete: () => this.filterMembers()
+        complete: () => {
+          this.filterMembers();
+          this.cdr.markForCheck();
+        }
       });
   }
 
