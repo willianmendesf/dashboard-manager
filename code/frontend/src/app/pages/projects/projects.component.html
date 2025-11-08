@@ -1,0 +1,63 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Projetos</h1>
+    <p>Gerencie todos os seus projetos em um só lugar</p>
+  </div>
+
+  <div class="projects-grid">
+    <div class="project-card" *ngFor="let project of projects">
+      <div class="project-header">
+        <h3>{{ project.name }}</h3>
+        <div class="project-status" [class]="project.status">
+          {{ getStatusText(project.status) }}
+        </div>
+      </div>
+      
+      <p class="project-description">{{ project.description }}</p>
+      
+      <div class="project-progress">
+        <div class="progress-info">
+          <span>Progresso</span>
+          <span>{{ project.progress }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="project.progress"></div>
+        </div>
+      </div>
+
+      <div class="project-team">
+        <div class="team-avatars">
+          <div class="avatar" *ngFor="let member of project.team">
+            {{ member }}
+          </div>
+        </div>
+        <span class="team-count">{{ project.team.length }} membros</span>
+      </div>
+
+      <div class="project-footer">
+        <div class="project-dates">
+          <div class="date-item">
+            <span class="date-label">Início:</span>
+            <span class="date-value">{{ project.startDate }}</span>
+          </div>
+          <div class="date-item">
+            <span class="date-label">Entrega:</span>
+            <span class="date-value">{{ project.endDate }}</span>
+          </div>
+        </div>
+        <div class="project-actions">
+          <button class="btn-action">Ver Detalhes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card add-project">
+      <div class="add-project-content">
+        <div class="add-icon">+</div>
+        <h3>Novo Projeto</h3>
+        <p>Clique aqui para criar um novo projeto</p>
+      </div>
+    </div>
+  </div>
+</div>
+

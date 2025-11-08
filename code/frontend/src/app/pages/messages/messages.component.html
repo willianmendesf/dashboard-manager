@@ -1,0 +1,257 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Agendamento de Mensagens</h1>
+    <p>Crie e agende mensagens para envio automático</p>
+  </div>
+
+  <div class="messages-layout">
+    <div class="compose-section">
+      <div class="compose-card">
+        <h2>Nova Mensagem</h2>
+        
+        <form class="compose-form" (ngSubmit)="scheduleMessage()">
+          <div class="form-group">
+            <label>Destinatários</label>
+            <div class="recipients-input">
+              <input 
+                type="text" 
+                [(ngModel)]="newMessage.recipients" 
+                name="recipients"
+                placeholder="Digite emails separados por vírgula"
+                class="form-control"
+              />
+              <button type="button" class="btn-contacts">📋</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Assunto</label>
+            <input 
+              type="text" 
+              [(ngModel)]="newMessage.subject" 
+              name="subject"
+              placeholder="Assunto da mensagem"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Mensagem</label>
+            <select [(ngModel)]="newMessage.type" name="type" class="form-control">
+              <option value="email">📧 Email</option>
+              <option value="sms">📱 SMS</option>
+              <option value="whatsapp">💬 WhatsApp</option>
+              <option value="push">🔔 Push Notification</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Mensagem</label>
+            <textarea 
+              [(ngModel)]="newMessage.content" 
+              name="content"
+              placeholder="Digite sua mensagem aqui..."
+              class="form-control message-textarea"
+              rows="6"
+            ></textarea>
+            <div class="character-count">
+              {{ newMessage.content.length }}/{{ getMaxLength() }} caracteres
+            </div>
+          </div>
+
+          <div class="scheduling-options">
+            <div class="form-group">
+              <label>Opções de Envio</label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    [(ngModel)]="newMessage.sendOption" 
+                    name="sendOption"
+                    value="now"
+                  />
+                  <span class="radio-custom"></span>
+                  Enviar Agora
+                </label>
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    [(ngModel)]="newMessage.sendOption" 
+                    name="sendOption"
+                    value="schedule"
+                  />
+                  <span class="radio-custom"></span>
+                  Agendar Envio
+                </label>
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    [(ngModel)]="newMessage.sendOption" 
+                    name="sendOption"
+                    value="recurring"
+                  />
+                  <span class="radio-custom"></span>
+                  Envio Recorrente
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="newMessage.sendOption === 'schedule'">
+              <label>Data e Hora do Envio</label>
+              <div class="datetime-inputs">
+                <input 
+                  type="date" 
+                  [(ngModel)]="newMessage.scheduleDate" 
+                  name="scheduleDate"
+                  class="form-control"
+                />
+                <input 
+                  type="time" 
+                  [(ngModel)]="newMessage.scheduleTime" 
+                  name="scheduleTime"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="newMessage.sendOption === 'recurring'">
+              <label>Frequência</label>
+              <select [(ngModel)]="newMessage.frequency" name="frequency" class="form-control">
+                <option value="daily">Diário</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly">Mensal</option>
+                <option value="custom">Personalizado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="saveDraft()">
+              💾 Salvar Rascunho
+            </button>
+            <button type="button" class="btn-secondary" (click)="previewMessage()">
+              👁️ Visualizar
+            </button>
+            <button type="submit" class="btn-primary">
+              {{ getSubmitButtonText() }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="messages-list-section">
+      <div class="messages-card">
+        <div class="messages-header">
+          <h2>Mensagens Agendadas</h2>
+          <div class="filter-tabs">
+            <button 
+              class="tab-button" 
+              [class.active]="activeTab === 'scheduled'"
+              (click)="activeTab = 'scheduled'"
+            >
+              Agendadas ({{ getScheduledCount() }})
+            </button>
+            <button 
+              class="tab-button" 
+              [class.active]="activeTab === 'sent'"
+              (click)="activeTab = 'sent'"
+            >
+              Enviadas ({{ getSentCount() }})
+            </button>
+            <button 
+              class="tab-button" 
+              [class.active]="activeTab === 'drafts'"
+              (click)="activeTab = 'drafts'"
+            >
+              Rascunhos ({{ getDraftsCount() }})
+            </button>
+          </div>
+        </div>
+
+        <div class="messages-list">
+          <div 
+            class="message-item" 
+            *ngFor="let message of getFilteredMessages()"
+            [class.sent]="message.status === 'sent'"
+            [class.scheduled]="message.status === 'scheduled'"
+            [class.draft]="message.status === 'draft'"
+          >
+            <div class="message-icon">
+              {{ getMessageIcon(message.type) }}
+            </div>
+            <div class="message-content">
+              <div class="message-header">
+                <h4>{{ message.subject }}</h4>
+                <div class="message-status" [class]="message.status">
+                  {{ getStatusText(message.status) }}
+                </div>
+              </div>
+              <p class="message-preview">{{ message.content | slice:0:100 }}...</p>
+              <div class="message-meta">
+                <span class="recipients">Para: {{ message.recipients }}</span>
+                <span class="schedule-time">
+                  {{ message.status === 'sent' ? 'Enviado em:' : 'Agendado para:' }} 
+                  {{ formatDateTime(message.scheduleDateTime) }}
+                </span>
+              </div>
+            </div>
+            <div class="message-actions">
+              <button class="btn-action edit" (click)="editMessage(message)" *ngIf="message.status !== 'sent'">
+                ✏️
+              </button>
+              <button class="btn-action duplicate" (click)="duplicateMessage(message)">
+                📋
+              </button>
+              <button class="btn-action delete" (click)="deleteMessage(message.id)">
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="getFilteredMessages().length === 0">
+            <div class="empty-icon">📭</div>
+            <h3>Nenhuma mensagem encontrada</h3>
+            <p>{{ getEmptyStateText() }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <app-modal
+    [title]="'Visualização da Mensagem'"
+    [isOpen]="showPreview"
+    [size]="'medium'"
+    [footerButtons]="getPreviewModalButtons()"
+    (close)="closePreview()">
+    
+    <div class="detail-section">
+      <h4 class="section-title">Informações da Mensagem</h4>
+      <div class="details-grid">
+        <div class="detail-item">
+          <label>Tipo</label>
+          <span>{{ getMessageTypeText(newMessage.type) }}</span>
+        </div>
+        <div class="detail-item full-width">
+          <label>Para</label>
+          <span>{{ newMessage.recipients }}</span>
+        </div>
+        <div class="detail-item full-width" *ngIf="newMessage.subject">
+          <label>Assunto</label>
+          <span>{{ newMessage.subject }}</span>
+        </div>
+        <div class="detail-item full-width">
+          <label>Mensagem</label>
+          <span class="message-text">{{ newMessage.content }}</span>
+        </div>
+        <div class="detail-item" *ngIf="newMessage.sendOption !== 'now'">
+          <label>Agendamento</label>
+          <span>{{ getSchedulingText() }}</span>
+        </div>
+      </div>
+    </div>
+  </app-modal>
+</div>
+
