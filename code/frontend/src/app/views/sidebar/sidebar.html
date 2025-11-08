@@ -1,10 +1,11 @@
-<div class="sidebar">
+<div class="sidebar" [class.open]="isOpen()">
   <div class="sidebar-header">
     <h2 class="logo">
       <a href="#">
         <img src="./img/logo.png" width="200px"/>
       </a>
     </h2>
+    <button class="close-btn" (click)="close()" *ngIf="isOpen()">×</button>
   </div>
 
   <nav class="sidebar-nav">
@@ -15,6 +16,7 @@
           routerLinkActive="active"
           [routerLinkActiveOptions]="{exact: item.exact}"
           class="nav-link"
+          (click)="close()"
         >
           <span class="nav-icon" [innerHTML]="item.icon"></span>
           <span class="nav-text">{{ item.label }}</span>

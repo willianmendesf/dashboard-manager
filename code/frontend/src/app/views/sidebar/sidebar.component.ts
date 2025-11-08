@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -13,6 +13,8 @@ import { RouterModule } from '@angular/router';
   styleUrl: "./sidebar.scss"
 })
 export class SidebarComponent {
+  public isOpen = signal(false);
+
   menuItems = [
     { path: '/home', label: 'Home', icon: '🏠', exact: false },
     //{ path: '/projects', label: 'Projetos', icon: '📂', exact: true },
@@ -22,6 +24,14 @@ export class SidebarComponent {
     { path: '/user-management', label: 'Usuários', icon: '👤', exact: true },
     { path: '/settings', label: 'Configurações', icon: '⚙️', exact: true }
   ];
+
+  toggle() {
+    this.isOpen.update(value => !value);
+  }
+
+  close() {
+    this.isOpen.set(false);
+  }
 }
 
 // { path: '/analytics', label: 'Analytics', icon: '📊', exact: true },

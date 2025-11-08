@@ -1,2 +1,10 @@
-<app-sidebar></app-sidebar>
-<router-outlet></router-outlet>
+<app-sidebar #sidebar></app-sidebar>
+@if (isMobile() && sidebar.isOpen()) {
+  <div class="sidebar-overlay" (click)="sidebar.close()"></div>
+}
+@if (isMobile()) {
+  <button class="menu-toggle" (click)="sidebar.toggle()">☰</button>
+}
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
