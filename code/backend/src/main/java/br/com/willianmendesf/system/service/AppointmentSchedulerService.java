@@ -12,7 +12,7 @@ import br.com.willianmendesf.system.repository.AppointmentExecutionRepository;
 import br.com.willianmendesf.system.repository.AppointmentRepository;
 import br.com.willianmendesf.system.service.utils.ApiRequest;
 import br.com.willianmendesf.system.service.utils.MessagesUtils;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.support.CronExpression;
@@ -28,7 +28,7 @@ import static java.util.Objects.isNull;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AppointmentSchedulerService {
 
     private final AppointmentCache appointmentCache;

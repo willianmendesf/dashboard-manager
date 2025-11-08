@@ -35,6 +35,8 @@ public class AppointmentEntity {
     private Long timeout;
     private String startDate;
     private String endDate;
+    
+    @Column(columnDefinition = "TEXT")
     private String message;
     private List<String> sendTo;
     private List<String> sendToGroups;
