@@ -104,11 +104,24 @@
     width: 250px;
     transform: translateX(-100%);
     z-index: 1000;
+    pointer-events: none;
+    visibility: hidden;
   }
 
   .sidebar.open {
     transform: translateX(0);
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    z-index: 1002;
+    visibility: visible;
+
+    .sidebar-header {
+      display: none;
+    }
+
+    .sidebar-nav {
+      padding-top: 24px;
+    }
   }
 }
 

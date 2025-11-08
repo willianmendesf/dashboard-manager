@@ -4,9 +4,9 @@
 }
 @if (isMobile()) {
   <nav class="mobile-navbar">
-    <div class="navbar-logo">
+    <a routerLink="/home" class="navbar-logo">
       <img src="./img/logo.png" alt="Logo" />
-    </div>
+    </a>
     <button class="navbar-menu-btn" (click)="sidebar.toggle()" [attr.aria-label]="'Menu'">
       <span class="menu-icon">☰</span>
     </button>
