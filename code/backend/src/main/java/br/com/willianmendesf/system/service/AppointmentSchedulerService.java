@@ -15,8 +15,10 @@ import br.com.willianmendesf.system.service.utils.MessagesUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -24,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Objects.isNull;
 
@@ -274,8 +277,8 @@ public class AppointmentSchedulerService {
             appointment.setLastStatus(TaskStatus.SUCCESS);
             execution.setStatus(TaskStatus.SUCCESS);
 
-            // Salvar registros
-            appointmentsRepository.save(appointment);
+            // Salvar registros de forma segura (tratando optimistic locking)
+            saveAppointmentSafely(appointment);
             executionRepository.save(execution);
             appointmentCache.updateCacheAppointment(appointment);
 
@@ -300,7 +303,7 @@ public class AppointmentSchedulerService {
                 log.error("Erro ao registrar falha de execução: {}", ex.getMessage(), ex);
             }
 
-            appointmentsRepository.save(appointment);
+            saveAppointmentSafely(appointment);
             appointmentCache.updateCacheAppointment(appointment);
         }
     }
@@ -422,8 +425,8 @@ public class AppointmentSchedulerService {
             appointment.setLastStatus(TaskStatus.SUCCESS);
             execution.setStatus(TaskStatus.SUCCESS);
 
-            // Salvar registros
-            appointmentsRepository.save(appointment);
+            // Salvar registros de forma segura (tratando optimistic locking)
+            saveAppointmentSafely(appointment);
             executionRepository.save(execution);
             appointmentCache.updateCacheAppointment(appointment);
 
@@ -457,8 +460,41 @@ public class AppointmentSchedulerService {
                 log.error("Erro ao registrar falha de execução: {}", ex.getMessage(), ex);
             }
 
-            appointmentsRepository.save(appointment);
+            saveAppointmentSafely(appointment);
             appointmentCache.updateCacheAppointment(appointment);
+        }
+    }
+
+    /**
+     * Salva um agendamento de forma segura, recarregando do banco antes de salvar
+     * para evitar conflitos de optimistic locking quando múltiplas threads tentam atualizar
+     */
+    @Transactional
+    private void saveAppointmentSafely(AppointmentEntity appointment) {
+        try {
+            // Recarregar a entidade do banco para ter a versão mais recente
+            Optional<AppointmentEntity> freshEntity = appointmentsRepository.findById(appointment.getId());
+            
+            if (freshEntity.isPresent()) {
+                AppointmentEntity entityToSave = freshEntity.get();
+                // Atualizar apenas os campos que mudaram
+                entityToSave.setLastExecution(appointment.getLastExecution());
+                entityToSave.setLastStatus(appointment.getLastStatus());
+                appointmentsRepository.save(entityToSave);
+                
+                // Atualizar o objeto original com a versão atualizada
+                appointment.setVersion(entityToSave.getVersion());
+            } else {
+                log.warn("Appointment {} not found in database, skipping save", appointment.getId());
+            }
+        } catch (OptimisticLockingFailureException e) {
+            // Se ainda houver conflito, apenas logar e continuar
+            // A próxima execução do scheduler tentará novamente
+            log.warn("Optimistic locking conflict for appointment {}: {}. Will retry on next execution.", 
+                    appointment.getId(), e.getMessage());
+        } catch (Exception e) {
+            log.error("Error saving appointment {}: {}", appointment.getId(), e.getMessage(), e);
+            throw e;
         }
     }
 
