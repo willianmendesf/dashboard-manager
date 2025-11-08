@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/service/api.service';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
+import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-whatsapp',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitleComponent],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent],
   templateUrl:'./whatsapp.html',
   styleUrl: './whatsapp.scss'
 })
@@ -264,5 +265,46 @@ export class WhatsAppComponent implements OnInit {
 
   isMemberSelected(contact: Contact): boolean {
     return this.newGroup.selectedMembers.some(m => m.id === contact.id);
+  }
+
+  getContactModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Cancelar',
+        type: 'secondary',
+        action: () => this.closeAddContactModal()
+      },
+      {
+        label: 'Adicionar Contato',
+        type: 'primary',
+        action: () => this.addContact()
+      }
+    ];
+  }
+
+  getGroupModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Cancelar',
+        type: 'secondary',
+        action: () => this.closeAddGroupModal()
+      },
+      {
+        label: 'Criar Grupo',
+        type: 'primary',
+        action: () => this.addGroup(),
+        disabled: !this.newGroup.name || this.newGroup.selectedMembers.length === 0
+      }
+    ];
+  }
+
+  getRecipientInfoModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Fechar',
+        type: 'secondary',
+        action: () => this.showRecipientInfo = false
+      }
+    ];
   }
 }

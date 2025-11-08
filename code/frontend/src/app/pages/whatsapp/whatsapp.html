@@ -201,88 +201,88 @@
   </div>
 
   <!-- Modal Adicionar Contato -->
-  <div class="modal-overlay" *ngIf="showAddContactModal" (click)="closeAddContactModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Novo Contato</h3>
-        <button class="btn-close" (click)="closeAddContactModal()">×</button>
-      </div>
+  <app-modal
+    [title]="'Novo Contato'"
+    [isOpen]="showAddContactModal"
+    [size]="'small'"
+    [footerButtons]="getContactModalButtons()"
+    (close)="closeAddContactModal()">
+    
+    <form (ngSubmit)="addContact()">
+      <div class="form-section">
+        <h4 class="section-title">Informações do Contato</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nome <span class="required">*</span></label>
+            <input
+              type="text"
+              [(ngModel)]="newContact.name"
+              name="name"
+              class="form-control"
+              placeholder="Nome do contato"
+              required
+            />
+          </div>
 
-      <form class="modal-body" (ngSubmit)="addContact()">
-        <div class="form-group">
-          <label>Nome *</label>
-          <input
-            type="text"
-            [(ngModel)]="newContact.name"
-            name="name"
-            class="form-control"
-            placeholder="Nome do contato"
-            required
-          />
+          <div class="form-group">
+            <label>Telefone <span class="required">*</span></label>
+            <input
+              type="tel"
+              [(ngModel)]="newContact.phone"
+              name="phone"
+              class="form-control"
+              placeholder="+55 11 99999-9999"
+              required
+            />
+          </div>
         </div>
-
-        <div class="form-group">
-          <label>Telefone *</label>
-          <input
-            type="tel"
-            [(ngModel)]="newContact.phone"
-            name="phone"
-            class="form-control"
-            placeholder="+55 11 99999-9999"
-            required
-          />
-        </div>
-      </form>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeAddContactModal()">
-          Cancelar
-        </button>
-        <button type="button" class="btn-primary" (click)="addContact()">
-          Adicionar Contato
-        </button>
       </div>
-    </div>
-  </div>
+    </form>
+  </app-modal>
 
   <!-- Modal Adicionar Grupo -->
-  <div class="modal-overlay" *ngIf="showAddGroupModal" (click)="closeAddGroupModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Novo Grupo</h3>
-        <button class="btn-close" (click)="closeAddGroupModal()">×</button>
+  <app-modal
+    [title]="'Novo Grupo'"
+    [isOpen]="showAddGroupModal"
+    [size]="'medium'"
+    [footerButtons]="getGroupModalButtons()"
+    (close)="closeAddGroupModal()">
+    
+    <form (ngSubmit)="addGroup()">
+      <div class="form-section">
+        <h4 class="section-title">Informações do Grupo</h4>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Nome do Grupo <span class="required">*</span></label>
+            <input
+              type="text"
+              [(ngModel)]="newGroup.name"
+              name="name"
+              class="form-control"
+              placeholder="Nome do grupo"
+              required
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label>Descrição</label>
+            <textarea
+              [(ngModel)]="newGroup.description"
+              name="description"
+              class="form-control"
+              placeholder="Descrição do grupo"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
       </div>
 
-      <form class="modal-body" (ngSubmit)="addGroup()">
-        <div class="form-group">
-          <label>Nome do Grupo *</label>
-          <input
-            type="text"
-            [(ngModel)]="newGroup.name"
-            name="name"
-            class="form-control"
-            placeholder="Nome do grupo"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label>Descrição</label>
-          <textarea
-            [(ngModel)]="newGroup.description"
-            name="description"
-            class="form-control"
-            placeholder="Descrição do grupo"
-            rows="3"
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Membros</label>
-          <div class="members-selector">
+      <div class="form-section">
+        <h4 class="section-title">Selecionar Membros <span class="required">*</span></h4>
+        <div class="members-selector">
+          @for (contact of contacts; track contact.id) {
             <div
               class="member-item"
-              *ngFor="let contact of contacts"
               (click)="toggleMember(contact)"
               [class.selected]="isMemberSelected(contact)"
             >
@@ -292,63 +292,63 @@
                 <div class="member-phone">{{ contact.id.replace('@s.whatsapp.net','') }}</div>
               </div>
               <div class="member-checkbox">
-                <span *ngIf="isMemberSelected(contact)">✓</span>
+                @if (isMemberSelected(contact)) {
+                  <span>✓</span>
+                }
               </div>
             </div>
-          </div>
+          }
         </div>
-      </form>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeAddGroupModal()">
-          Cancelar
-        </button>
-        <button type="button" class="btn-primary" (click)="addGroup()">
-          Criar Grupo
-        </button>
+        <small class="form-hint">Selecione pelo menos um membro para criar o grupo</small>
       </div>
-    </div>
-  </div>
+    </form>
+  </app-modal>
 
   <!-- Modal Informações do Destinatário -->
-  <div class="modal-overlay" *ngIf="showRecipientInfo" (click)="showRecipientInfo = false">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Informações</h3>
-        <button class="btn-close" (click)="showRecipientInfo = false">×</button>
-      </div>
-
-      <div class="modal-body" *ngIf="selectedRecipient">
-        <div class="recipient-profile">
-          <div class="profile-avatar">
-            {{ selectedRecipient.type === 'group' ? '👥' : selectedRecipient.name.charAt(0) }}
+  <app-modal
+    [title]="'Informações do Destinatário'"
+    [isOpen]="showRecipientInfo"
+    [size]="'medium'"
+    [footerButtons]="getRecipientInfoModalButtons()"
+    (close)="showRecipientInfo = false">
+    
+    @if (selectedRecipient) {
+      <div class="detail-section">
+        <h4 class="section-title">Informações Básicas</h4>
+        <div class="details-grid">
+          <div class="detail-item full-width">
+            <label>Nome</label>
+            <span>{{ selectedRecipient.name || 'Não informado' }}</span>
           </div>
-          <div class="profile-info">
-            <h2>{{ selectedRecipient.name }}</h2>
-            <p *ngIf="selectedRecipient.type === 'contact'">{{ selectedRecipient.phone }}</p>
-            <p *ngIf="selectedRecipient.type === 'group'">{{ selectedRecipient.description }}</p>
-          </div>
-        </div>
-
-        <div class="info-details" *ngIf="selectedRecipient.type === 'group'">
-          <h4>Membros do Grupo ({{ selectedRecipient.members.length }})</h4>
-          <div class="members-list">
-            <div class="member-item" *ngFor="let member of selectedRecipient.members">
-              <div class="member-avatar">{{ member.name.charAt(0) }}</div>
-              <div class="member-info">
-                <div class="member-name">{{ member.name }}</div>
-                <div class="member-phone">{{ member.phone }}</div>
-              </div>
+          @if (selectedRecipient.type === 'contact') {
+            <div class="detail-item">
+              <label>Telefone</label>
+              <span>{{ selectedRecipient.phone || 'Não informado' }}</span>
             </div>
-          </div>
+          }
+          @if (selectedRecipient.type === 'group') {
+            <div class="detail-item full-width">
+              <label>Descrição</label>
+              <span>{{ selectedRecipient.description || 'Não informado' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Total de Membros</label>
+              <span>{{ selectedRecipient.members?.length || 0 }}</span>
+            </div>
+          }
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="showRecipientInfo = false">
-          Fechar
-        </button>
-      </div>
-    </div>
-  </div>
+      @if (selectedRecipient.type === 'group' && selectedRecipient.members && selectedRecipient.members.length > 0) {
+        <div class="detail-section">
+          <h4 class="section-title">Membros do Grupo</h4>
+          <div class="tags-list">
+            @for (member of selectedRecipient.members; track member.id) {
+              <span class="tag">{{ member.name }}</span>
+            }
+          </div>
+        </div>
+      }
+    }
+  </app-modal>
 </div>

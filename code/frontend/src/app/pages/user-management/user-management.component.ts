@@ -5,11 +5,12 @@ import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
+import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitleComponent],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss'
 })
@@ -156,8 +157,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   viewUser(user: User) {
-    this.viewingUser = user;
+    this.viewingUser = { ...user };
     this.showViewModal = true;
+    this.cdr.markForCheck();
   }
 
   closeViewModal() {
@@ -168,6 +170,49 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   editUser(user: User) {
     this.closeViewModal();
     this.openUserModal(user);
+  }
+
+  getViewModalButtons(): ModalButton[] {
+    if (!this.viewingUser) {
+      return [
+        {
+          label: 'Fechar',
+          type: 'secondary',
+          action: () => this.closeViewModal()
+        }
+      ];
+    }
+    return [
+      {
+        label: 'Fechar',
+        type: 'secondary',
+        action: () => this.closeViewModal()
+      },
+      {
+        label: 'Editar Usuário',
+        type: 'primary',
+        action: () => {
+          if (this.viewingUser) {
+            this.editUser(this.viewingUser);
+          }
+        }
+      }
+    ];
+  }
+
+  getEditModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Cancelar',
+        type: 'secondary',
+        action: () => this.closeUserModal()
+      },
+      {
+        label: 'Salvar Alterações',
+        type: 'primary',
+        action: () => this.saveUser()
+      }
+    ];
   }
 
   saveUser() {

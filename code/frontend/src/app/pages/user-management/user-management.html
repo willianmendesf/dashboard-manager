@@ -108,15 +108,17 @@
     </button>
   </div>
 
-  <!-- User Modal -->
-  <div class="modal-overlay" *ngIf="showUserModal" (click)="closeUserModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
-        <button class="btn-close" (click)="closeUserModal()">×</button>
-      </div>
-
-      <form class="modal-body" (ngSubmit)="saveUser()">
+  <!-- Edit/Create User Modal -->
+  <app-modal
+    [title]="isEditing ? 'Editar Usuário' : 'Novo Usuário'"
+    [isOpen]="showUserModal"
+    [size]="'large'"
+    [footerButtons]="getEditModalButtons()"
+    (close)="closeUserModal()">
+    
+    <form (ngSubmit)="saveUser()">
+      <div class="form-section">
+        <h4 class="section-title">Informações Básicas</h4>
         <div class="form-grid">
           <div class="form-group">
             <label>Nome Completo *</label>
@@ -195,76 +197,71 @@
           </div>
         </div>
 
-        <div class="permissions-section" *ngIf="currentUser.role">
-          <h4>Permissões</h4>
+      </div>
+
+      @if (currentUser.role) {
+        <div class="form-section">
+          <h4 class="section-title">Permissões</h4>
           <div class="permissions-grid">
-            <label class="permission-item" *ngFor="let permission of getPermissionsForRole(currentUser.role)">
-              <input type="checkbox" [checked]="true" disabled />
-              <span>{{ permission }}</span>
-            </label>
+            @for (permission of getPermissionsForRole(currentUser.role); track permission) {
+              <label class="permission-item">
+                <input type="checkbox" [checked]="true" disabled />
+                <span>{{ permission }}</span>
+              </label>
+            }
           </div>
         </div>
-      </form>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeUserModal()">
-          Cancelar
-        </button>
-        <button type="button" class="btn-primary" (click)="saveUser()">
-          {{ isEditing ? 'Salvar Alterações' : 'Criar Usuário' }}
-        </button>
-      </div>
-    </div>
-  </div>
+      }
+    </form>
+  </app-modal>
 
   <!-- View User Modal -->
-  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
-    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Detalhes do Usuário</h3>
-        <button class="btn-close" (click)="closeViewModal()">×</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="user-profile">
-          <div class="profile-avatar">{{ viewingUser?.name?.charAt(0) || '' }}</div>
-          <div class="profile-info">
-            <h2>{{ viewingUser?.name }}</h2>
-            <p class="profile-role">{{ getRoleText(viewingUser?.role || '') }}</p>
-            <span class="status-badge" [class]="viewingUser?.status">
-              {{ viewingUser?.status === 'active' ? 'Ativo' : 'Inativo' }}
+  <app-modal
+    [title]="'Detalhes do Usuário'"
+    [isOpen]="showViewModal"
+    [size]="'medium'"
+    [footerButtons]="getViewModalButtons()"
+    (close)="closeViewModal()">
+    
+    @if (viewingUser) {
+      <div class="detail-section">
+        <h4 class="section-title">Informações Básicas</h4>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Nome Completo</label>
+            <span>{{ viewingUser.name || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Usuário</label>
+            <span>{{ viewingUser.username || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Email</label>
+            <span>{{ viewingUser.email || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Função</label>
+            <span class="badge" [class.active]="viewingUser.role">{{ getRoleText(viewingUser.role) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Status</label>
+            <span class="badge" [class.active]="viewingUser.status === 'active'" [class.inactive]="viewingUser.status === 'inactive'">
+              {{ viewingUser.status === 'active' ? 'Ativo' : 'Inativo' }}
             </span>
           </div>
         </div>
+      </div>
 
-        <div class="details-grid">
-          <div class="detail-item">
-            <label>Email</label>
-            <span>{{ viewingUser?.email }}</span>
+      @if (viewingUser.role) {
+        <div class="detail-section">
+          <h4 class="section-title">Permissões</h4>
+          <div class="tags-list">
+            @for (permission of getPermissionsForRole(viewingUser.role); track permission) {
+              <span class="tag">{{ permission }}</span>
+            }
           </div>
-          <!-- <div class="detail-item">
-            <label>Telefone</label>
-            <span>{{ viewingUser?.phone }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Data de Criação</label>
-            <span>{{ viewingUser?.createdAt }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Último Acesso</label>
-            <span>{{ viewingUser?.lastLogin || 'Nunca acessou' }}</span>
-          </div> -->
         </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeViewModal()">
-          Fechar
-        </button>
-        <button type="button" class="btn-primary" (click)="editUser(viewingUser!)">
-          Editar Usuário
-        </button>
-      </div>
-    </div>
-  </div>
+      }
+    }
+  </app-modal>
 </div>

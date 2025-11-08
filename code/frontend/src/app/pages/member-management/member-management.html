@@ -87,15 +87,17 @@
     </button>
   </div>
 
-  <!-- Member Modal -->
-  <div class="modal-overlay" *ngIf="showMemberModal" (click)="closeMemberModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ isEditing ? 'Editar Membro' : 'Novo Membro' }}</h3>
-        <button class="btn-close" (click)="closeMemberModal()">×</button>
-      </div>
-
-      <form class="modal-body" (ngSubmit)="saveMember()">
+  <!-- Edit/Create Member Modal -->
+  <app-modal
+    [title]="isEditing ? 'Editar Membro' : 'Novo Membro'"
+    [isOpen]="showMemberModal"
+    [size]="'xlarge'"
+    [footerButtons]="getEditModalButtons()"
+    (close)="closeMemberModal()">
+    
+    <form (ngSubmit)="saveMember()">
+      <div class="form-section">
+        <h4 class="section-title">Informações Básicas</h4>
         <div class="form-grid">
 
           <div class="form-group">
@@ -109,6 +111,34 @@
             />
           </div>
 
+          <div class="form-group">
+            <label>Data de Nascimento</label>
+            <input
+              type="date"
+              [(ngModel)]="currentMember.nascimento"
+              name="nascimento"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Estado Civil <span class="required">*</span></label>
+            <select
+              [(ngModel)]="currentMember.estadoCivil"
+              name="estadoCivil"
+              class="form-control"
+              required
+            >
+              <option [value]="false">Solteiro</option>
+              <option [value]="true">Casado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Documentos</h4>
+        <div class="form-grid">
           <div class="form-group">
             <label>CPF</label>
             <input
@@ -133,29 +163,6 @@
             />
           </div>
 
-          <div class="form-group">
-            <label>Data de Nascimento</label>
-            <input
-              type="date"
-              [(ngModel)]="currentMember.nascimento"
-              name="nascimento"
-              class="form-control"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Estado Civil *</label>
-            <select
-              [(ngModel)]="currentMember.estadoCivil"
-              name="estadoCivil"
-              class="form-control"
-              required
-            >
-              <option [value]="false">Solteiro</option>
-              <option [value]="true">Casado</option>
-            </select>
-          </div>
-
           @if (currentMember.estadoCivil) {
             <div class="form-group">
               <label>Conjugue CPF</label>
@@ -169,6 +176,12 @@
               />
             </div>
           }
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Contatos</h4>
+        <div class="form-grid">
 
           <div class="form-group">
             <label>Telefone</label>
@@ -204,7 +217,7 @@
           </div>
 
           <div class="form-group">
-            <label>Email *</label>
+            <label>Email <span class="required">*</span></label>
             <input
               type="email"
               [(ngModel)]="currentMember.email"
@@ -216,44 +229,30 @@
           </div>
 
           <div class="form-group">
-            <label>Comungante</label>
-            <select
-              [(ngModel)]="currentMember.comungante"
-              name="comungante"
+            <label>Operadora</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.operadora"
+              name="operadora"
               class="form-control"
-            >
-              <option [value]="true">Sim</option>
-              <option [value]="false">Não</option>
-            </select>
+            />
           </div>
 
           <div class="form-group">
-            <label>Intercessor</label>
-            <select
-              [(ngModel)]="currentMember.intercessor"
-              name="intercessor"
+            <label>Contato</label>
+            <input
+              type="text"
+              [(ngModel)]="currentMember.contato"
+              name="contato"
               class="form-control"
-            >
-              <option [value]="true">Sim</option>
-              <option [value]="false">Não</option>
-            </select>
+            />
           </div>
+        </div>
+      </div>
 
-          <div class="form-group">
-            <label>Tipo de Cadastro</label>
-            <select
-              [(ngModel)]="currentMember.tipoCadastro"
-              name="tipoCadastro"
-              class="form-control"
-            >
-              <option [value]="'Membro'">Membro</option>
-              <option [value]="'Visitante'">Visitante</option>
-              <option [value]="'Seminarista'">Seminarista</option>
-              <option [value]="'Presbítero'">Presbítero</option>
-              <option [value]="'Pastor'">Pastor</option>
-            </select>
-          </div>
-
+      <div class="form-section">
+        <h4 class="section-title">Endereço</h4>
+        <div class="form-grid">
           <div class="form-group">
             <label>CEP</label>
             <input
@@ -323,6 +322,50 @@
               class="form-control"
             />
           </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Configurações</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Comungante</label>
+            <select
+              [(ngModel)]="currentMember.comungante"
+              name="comungante"
+              class="form-control"
+            >
+              <option [value]="true">Sim</option>
+              <option [value]="false">Não</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Intercessor</label>
+            <select
+              [(ngModel)]="currentMember.intercessor"
+              name="intercessor"
+              class="form-control"
+            >
+              <option [value]="true">Sim</option>
+              <option [value]="false">Não</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Cadastro</label>
+            <select
+              [(ngModel)]="currentMember.tipoCadastro"
+              name="tipoCadastro"
+              class="form-control"
+            >
+              <option [value]="'Membro'">Membro</option>
+              <option [value]="'Visitante'">Visitante</option>
+              <option [value]="'Seminarista'">Seminarista</option>
+              <option [value]="'Presbítero'">Presbítero</option>
+              <option [value]="'Pastor'">Pastor</option>
+            </select>
+          </div>
 
           <div class="form-group">
             <label>LGPD Aceito?</label>
@@ -345,104 +388,157 @@
               class="form-control"
             />
           </div>
-
-          <div class="form-group">
-            <label>Operadora</label>
-            <input
-              type="text"
-              [(ngModel)]="currentMember.operadora"
-              name="operadora"
-              class="form-control"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Contato</label>
-            <input
-              type="text"
-              [(ngModel)]="currentMember.contato"
-              name="contato"
-              class="form-control"
-            />
-          </div>
-
         </div>
-      </form>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeMemberModal()">Cancelar</button>
-        <button type="button" class="btn-primary" (click)="saveMember()">
-          {{ isEditing ? 'Salvar Alterações' : 'Criar Membro' }}
-        </button>
       </div>
-    </div>
-  </div>
+    </form>
+  </app-modal>
 
   <!-- View Member Modal -->
-  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
-    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Detalhes do Membro</h3>
-        <button class="btn-close" (click)="closeViewModal()">×</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="member-profile">
-          <div class="profile-avatar">{{ viewingMember?.nome?.charAt(0) || '' }}</div>
-          <div class="profile-info">
-            <h2>{{ viewingMember?.nome }}</h2>
-            <span>
-              Estado Civil: {{ viewingMember?.estadoCivil ? 'Casado' : 'Solteiro' }}
-            </span>
-            <span>Email: {{ viewingMember?.email }}</span>
-          </div>
-        </div>
-
+  <app-modal
+    [title]="'Detalhes do Membro'"
+    [isOpen]="showViewModal"
+    [size]="'large'"
+    [footerButtons]="getViewModalButtons()"
+    (close)="closeViewModal()">
+    
+    @if (viewingMember) {
+      <div class="detail-section">
+        <h4 class="section-title">Informações Básicas</h4>
         <div class="details-grid">
           <div class="detail-item">
-            <label>CPF</label>
-            <span>{{ viewingMember?.cpf }}</span>
-          </div>
-          <div class="detail-item">
-            <label>RG</label>
-            <span>{{ viewingMember?.rg }}</span>
+            <label>Nome Completo</label>
+            <span>{{ viewingMember.nome || 'Não informado' }}</span>
           </div>
           <div class="detail-item">
             <label>Data de Nascimento</label>
-            <span>{{ viewingMember?.nascimento | date:'dd/MM/yyyy' }}</span>
+            <span>{{ viewingMember.nascimento ? (viewingMember.nascimento | date:'dd/MM/yyyy') : 'Não informado' }}</span>
           </div>
           <div class="detail-item">
-            <label>Telefone</label>
-            <span>{{ viewingMember?.telefone }}</span>
+            <label>Estado Civil</label>
+            <span class="badge" [class.active]="viewingMember.estadoCivil">
+              {{ viewingMember.estadoCivil ? 'Casado' : 'Solteiro' }}
+            </span>
           </div>
           <div class="detail-item">
-            <label>Celular</label>
-            <span>{{ viewingMember?.celular }}</span>
+            <label>Tipo de Cadastro</label>
+            <span>{{ viewingMember.tipoCadastro || 'Não informado' }}</span>
           </div>
-          <div class="detail-item">
-            <label>Comercial</label>
-            <span>{{ viewingMember?.comercial }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Logradouro</label>
-            <span>{{ viewingMember?.logradouro }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Cidade</label>
-            <span>{{ viewingMember?.cidade }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Estado</label>
-            <span>{{ viewingMember?.estado }}</span>
-          </div>
-          <!-- Inclua demais campos conforme desejar -->
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeViewModal()">Fechar</button>
-        <button type="button" class="btn-primary" (click)="editMember(viewingMember!)">Editar Membro</button>
+      <div class="detail-section">
+        <h4 class="section-title">Documentos</h4>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>CPF</label>
+            <span>{{ viewingMember.cpf || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>RG</label>
+            <span>{{ viewingMember.rg || 'Não informado' }}</span>
+          </div>
+          @if (viewingMember.conjugueCPF) {
+            <div class="detail-item">
+              <label>CPF do Cônjuge</label>
+              <span>{{ viewingMember.conjugueCPF }}</span>
+            </div>
+          }
+        </div>
       </div>
-    </div>
-  </div>
+
+      <div class="detail-section">
+        <h4 class="section-title">Contatos</h4>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Email</label>
+            <span>{{ viewingMember.email || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Telefone</label>
+            <span>{{ viewingMember.telefone || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Celular</label>
+            <span>{{ viewingMember.celular || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Comercial</label>
+            <span>{{ viewingMember.comercial || 'Não informado' }}</span>
+          </div>
+          @if (viewingMember.operadora) {
+            <div class="detail-item">
+              <label>Operadora</label>
+              <span>{{ viewingMember.operadora }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4 class="section-title">Endereço</h4>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>CEP</label>
+            <span>{{ viewingMember.cep || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Logradouro</label>
+            <span>{{ viewingMember.logradouro || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Número</label>
+            <span>{{ viewingMember.numero || 'Não informado' }}</span>
+          </div>
+          @if (viewingMember.complemento) {
+            <div class="detail-item">
+              <label>Complemento</label>
+              <span>{{ viewingMember.complemento }}</span>
+            </div>
+          }
+          <div class="detail-item">
+            <label>Bairro</label>
+            <span>{{ viewingMember.bairro || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Cidade</label>
+            <span>{{ viewingMember.cidade || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Estado</label>
+            <span>{{ viewingMember.estado || 'Não informado' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4 class="section-title">Configurações</h4>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Comungante</label>
+            <span class="badge" [class.active]="viewingMember.comungante" [class.inactive]="!viewingMember.comungante">
+              {{ viewingMember.comungante ? 'Sim' : 'Não' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Intercessor</label>
+            <span class="badge" [class.active]="viewingMember.intercessor" [class.inactive]="!viewingMember.intercessor">
+              {{ viewingMember.intercessor ? 'Sim' : 'Não' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>LGPD Aceito</label>
+            <span class="badge" [class.active]="viewingMember.lgpd" [class.inactive]="!viewingMember.lgpd">
+              {{ viewingMember.lgpd ? 'Sim' : 'Não' }}
+            </span>
+          </div>
+          @if (viewingMember.lgpdAceitoEm) {
+            <div class="detail-item">
+              <label>LGPD Aceito Em</label>
+              <span>{{ viewingMember.lgpdAceitoEm | date:'dd/MM/yyyy' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </app-modal>
 </div>

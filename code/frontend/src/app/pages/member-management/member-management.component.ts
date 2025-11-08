@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
+import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 
 @Component({
   selector: 'member-management',
   standalone: true,
   templateUrl: './member-management.html',
   styleUrl: './member-management.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent]
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe]
 })
 export class MemberManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
@@ -148,8 +149,9 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   viewMember(member: Member) {
-    this.viewingMember = member;
+    this.viewingMember = { ...member };
     this.showViewModal = true;
+    this.cdr.markForCheck();
   }
 
   closeViewModal() {
@@ -160,6 +162,49 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   editMember(member: Member) {
     this.closeViewModal();
     this.openMemberModal(member);
+  }
+
+  getViewModalButtons(): ModalButton[] {
+    if (!this.viewingMember) {
+      return [
+        {
+          label: 'Fechar',
+          type: 'secondary',
+          action: () => this.closeViewModal()
+        }
+      ];
+    }
+    return [
+      {
+        label: 'Fechar',
+        type: 'secondary',
+        action: () => this.closeViewModal()
+      },
+      {
+        label: 'Editar Membro',
+        type: 'primary',
+        action: () => {
+          if (this.viewingMember) {
+            this.editMember(this.viewingMember);
+          }
+        }
+      }
+    ];
+  }
+
+  getEditModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Cancelar',
+        type: 'secondary',
+        action: () => this.closeMemberModal()
+      },
+      {
+        label: 'Salvar Alterações',
+        type: 'primary',
+        action: () => this.saveMember()
+      }
+    ];
   }
 
   saveMember() {

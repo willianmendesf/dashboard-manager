@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 
 @Component({
   selector: 'app-messages',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   template: `
     <div class="page-container">
       <div class="page-header">
@@ -229,38 +230,43 @@ import { FormsModule } from '@angular/forms';
       </div>
 
       <!-- Preview Modal -->
-      <div class="modal-overlay" *ngIf="showPreview" (click)="closePreview()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Visualização da Mensagem</h3>
-            <button class="btn-close" (click)="closePreview()">×</button>
-          </div>
-          <div class="modal-body">
-            <div class="preview-message">
-              <div class="preview-field">
-                <strong>Tipo:</strong> {{ getMessageTypeText(newMessage.type) }}
-              </div>
-              <div class="preview-field">
-                <strong>Para:</strong> {{ newMessage.recipients }}
-              </div>
-              <div class="preview-field" *ngIf="newMessage.subject">
-                <strong>Assunto:</strong> {{ newMessage.subject }}
-              </div>
-              <div class="preview-field">
-                <strong>Mensagem:</strong>
-                <div class="preview-content">{{ newMessage.content }}</div>
-              </div>
-              <div class="preview-field" *ngIf="newMessage.sendOption !== 'now'">
-                <strong>Agendamento:</strong> {{ getSchedulingText() }}
-              </div>
+      <app-modal
+        [title]="'Visualização da Mensagem'"
+        [isOpen]="showPreview"
+        [size]="'medium'"
+        [footerButtons]="getPreviewModalButtons()"
+        (close)="closePreview()">
+        
+        <div class="detail-section">
+          <h4 class="section-title">Informações da Mensagem</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Tipo</label>
+              <span>{{ getMessageTypeText(newMessage.type) }}</span>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" (click)="closePreview()">Fechar</button>
-            <button class="btn-primary" (click)="confirmSchedule()">Confirmar Agendamento</button>
+            <div class="detail-item full-width">
+              <label>Para</label>
+              <span>{{ newMessage.recipients }}</span>
+            </div>
+            @if (newMessage.subject) {
+              <div class="detail-item full-width">
+                <label>Assunto</label>
+                <span>{{ newMessage.subject }}</span>
+              </div>
+            }
+            <div class="detail-item full-width">
+              <label>Mensagem</label>
+              <span class="message-text">{{ newMessage.content }}</span>
+            </div>
+            @if (newMessage.sendOption !== 'now') {
+              <div class="detail-item">
+                <label>Agendamento</label>
+                <span>{{ getSchedulingText() }}</span>
+              </div>
+            }
           </div>
         </div>
-      </div>
+      </app-modal>
     </div>
   `,
   styles: [`
@@ -743,6 +749,75 @@ import { FormsModule } from '@angular/forms';
       white-space: pre-wrap;
       font-size: 14px;
       color: #1F2937;
+    }
+
+    .detail-section {
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .detail-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-title {
+      margin: 0 0 20px 0;
+      color: #1F2937;
+      font-size: 18px;
+      font-weight: 600;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #3B82F6;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      width: 100%;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    @media (max-width: 768px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .detail-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .detail-item label {
+      color: #6B7280;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-item span {
+      color: #1F2937;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message-text {
+      background: #F9FAFB;
+      padding: 12px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      display: block;
     }
 
     .modal-footer {
