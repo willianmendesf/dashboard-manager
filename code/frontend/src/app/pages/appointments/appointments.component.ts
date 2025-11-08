@@ -215,7 +215,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   edit(appointment: Appointment) {
     this.closeViewModal();
+    // Garantir que o schedule existe antes de abrir o modal
+    if (!appointment.schedule) {
+      appointment.schedule = '0 0 * * *';
+    }
     this.openAppointmentModal(appointment);
+    // Forçar detecção de mudanças após abrir o modal
+    setTimeout(() => {
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   deleteItem(appointment: Appointment) {

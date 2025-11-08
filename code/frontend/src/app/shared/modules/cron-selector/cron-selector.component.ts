@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
     styleUrl: './cron-selector.component.scss',
     imports: [CommonModule, FormsModule]
 })
-export class CronSelectorComponent implements OnInit {
+export class CronSelectorComponent implements OnInit, OnChanges {
     @Input() currentAppointment: { schedule: string } = { schedule: '0 0 * * *' };
     @Output() currentAppointmentChange = new EventEmitter<{ schedule: string }>();
 
@@ -44,8 +44,18 @@ export class CronSelectorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.parseCronString(this.currentAppointment.schedule);
-        this.updateCronString();
+        if (this.currentAppointment?.schedule) {
+            this.parseCronString(this.currentAppointment.schedule);
+        }
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['currentAppointment'] && changes['currentAppointment'].currentValue) {
+            const schedule = changes['currentAppointment'].currentValue.schedule;
+            if (schedule) {
+                this.parseCronString(schedule);
+            }
+        }
     }
 
     public updateCronString(): void {
@@ -56,22 +66,69 @@ export class CronSelectorComponent implements OnInit {
     }
 
     private parseCronString(cron: string): void {
-        const parts = cron.split(' ');
+        if (!cron || !cron.trim()) {
+            return;
+        }
+
+        const parts = cron.trim().split(/\s+/);
+        
         if (parts.length >= 6) { 
-            this.cronFields.segundos = parts[0];
-            this.cronFields.minutos = parts[1];
-            this.cronFields.horas = parts[2];
-            this.cronFields.diaDoMes = parts[3];
-            this.cronFields.mes = parts[4];
-            this.cronFields.diaDaSemana = parts[5];
+            this.setCronField('segundos', parts[0], this.segundoOptions);
+            this.setCronField('minutos', parts[1], this.minutoOptions);
+            this.setCronField('horas', parts[2], this.horaOptions);
+            this.setCronField('diaDoMes', parts[3], this.diaDoMesOptions);
+            this.setCronField('mes', parts[4], this.mesOptions);
+            this.setCronField('diaDaSemana', parts[5], this.diaDaSemanaOptions.map(d => d.value));
         }
         else if (parts.length === 5) {
             this.cronFields.segundos = '0';
-            this.cronFields.minutos = parts[0];
-            this.cronFields.horas = parts[1];
-            this.cronFields.diaDoMes = parts[2];
-            this.cronFields.mes = parts[3];
-            this.cronFields.diaDaSemana = parts[4];
+            this.setCronField('minutos', parts[0], this.minutoOptions);
+            this.setCronField('horas', parts[1], this.horaOptions);
+            this.setCronField('diaDoMes', parts[2], this.diaDoMesOptions);
+            this.setCronField('mes', parts[3], this.mesOptions);
+            this.setCronField('diaDaSemana', parts[4], this.diaDaSemanaOptions.map(d => d.value));
+        }
+    }
+
+    private setCronField(fieldName: keyof typeof this.cronFields, value: string, options: (string | number)[]): void {
+        const stringValue = String(value);
+        const stringOptions = options.map(opt => String(opt));
+        
+        // Se o valor existe nas opções, usa ele
+        if (stringOptions.includes(stringValue)) {
+            this.cronFields[fieldName] = stringValue;
+        } else {
+            // Se não existe, adiciona às opções e usa
+            if (fieldName === 'diaDaSemana') {
+                // Para dia da semana, adiciona como opção especial
+                const diaDaSemanaOptions = this.diaDaSemanaOptions as { value: string, label: string }[];
+                if (!diaDaSemanaOptions.find(d => d.value === stringValue)) {
+                    diaDaSemanaOptions.push({ value: stringValue, label: stringValue });
+                }
+            } else {
+                // Para outros campos, adiciona à lista de opções
+                const optionsArray = this.getOptionsArray(fieldName);
+                if (!optionsArray.includes(stringValue)) {
+                    optionsArray.push(stringValue);
+                    optionsArray.sort((a, b) => {
+                        if (a === '*') return -1;
+                        if (b === '*') return 1;
+                        return a.localeCompare(b);
+                    });
+                }
+            }
+            this.cronFields[fieldName] = stringValue;
+        }
+    }
+
+    private getOptionsArray(fieldName: string): string[] {
+        switch (fieldName) {
+            case 'segundos': return this.segundoOptions;
+            case 'minutos': return this.minutoOptions;
+            case 'horas': return this.horaOptions;
+            case 'diaDoMes': return this.diaDoMesOptions.map(d => String(d));
+            case 'mes': return this.mesOptions.map(m => String(m));
+            default: return [];
         }
     }
 }
