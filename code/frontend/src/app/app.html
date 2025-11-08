@@ -3,7 +3,14 @@
   <div class="sidebar-overlay" (click)="sidebar.close()"></div>
 }
 @if (isMobile()) {
-  <button class="menu-toggle" (click)="sidebar.toggle()">☰</button>
+  <nav class="mobile-navbar">
+    <div class="navbar-logo">
+      <img src="./img/logo.png" alt="Logo" />
+    </div>
+    <button class="navbar-menu-btn" (click)="sidebar.toggle()" [attr.aria-label]="'Menu'">
+      <span class="menu-icon">☰</span>
+    </button>
+  </nav>
 }
 <main class="main-content">
   <router-outlet></router-outlet>
