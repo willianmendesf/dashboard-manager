@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ApiService } from '../../shared/service/api.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Appointment } from './model/appointment.model';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { FormsModule } from '@angular/forms';
 import { CronSelectorComponent } from '../../shared/modules/cron-selector/cron-selector.component';
 import { ImageUploadComponent } from "../../shared/modules/image-upload/image-upload.component";
+import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { environment } from '../../../environments/environment';
 export interface ChecklistItem {
   id: number;
@@ -18,7 +19,7 @@ export interface ChecklistItem {
   standalone: true,
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent, ImageUploadComponent]
+  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent, ImageUploadComponent, ModalComponent, DatePipe]
 })
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
@@ -155,9 +156,61 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.currentAppointment = {};
   }
 
+  getViewModalButtons(): ModalButton[] {
+    if (!this.viewingAppointment) {
+      return [
+        {
+          label: 'Fechar',
+          type: 'secondary',
+          action: () => this.closeViewModal()
+        }
+      ];
+    }
+    return [
+      {
+        label: 'Fechar',
+        type: 'secondary',
+        action: () => this.closeViewModal()
+      },
+      {
+        label: 'Editar Agendamento',
+        type: 'primary',
+        action: () => {
+          if (this.viewingAppointment) {
+            this.edit(this.viewingAppointment);
+          }
+        }
+      }
+    ];
+  }
+
+  getEditModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Cancelar',
+        type: 'secondary',
+        action: () => this.closeModal()
+      },
+      {
+        label: 'Salvar Alterações',
+        type: 'primary',
+        action: () => this.save()
+      }
+    ];
+  }
+
   view(appointment: Appointment) {
-    this.viewingAppointment = appointment;
+    this.viewingAppointment = { ...appointment };
     this.showViewModal = true;
+    this.cdr.markForCheck();
+  }
+
+  toString(value: any): string {
+    return String(value);
+  }
+
+  compareIds(id1: any, id2: any): boolean {
+    return String(id1) === String(id2);
   }
 
   edit(appointment: Appointment) {

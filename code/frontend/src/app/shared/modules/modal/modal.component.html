@@ -1,0 +1,39 @@
+@if (isOpen) {
+  <div class="modal-overlay" (click)="onOverlayClick()">
+    <div class="modal-content" [class]="sizeClass" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        @if (customHeaderTemplate) {
+          <ng-container *ngTemplateOutlet="customHeaderTemplate"></ng-container>
+        } @else {
+          <h3>{{ title }}</h3>
+        }
+        @if (showCloseButton) {
+          <button class="btn-close" (click)="closeModal()" aria-label="Fechar">×</button>
+        }
+      </div>
+
+      <div class="modal-body">
+        <ng-content></ng-content>
+      </div>
+
+      @if (footerButtons.length > 0 || customFooterTemplate) {
+        <div class="modal-footer">
+          @if (customFooterTemplate) {
+            <ng-container *ngTemplateOutlet="customFooterTemplate"></ng-container>
+          } @else {
+            @for (button of footerButtons; track button.label) {
+              <button
+                type="button"
+                [class]="'btn-' + (button.type || 'secondary')"
+                [disabled]="button.disabled"
+                (click)="onButtonClick(button)">
+                {{ button.label }}
+              </button>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+

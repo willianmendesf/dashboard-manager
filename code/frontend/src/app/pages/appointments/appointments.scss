@@ -562,8 +562,10 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .modal-content.view-modal {
@@ -614,6 +616,9 @@
   margin-bottom: 32px;
   padding-bottom: 24px;
   border-bottom: 1px solid #E5E7EB;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .form-section:last-child {
@@ -660,6 +665,15 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .detail-item {
@@ -791,12 +805,24 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group label {
@@ -807,6 +833,91 @@
 
 .form-group textarea {
   min-height: 200px;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.form-control {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+app-modal form {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+app-modal .modal-body {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+app-modal cron-selector {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  display: block;
+  overflow-x: hidden;
+}
+
+app-modal cron-selector .cron-parts {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow-x: hidden;
+}
+
+app-modal cron-selector .cron-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+app-modal cron-selector .cron-field.hms {
+  min-width: 70px;
+  flex: 0 1 72px;
+}
+
+app-modal cron-selector .cron-field.dms {
+  min-width: 110px;
+  flex: 0 1 120px;
+}
+
+app-modal cron-selector .cron-field > select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  app-modal cron-selector .cron-parts {
+    flex-direction: column;
+  }
+  
+  app-modal cron-selector .cron-field,
+  app-modal cron-selector .cron-field.hms,
+  app-modal cron-selector .cron-field.dms {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+    margin: 0;
+  }
+}
+
+app-modal select,
+app-modal input,
+app-modal textarea {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group .info {
