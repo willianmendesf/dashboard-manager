@@ -1,22 +1,67 @@
 .cron-parts {
   display: flex;
+  width: 100%;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cron-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cron-field > label {
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
 .cron-field > select {
   width: 100%;
+  padding: 10px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cron-field > select:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .cron-field.hms {
-  width: 72px;
-}
-
-.cron-field.hms > select {
-  width: 50px;
+  flex: 1 1 0;
+  min-width: 100px;
 }
 
 .cron-field.dms {
-  width: 120px;
-  margin: 0px 2px;
+  flex: 1 1 0;
+  min-width: 140px;
+}
+
+@media (max-width: 768px) {
+  .cron-parts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  
+  .cron-field,
+  .cron-field.hms,
+  .cron-field.dms {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+    margin: 0;
+  }
 }
 
 .page-container {

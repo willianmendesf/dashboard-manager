@@ -872,7 +872,7 @@ app-modal cron-selector .cron-parts {
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
   overflow-x: hidden;
 }
 
@@ -880,16 +880,19 @@ app-modal cron-selector .cron-field {
   flex: 1 1 auto;
   min-width: 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 app-modal cron-selector .cron-field.hms {
-  min-width: 70px;
-  flex: 0 1 72px;
+  flex: 1 1 0;
+  min-width: 100px;
 }
 
 app-modal cron-selector .cron-field.dms {
-  min-width: 110px;
-  flex: 0 1 120px;
+  flex: 1 1 0;
+  min-width: 140px;
 }
 
 app-modal cron-selector .cron-field > select {
@@ -900,7 +903,9 @@ app-modal cron-selector .cron-field > select {
 
 @media (max-width: 768px) {
   app-modal cron-selector .cron-parts {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
   }
   
   app-modal cron-selector .cron-field,
