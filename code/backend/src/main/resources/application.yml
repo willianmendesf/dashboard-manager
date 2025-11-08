@@ -32,6 +32,10 @@ scheduler:
       minutes: ${MAX_BACKLOG_MINUTES}
   cron:
     scheduleTimeLoad: ${LOAD_SCHEDULE}
+  catchup:
+    recurrence:
+      threshold:
+        minutes: ${CATCHUP_RECURRENCE_THRESHOLD_MINUTES:60}
 
 file:
   images-dir: ${DIR_IMAGE}

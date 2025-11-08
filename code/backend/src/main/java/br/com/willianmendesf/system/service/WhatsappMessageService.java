@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -119,7 +122,18 @@ public class WhatsappMessageService {
         body.add("phone", message.getPhone());
         body.add("view_once", message.getView_once());
         body.add("compress", message.getCompress());
-        body.add(message.getMediaType().getDesc(), new FileSystemResource(uploadDir + "/" + message.getMedia()));
+        
+        // Usar Path para garantir compatibilidade entre sistemas (Windows/Linux/Docker)
+        Path imagePath = Paths.get(uploadDir).resolve(message.getMedia()).normalize().toAbsolutePath();
+        
+        // Validar se o arquivo existe
+        if (!Files.exists(imagePath)) {
+            log.error("Image file not found: {}", imagePath);
+            throw new IllegalArgumentException("Image file not found: " + imagePath);
+        }
+        
+        log.info("Sending media file from path: {}", imagePath);
+        body.add(message.getMediaType().getDesc(), new FileSystemResource(imagePath.toFile()));
 
         return body;
     }

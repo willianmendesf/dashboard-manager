@@ -28,7 +28,7 @@ public class AppointmentSchedulerConfig {
 
     @PostConstruct
     public void init() {
-        log.info("Starting appointment scheduled");
-        schedulerService.loadAppointmentsToCache();
+        log.info("Starting appointment scheduled - executing intelligent catch-up");
+        schedulerService.loadAppointmentsToCache(true);
     }
 }

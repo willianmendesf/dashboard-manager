@@ -19,6 +19,7 @@ import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -40,28 +41,268 @@ public class AppointmentSchedulerService {
     @Value("${scheduler.max.backlog.minutes:5}")
     private int maxBacklogMinutes;
 
+    // Limiar de recorrência para catch-up (em minutos) - agendamentos com recorrência maior que este valor serão reenviados
+    @Value("${scheduler.catchup.recurrence.threshold.minutes:60}")
+    private int catchupRecurrenceThresholdMinutes;
+
     /**
      * Carrega todos os agendamentos ativos para o cache
      * Atualiza a última execução para evitar processamento de agendamentos antigos
+     * @param isStartup Indica se é a inicialização da aplicação (para executar catch-up)
      */
-    public void loadAppointmentsToCache() {
-        log.info("Loading all appointments to cache");
+    public void loadAppointmentsToCache(boolean isStartup) {
+        log.info("Loading all appointments to cache (startup: {})", isStartup);
         List<AppointmentEntity> activeAppointments = appointmentsRepository.findByEnabledTrue();
 
-        // Atualizar a última execução para agendamentos antigos
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(maxBacklogMinutes);
+        // Se for inicialização, processar catch-up inteligente antes de carregar no cache
+        if (isStartup) {
+            log.info("Processing intelligent catch-up for missed appointments during downtime");
+            processIntelligentCatchUp(activeAppointments);
+        } else {
+            // Atualizar a última execução para agendamentos antigos (comportamento normal)
+            LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(maxBacklogMinutes);
 
-        activeAppointments.forEach(appointment -> {
-            if (appointment.getLastExecution() == null ||
-                    appointment.getLastExecution().toLocalDateTime().isBefore(cutoffTime)) {
-                // Definir a última execução como o tempo de corte para evitar execuções antigas
-                appointment.setLastExecution(Timestamp.valueOf(cutoffTime));
-                appointmentsRepository.save(appointment);
-            }
-        });
+            activeAppointments.forEach(appointment -> {
+                if (appointment.getLastExecution() == null ||
+                        appointment.getLastExecution().toLocalDateTime().isBefore(cutoffTime)) {
+                    // Definir a última execução como o tempo de corte para evitar execuções antigas
+                    appointment.setLastExecution(Timestamp.valueOf(cutoffTime));
+                    appointmentsRepository.save(appointment);
+                }
+            });
+        }
 
         appointmentCache.loadAppointments(activeAppointments);
         log.info("Loaded {} appointments to cache", activeAppointments.size());
+    }
+
+    /**
+     * Sobrecarga do método para manter compatibilidade (assume que não é startup)
+     */
+    public void loadAppointmentsToCache() {
+        loadAppointmentsToCache(false);
+    }
+
+    /**
+     * Processa catch-up inteligente para agendamentos perdidos durante o downtime
+     * Aplica a regra: reenvia apenas agendamentos com recorrência > limiar (padrão: 1 hora)
+     */
+    private void processIntelligentCatchUp(List<AppointmentEntity> appointments) {
+        LocalDateTime now = LocalDateTime.now();
+        int processedCount = 0;
+        int executedCount = 0;
+        int skippedCount = 0;
+
+        for (AppointmentEntity appointment : appointments) {
+            if (!Boolean.TRUE.equals(appointment.getEnabled())) {
+                continue;
+            }
+
+            try {
+                // Calcular período de downtime
+                LocalDateTime lastExecution = appointment.getLastExecution() != null ?
+                        appointment.getLastExecution().toLocalDateTime() : null;
+
+                // Se nunca foi executado, usar um período máximo razoável (ex: 24 horas atrás)
+                LocalDateTime downtimeStart = lastExecution != null ?
+                        lastExecution : now.minusHours(24);
+
+                // Não processar se a última execução foi muito recente (menos de 1 minuto)
+                if (lastExecution != null && Duration.between(lastExecution, now).toMinutes() < 1) {
+                    continue;
+                }
+
+                // Calcular recorrência mínima do cron
+                int minRecurrenceMinutes = calculateMinRecurrenceMinutes(appointment.getSchedule());
+
+                // Se a recorrência for menor ou igual ao limiar, ignorar agendamentos perdidos
+                if (minRecurrenceMinutes <= catchupRecurrenceThresholdMinutes) {
+                    log.debug("Skipping catch-up for appointment {} (recurrence: {} min <= threshold: {} min)",
+                            appointment.getName(), minRecurrenceMinutes, catchupRecurrenceThresholdMinutes);
+                    skippedCount++;
+                    continue;
+                }
+
+                // Encontrar execuções perdidas no período de downtime
+                List<LocalDateTime> missedExecutions = findMissedExecutions(
+                        appointment, downtimeStart, now);
+
+                // Executar apenas as que não foram executadas anteriormente
+                for (LocalDateTime missedTime : missedExecutions) {
+                    // Verificar se já foi executado
+                    boolean alreadyExecuted = executionRepository.existsByAppointmentIdAndScheduledTime(
+                            appointment.getId(), missedTime);
+
+                    if (!alreadyExecuted) {
+                        log.info("Executing missed appointment: {} (scheduled: {}, recurrence: {} min)",
+                                appointment.getName(), missedTime, minRecurrenceMinutes);
+                        executeAppointmentAtTime(appointment, missedTime);
+                        executedCount++;
+                    } else {
+                        log.debug("Skipping already executed appointment: {} at {}", appointment.getName(), missedTime);
+                    }
+                }
+
+                processedCount++;
+            } catch (Exception e) {
+                log.error("Error processing catch-up for appointment {}: {}", appointment.getId(), e.getMessage(), e);
+            }
+        }
+
+        log.info("Catch-up completed: processed={}, executed={}, skipped={}", processedCount, executedCount, skippedCount);
+    }
+
+    /**
+     * Calcula a recorrência mínima (em minutos) de uma expressão cron
+     * Retorna o menor intervalo possível entre duas execuções consecutivas
+     */
+    private int calculateMinRecurrenceMinutes(String cronExpression) {
+        try {
+            CronExpression cron = CronExpression.parse(cronExpression);
+            LocalDateTime baseTime = LocalDateTime.now();
+
+            // Encontrar a próxima execução
+            LocalDateTime next1 = cron.next(baseTime);
+            if (next1 == null) {
+                return Integer.MAX_VALUE; // Não há próxima execução
+            }
+
+            // Encontrar a execução após a próxima
+            LocalDateTime next2 = cron.next(next1);
+            if (next2 == null) {
+                return Integer.MAX_VALUE;
+            }
+
+            // Calcular diferença em minutos
+            long minutes = Duration.between(next1, next2).toMinutes();
+            return (int) Math.max(1, minutes); // Mínimo 1 minuto
+        } catch (Exception e) {
+            log.error("Error calculating recurrence for cron {}: {}", cronExpression, e.getMessage());
+            return Integer.MAX_VALUE; // Em caso de erro, assumir recorrência muito alta (não executar)
+        }
+    }
+
+    /**
+     * Encontra todas as execuções perdidas no período de downtime
+     */
+    private List<LocalDateTime> findMissedExecutions(AppointmentEntity appointment,
+                                                      LocalDateTime downtimeStart,
+                                                      LocalDateTime now) {
+        List<LocalDateTime> missedExecutions = new java.util.ArrayList<>();
+
+        try {
+            CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
+            LocalDateTime current = downtimeStart;
+
+            // Encontrar a primeira execução após o início do downtime
+            LocalDateTime nextExecution = cronExpression.next(current);
+            if (nextExecution == null) {
+                return missedExecutions;
+            }
+
+            // Coletar todas as execuções até agora
+            while (nextExecution != null && !nextExecution.isAfter(now)) {
+                // Verificar se está dentro do período válido do agendamento
+                if (isWithinValidPeriod(appointment, nextExecution)) {
+                    missedExecutions.add(nextExecution);
+                }
+                nextExecution = cronExpression.next(nextExecution);
+            }
+        } catch (Exception e) {
+            log.error("Error finding missed executions for appointment {}: {}", appointment.getId(), e.getMessage(), e);
+        }
+
+        return missedExecutions;
+    }
+
+    /**
+     * Verifica se uma data está dentro do período válido do agendamento
+     */
+    private boolean isWithinValidPeriod(AppointmentEntity appointment, LocalDateTime dateTime) {
+        LocalDate date = dateTime.toLocalDate();
+
+        // Verificar data de início
+        if (!isNull(appointment.getStartDate()) && !appointment.getStartDate().isEmpty()) {
+            LocalDate startDate = LocalDate.parse(appointment.getStartDate());
+            if (date.isBefore(startDate)) {
+                return false;
+            }
+        }
+
+        // Verificar data de fim
+        if (!isNull(appointment.getEndDate()) && !appointment.getEndDate().isEmpty()) {
+            LocalDate endDate = LocalDate.parse(appointment.getEndDate());
+            if (date.isAfter(endDate)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Executa um agendamento em um horário específico (para catch-up)
+     */
+    private void executeAppointmentAtTime(AppointmentEntity appointment, LocalDateTime scheduledTime) {
+        log.info("Executing catch-up appointment: {} at scheduled time: {}", appointment.getName(), scheduledTime);
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            // Criar registro de execução
+            AppointmentExecution execution = new AppointmentExecution();
+            execution.setAppointmentId(appointment.getId());
+            execution.setScheduledTime(scheduledTime);
+            execution.setExecutionTime(now);
+
+            // Executar a tarefa conforme o tipo
+            switch (appointment.getTaskType()) {
+                case WHATSAPP_MESSAGE:
+                    executeWhatsAppMessage(appointment);
+                    executeMonitoringMessage(appointment);
+                    break;
+                case API_CALL:
+                    executeApiCall(appointment);
+                    executeMonitoringMessage(appointment);
+                    break;
+                default:
+                    log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
+                    break;
+            }
+
+            // Atualizar status de sucesso
+            appointment.setLastExecution(Timestamp.valueOf(now));
+            appointment.setLastStatus(TaskStatus.SUCCESS);
+            execution.setStatus(TaskStatus.SUCCESS);
+
+            // Salvar registros
+            appointmentsRepository.save(appointment);
+            executionRepository.save(execution);
+            appointmentCache.updateCacheAppointment(appointment);
+
+            log.info("Successfully executed catch-up appointment: {} at {}", appointment.getName(), scheduledTime);
+
+        } catch (Exception e) {
+            log.error("Error executing catch-up appointment {} at {}: {}", appointment.getId(), scheduledTime, e.getMessage(), e);
+
+            // Atualizar status em caso de erro
+            appointment.setLastExecution(Timestamp.valueOf(now));
+            appointment.setLastStatus(TaskStatus.FAILURE);
+
+            // Criar registro de execução com falha
+            try {
+                AppointmentExecution execution = new AppointmentExecution();
+                execution.setAppointmentId(appointment.getId());
+                execution.setScheduledTime(scheduledTime);
+                execution.setExecutionTime(now);
+                execution.setStatus(TaskStatus.FAILURE);
+                executionRepository.save(execution);
+            } catch (Exception ex) {
+                log.error("Erro ao registrar falha de execução: {}", ex.getMessage(), ex);
+            }
+
+            appointmentsRepository.save(appointment);
+            appointmentCache.updateCacheAppointment(appointment);
+        }
     }
 
     public void checkAndExecuteScheduledAppointments() {

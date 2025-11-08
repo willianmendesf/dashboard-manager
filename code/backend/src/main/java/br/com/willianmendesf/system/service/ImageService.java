@@ -26,7 +26,9 @@ public class ImageService {
     public String uploadImage(MultipartFile file) {
         log.info("Uploading file: {}", file.getOriginalFilename());
         try {
-            Path uploadPath = Paths.get(uploadDir);
+            // Normalizar e tornar o caminho absoluto para garantir compatibilidade Docker/Local
+            Path uploadPath = Paths.get(uploadDir).normalize().toAbsolutePath();
+            log.info("Upload directory: {}", uploadPath);
 
             if (Files.notExists(uploadPath)) {
                 Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
@@ -59,11 +61,27 @@ public class ImageService {
     public Resource getImage(String filename) {
         log.info("Retrieving file: {}", filename);
         try {
-            Path filepath = Paths.get(uploadDir, filename);
-            if (!Files.exists(filepath)) throw new ImageException("Image not found: " + filename, null);
-            log.info("File retrieved successfully: {}", filename);
+            // Normalizar e tornar o caminho absoluto para garantir compatibilidade Docker/Local
+            Path uploadPath = Paths.get(uploadDir).normalize().toAbsolutePath();
+            Path filepath = uploadPath.resolve(filename).normalize();
+            
+            // Validação de segurança: garantir que o arquivo está dentro do diretório de upload
+            if (!filepath.startsWith(uploadPath)) {
+                log.error("Security violation: Attempted to access file outside upload directory: {}", filepath);
+                throw new ImageException("Invalid file path: " + filename, null);
+            }
+            
+            if (!Files.exists(filepath)) {
+                log.error("Image file not found: {}", filepath);
+                throw new ImageException("Image not found: " + filename, null);
+            }
+            
+            log.info("File retrieved successfully from path: {}", filepath);
             return new UrlResource(filepath.toUri());
+        } catch (ImageException e) {
+            throw e;
         } catch (Exception e) {
+            log.error("Error retrieving image {}: {}", filename, e.getMessage(), e);
             throw new ImageException("Error to get image", e);
         }
     }
