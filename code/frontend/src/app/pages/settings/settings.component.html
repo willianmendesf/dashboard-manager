@@ -1,15 +1,125 @@
 <div class="page-container">
-  <pagetitle
-    title="Configurações"
-    subtitle="Gerencie as configurações globais do sistema"
-  ></pagetitle>
+  <div class="page-header">
+    <div>
+      <h1>Configurações</h1>
+      <p>Gerencie as configurações globais do sistema</p>
+    </div>
+    <div class="actions-bar">
+      <button 
+        type="button" 
+        class="btn-secondary" 
+        (click)="cancelChanges()"
+        [disabled]="saving"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="button" 
+        class="btn-primary" 
+        (click)="saveSettings()"
+        [disabled]="saving || settingsForm.invalid"
+      >
+        <span *ngIf="!saving">Salvar Alterações</span>
+        <span *ngIf="saving">Salvando...</span>
+      </button>
+    </div>
+  </div>
 
   <ng-container *ngIf="configurations$ | async as configurations; else loading">
   <form [formGroup]="settingsForm">
-    <div class="settings-grid">
-      <!-- Seção Aparência -->
-      <div class="settings-section">
-        <h2>Aparência</h2>
+    <div class="settings-layout">
+      <!-- Lado Esquerdo: Sistema em 3 colunas -->
+      <div class="settings-left">
+        <!-- Seção Sistema -->
+        <div class="settings-section system-section">
+          <h2>Sistema</h2>
+          <div class="system-grid">
+            <!-- Coluna 1: Gerenciamento de Jobs -->
+            <div class="system-column">
+              <h3>Gerenciamento de Jobs</h3>
+              
+              <div class="setting-item">
+                <label>Recorrência - Relatórios Semanais</label>
+                <cron-selector [(currentAppointment)]="jobWeeklyReports"></cron-selector>
+              </div>
+
+              <div class="setting-item">
+                <label>Recorrência - Sincronização de Dados</label>
+                <cron-selector [(currentAppointment)]="jobDataSync"></cron-selector>
+              </div>
+
+              <div class="setting-item">
+                <label>Recorrência - Carregamento de Agendamentos</label>
+                <cron-selector [(currentAppointment)]="jobLoadAppointments"></cron-selector>
+              </div>
+            </div>
+
+            <!-- Coluna 2: Configurações de API e Outras Configurações -->
+            <div class="system-column">
+              <h3>Configurações de API</h3>
+              
+              <div class="setting-item">
+                <label>Chave API - Serviço Externo 1</label>
+                <input 
+                  type="password" 
+                  formControlName="apiKeyExternalService1"
+                  placeholder="Digite a chave de API"
+                  autocomplete="off"
+                />
+                <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
+              </div>
+
+              <div class="setting-item">
+                <label>Chave API - Serviço Externo 2</label>
+                <input 
+                  type="password" 
+                  formControlName="apiKeyExternalService2"
+                  placeholder="Digite a chave de API"
+                  autocomplete="off"
+                />
+                <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
+              </div>
+
+              <div class="setting-item section-divider">
+                <h3 class="section-subtitle">Outras Configurações</h3>
+              </div>
+              
+              <div class="setting-item">
+                <label>Backup Automático</label>
+                <select>
+                  <option>Diário</option>
+                  <option>Semanal</option>
+                  <option>Mensal</option>
+                  <option>Desabilitado</option>
+                </select>
+              </div>
+              
+              <div class="setting-item">
+                <label>Retenção de Logs</label>
+                <select>
+                  <option>30 dias</option>
+                  <option>90 dias</option>
+                  <option>1 ano</option>
+                </select>
+              </div>
+              
+              <div class="setting-toggle">
+                <label>
+                  <input type="checkbox" checked />
+                  <span class="toggle-slider"></span>
+                  Coleta de dados de uso
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lado Direito: Aparência e Notificações -->
+      <div class="settings-right">
+        <!-- Seção Aparência -->
+        <div class="settings-section">
+          <h2>Aparência</h2>
         <div class="setting-group">
           <!-- Upload de Logo -->
           <div class="setting-item">
@@ -99,187 +209,69 @@
         </div>
       </div>
 
-      <!-- Seção Notificações -->
-      <div class="settings-section">
-        <h2>Notificações</h2>
-        <div class="setting-group">
-          <div class="setting-toggle">
-            <label>
-              <input 
-                type="checkbox" 
-                formControlName="notificationsEmail"
-              />
-              <span class="toggle-slider"></span>
-              Notificações por email
-            </label>
-          </div>
-          <div class="setting-toggle">
-            <label>
-              <input 
-                type="checkbox" 
-                formControlName="notificationsPush"
-              />
-              <span class="toggle-slider"></span>
-              Notificações push
-            </label>
-          </div>
-          
-          <!-- Toggle WhatsApp -->
-          <div class="setting-toggle">
-            <label>
-              <input 
-                type="checkbox" 
-                formControlName="notificationsWhatsApp"
-              />
-              <span class="toggle-slider"></span>
-              Notificações por WhatsApp
-            </label>
-          </div>
-
-          <!-- Sub-seleções WhatsApp -->
-          <div *ngIf="isWhatsAppEnabled" class="whatsapp-sub-options">
-            <div class="setting-toggle whatsapp-option">
+        <!-- Seção Notificações -->
+        <div class="settings-section">
+          <h2>Notificações</h2>
+          <div class="setting-group">
+            <div class="setting-toggle">
               <label>
                 <input 
                   type="checkbox" 
-                  formControlName="whatsAppWeeklyReports"
+                  formControlName="notificationsEmail"
                 />
                 <span class="toggle-slider"></span>
-                Relatórios semanais
+                Notificações por email
               </label>
             </div>
-            <div class="setting-toggle whatsapp-option">
+            <div class="setting-toggle">
               <label>
                 <input 
                   type="checkbox" 
-                  formControlName="whatsAppSecurityAlerts"
+                  formControlName="notificationsPush"
                 />
                 <span class="toggle-slider"></span>
-                Alertas de segurança
+                Notificações push
               </label>
+            </div>
+            
+            <!-- Toggle WhatsApp -->
+            <div class="setting-toggle">
+              <label>
+                <input 
+                  type="checkbox" 
+                  formControlName="notificationsWhatsApp"
+                />
+                <span class="toggle-slider"></span>
+                Notificações por WhatsApp
+              </label>
+            </div>
+
+            <!-- Sub-seleções WhatsApp -->
+            <div *ngIf="isWhatsAppEnabled" class="whatsapp-sub-options">
+              <div class="setting-toggle whatsapp-option">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    formControlName="whatsAppWeeklyReports"
+                  />
+                  <span class="toggle-slider"></span>
+                  Relatórios semanais
+                </label>
+              </div>
+              <div class="setting-toggle whatsapp-option">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    formControlName="whatsAppSecurityAlerts"
+                  />
+                  <span class="toggle-slider"></span>
+                  Alertas de segurança
+                </label>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Seção Sistema -->
-      <div class="settings-section">
-        <h2>Sistema</h2>
-        <div class="setting-group">
-          <!-- Gerenciamento de Jobs - Recorrências -->
-          <div class="setting-subsection">
-            <h3>Gerenciamento de Jobs</h3>
-            
-            <div class="setting-item">
-              <label>Recorrência - Relatórios Semanais</label>
-              <input 
-                type="text" 
-                formControlName="jobRecurrenceWeeklyReports"
-                placeholder="0 9 * * 1"
-                title="Formato cron: minuto hora dia mês dia-semana (ex: 0 9 * * 1 = Segunda às 9h)"
-              />
-              <small class="field-hint">Formato cron: 0 9 * * 1 (Segunda-feira às 9h)</small>
-            </div>
-
-            <div class="setting-item">
-              <label>Recorrência - Sincronização de Dados</label>
-              <input 
-                type="text" 
-                formControlName="jobRecurrenceDataSync"
-                placeholder="*/30 * * * *"
-                title="Formato cron: */30 * * * * (A cada 30 minutos)"
-              />
-              <small class="field-hint">Formato cron: */30 * * * * (A cada 30 minutos)</small>
-            </div>
-
-            <div class="setting-item">
-              <label>Recorrência - Carregamento de Agendamentos</label>
-              <input 
-                type="text" 
-                formControlName="jobRecurrenceLoadAppointments"
-                placeholder="0 */5 * * * *"
-                title="Formato cron: 0 */5 * * * * (A cada 5 minutos)"
-              />
-              <small class="field-hint">Formato cron: 0 */5 * * * * (A cada 5 minutos)</small>
-            </div>
-          </div>
-
-          <!-- Configurações de API -->
-          <div class="setting-subsection">
-            <h3>Configurações de API</h3>
-            
-            <div class="setting-item">
-              <label>Chave API - Serviço Externo 1</label>
-              <input 
-                type="password" 
-                formControlName="apiKeyExternalService1"
-                placeholder="Digite a chave de API"
-                autocomplete="off"
-              />
-              <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
-            </div>
-
-            <div class="setting-item">
-              <label>Chave API - Serviço Externo 2</label>
-              <input 
-                type="password" 
-                formControlName="apiKeyExternalService2"
-                placeholder="Digite a chave de API"
-                autocomplete="off"
-              />
-              <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
-            </div>
-          </div>
-
-          <!-- Outras configurações do sistema -->
-          <div class="setting-item">
-            <label>Backup Automático</label>
-            <select>
-              <option>Diário</option>
-              <option>Semanal</option>
-              <option>Mensal</option>
-              <option>Desabilitado</option>
-            </select>
-          </div>
-          <div class="setting-item">
-            <label>Retenção de Logs</label>
-            <select>
-              <option>30 dias</option>
-              <option>90 dias</option>
-              <option>1 ano</option>
-            </select>
-          </div>
-          <div class="setting-toggle">
-            <label>
-              <input type="checkbox" checked />
-              <span class="toggle-slider"></span>
-              Coleta de dados de uso
-            </label>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Footer com botões de ação -->
-    <div class="settings-footer">
-      <button 
-        type="button" 
-        class="btn-primary" 
-        (click)="saveSettings()"
-        [disabled]="saving || settingsForm.invalid"
-      >
-        <span *ngIf="!saving">Salvar Alterações</span>
-        <span *ngIf="saving">Salvando...</span>
-      </button>
-      <button 
-        type="button" 
-        class="btn-secondary" 
-        (click)="cancelChanges()"
-        [disabled]="saving"
-      >
-        Cancelar
-      </button>
     </div>
   </form>
   </ng-container>

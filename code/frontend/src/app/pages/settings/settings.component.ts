@@ -6,6 +6,7 @@ import { ApiService } from '../../shared/service/api.service';
 import { LogoUploadComponent } from '../../shared/modules/logo-upload/logo-upload.component';
 import { PageTitleComponent } from '../../shared/modules/pagetitle/pagetitle.component';
 import { IfHasPermissionDirective } from '../../shared/directives/if-has-permission.directive';
+import { CronSelectorComponent } from '../../shared/modules/cron-selector/cron-selector.component';
 import { environment } from '../../../environments/environment';
 import { timeout, catchError, of, Observable, tap } from 'rxjs';
 import { NotificationService } from '../../shared/services/notification.service';
@@ -13,7 +14,7 @@ import { NotificationService } from '../../shared/services/notification.service'
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LogoUploadComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LogoUploadComponent, PageTitleComponent, CronSelectorComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })
@@ -23,6 +24,11 @@ export class SettingsComponent implements OnInit {
   saving = false;
   logoUrl: string | null = null;
   apiUrl = environment.apiUrl;
+
+  // Objetos para os cron selectors (similar ao currentAppointment)
+  jobWeeklyReports = { schedule: '0 9 * * 1' };
+  jobDataSync = { schedule: '*/30 * * * *' };
+  jobLoadAppointments = { schedule: '0 */5 * * * *' };
 
   // Notification types for WhatsApp
   notificationTypes = [
@@ -115,6 +121,11 @@ export class SettingsComponent implements OnInit {
     const menuBackgroundColor = configMap.get('COR_FUNDO_MENU') || '#1F2937';
     const menuTextColor = configMap.get('COR_TEXTO_MENU') || '#FFFFFF';
     
+    // Atualizar objetos dos cron selectors
+    this.jobWeeklyReports.schedule = configMap.get('JOB_RECURRENCE_WEEKLY_REPORTS') || '0 9 * * 1';
+    this.jobDataSync.schedule = configMap.get('JOB_RECURRENCE_DATA_SYNC') || '*/30 * * * *';
+    this.jobLoadAppointments.schedule = configMap.get('JOB_RECURRENCE_LOAD_APPOINTMENTS') || '0 */5 * * * *';
+
     this.settingsForm.patchValue({
       logoUrl: this.logoUrl || '',
       primaryColor: primaryColor,
@@ -122,10 +133,10 @@ export class SettingsComponent implements OnInit {
       menuBackgroundColor: menuBackgroundColor,
       menuTextColor: menuTextColor,
       
-      // System - Job Recurrences
-      jobRecurrenceWeeklyReports: configMap.get('JOB_RECURRENCE_WEEKLY_REPORTS') || '0 9 * * 1',
-      jobRecurrenceDataSync: configMap.get('JOB_RECURRENCE_DATA_SYNC') || '*/30 * * * *',
-      jobRecurrenceLoadAppointments: configMap.get('JOB_RECURRENCE_LOAD_APPOINTMENTS') || '0 */5 * * * *',
+      // System - Job Recurrences (manter para compatibilidade com o form)
+      jobRecurrenceWeeklyReports: this.jobWeeklyReports.schedule,
+      jobRecurrenceDataSync: this.jobDataSync.schedule,
+      jobRecurrenceLoadAppointments: this.jobLoadAppointments.schedule,
       
       // System - API Keys (não carregamos valores reais por segurança)
       apiKeyExternalService1: configMap.get('API_KEY_EXTERNAL_SERVICE_1') ? '******' : '',
@@ -197,10 +208,10 @@ export class SettingsComponent implements OnInit {
       COR_FUNDO_MENU: formValue.menuBackgroundColor,
       COR_TEXTO_MENU: formValue.menuTextColor,
       
-      // System - Job Recurrences
-      JOB_RECURRENCE_WEEKLY_REPORTS: formValue.jobRecurrenceWeeklyReports,
-      JOB_RECURRENCE_DATA_SYNC: formValue.jobRecurrenceDataSync,
-      JOB_RECURRENCE_LOAD_APPOINTMENTS: formValue.jobRecurrenceLoadAppointments,
+      // System - Job Recurrences (usar os valores dos objetos cron)
+      JOB_RECURRENCE_WEEKLY_REPORTS: this.jobWeeklyReports.schedule,
+      JOB_RECURRENCE_DATA_SYNC: this.jobDataSync.schedule,
+      JOB_RECURRENCE_LOAD_APPOINTMENTS: this.jobLoadAppointments.schedule,
       
       // System - API Keys (só atualiza se não for ****** - senão mantém o valor atual)
       // NOTA: Em produção, você deve verificar se o valor mudou antes de atualizar

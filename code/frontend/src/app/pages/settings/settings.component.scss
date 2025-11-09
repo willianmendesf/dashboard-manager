@@ -1,6 +1,96 @@
 // .page-container está definido em shared/styles/layout.scss
 // O componente pagetitle já tem seus próprios estilos definidos
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px 0;
+  color: #1F2937;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.page-header p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 16px;
+}
+
+.actions-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-primary {
+  background: #3B82F6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #F3F4F6;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #E5E7EB;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 2fr 0.8fr;
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+.settings-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -11,8 +101,75 @@
 .settings-section {
   background: white;
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #E5E7EB;
+  transition: box-shadow 0.2s ease;
+}
+
+.settings-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.system-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 32px;
+  margin-top: 8px;
+}
+
+.system-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-right: 28px;
+  border-right: 1px solid #E5E7EB;
+}
+
+.system-column:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.system-column .setting-item {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.system-column .setting-item:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.setting-item.section-divider {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid #E5E7EB;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.section-subtitle {
+  margin: 0 0 16px 0;
+  color: #1F2937;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.system-column h3 {
+  margin: 0 0 20px 0;
+  color: #1F2937;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #E5E7EB;
 }
 
 .settings-section.danger-zone {
@@ -21,12 +178,13 @@
 }
 
 .settings-section h2 {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   color: #1F2937;
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 600;
   padding-bottom: 12px;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 2px solid #E5E7EB;
+  letter-spacing: -0.3px;
 }
 
 .danger-zone h2 {
@@ -36,28 +194,46 @@
 .setting-group {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
 }
 
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.setting-group > .setting-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .setting-item label {
-  color: #374151;
-  font-size: 14px;
-  font-weight: 500;
+  color: #1F2937;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
 }
 
 .setting-item input,
 .setting-item select {
-  padding: 12px;
+  padding: 10px 14px;
   border: 1px solid #D1D5DB;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 14px;
-  transition: border-color 0.3s ease;
+  transition: all 0.2s ease;
+  background: #FFFFFF;
+}
+
+.setting-item input:hover,
+.setting-item select:hover {
+  border-color: #9CA3AF;
 }
 
 .setting-item input:focus,
@@ -67,9 +243,90 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+// Estilos para o cron-selector dentro de setting-item
+.setting-item cron-selector {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  display: block;
+  overflow-x: hidden;
+}
+
+.setting-item cron-selector .cron-parts {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  overflow-x: hidden;
+}
+
+.setting-item cron-selector .cron-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setting-item cron-selector .cron-field.hms {
+  flex: 1 1 0;
+  min-width: 100px;
+}
+
+.setting-item cron-selector .cron-field.dms {
+  flex: 1 1 0;
+  min-width: 140px;
+}
+
+.setting-item cron-selector .cron-field > select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .setting-item cron-selector .cron-parts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  
+  .setting-item cron-selector .cron-field,
+  .setting-item cron-selector .cron-field.hms,
+  .setting-item cron-selector .cron-field.dms {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+    margin: 0;
+  }
+}
+
+.setting-item .setting-item {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .setting-toggle {
   display: flex;
   align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #F3F4F6;
+  transition: background-color 0.2s ease;
+  border-radius: 4px;
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.setting-toggle:hover {
+  background-color: #F9FAFB;
+}
+
+.setting-toggle:last-child {
+  border-bottom: none;
 }
 
 .setting-toggle label {
@@ -327,6 +584,24 @@
 }
 
 @media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .actions-bar {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .system-grid {
+    grid-template-columns: 1fr;
+  }
+
   .settings-grid {
     grid-template-columns: 1fr;
   }
