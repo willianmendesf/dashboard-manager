@@ -204,20 +204,26 @@ export class UserManagementComponent implements OnInit, OnDestroy {
               profileId: user.profileId
             });
             
-            return {
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              email: user.email,
-              role: profileName, // Usar profileName como role
-              status: user.enabled ? 'active' : 'inactive',
-              profileName: profileName, // Sempre ter um valor
-              profileId: user.profileId || null,
-              permissions: user.permissions || [],
-              fotoUrl: user.fotoUrl || null,
-              cpf: user.cpf || null,
-              telefone: user.telefone || null
-            };
+          // Adicionar timestamp à fotoUrl para cache busting se existir
+          let fotoUrl = user.fotoUrl || null;
+          if (fotoUrl && fotoUrl.trim() !== '') {
+            fotoUrl = fotoUrl + (fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+          }
+          
+          return {
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            role: profileName, // Usar profileName como role
+            status: user.enabled ? 'active' : 'inactive',
+            profileName: profileName, // Sempre ter um valor
+            profileId: user.profileId || null,
+            permissions: user.permissions || [],
+            fotoUrl: fotoUrl,
+            cpf: user.cpf || null,
+            telefone: user.telefone || null
+          };
           });
           this.filterUsers();
           this.getTableData(); // Garantir que tableData seja atualizado
@@ -335,13 +341,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         const loggedInUser = this.authService.getCurrentUser();
         if (loggedInUser && loggedInUser.id === user.id) {
           // Map backend response to LoginResponse format
+          // Adicionar timestamp à fotoUrl para cache busting
+          let fotoUrl = res.fotoUrl || null;
+          if (fotoUrl && fotoUrl.trim() !== '') {
+            fotoUrl = fotoUrl + (fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+          }
+          
           const updatedUserData: any = {
             id: res.id,
             username: res.username,
             email: res.email,
             name: res.name,
             profileName: res.profileName,
-            fotoUrl: res.fotoUrl,
+            fotoUrl: fotoUrl,
             permissions: res.permissions || loggedInUser.permissions || []
           };
           this.authService.updateUserCache(updatedUserData);
@@ -464,9 +476,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
     
     // Set photo preview - ensure fotoUrl is set on currentUser
+    // Adicionar timestamp para forçar atualização (cache busting)
     if (user?.fotoUrl && user.fotoUrl.trim() !== '') {
-      this.photoPreview = user.fotoUrl;
-      this.currentUser.fotoUrl = user.fotoUrl;
+      const fotoUrlWithTimestamp = user.fotoUrl + (user.fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+      this.photoPreview = fotoUrlWithTimestamp;
+      this.currentUser.fotoUrl = fotoUrlWithTimestamp;
     } else {
       this.photoPreview = null;
       this.currentUser.fotoUrl = null;
@@ -534,26 +548,57 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         throw new Error('Resposta inválida do servidor: fotoUrl não encontrada');
       }
       
-      // CRITICAL: Update current user in modal with the actual URL from backend
-      this.currentUser.fotoUrl = fotoUrl;
-      this.photoPreview = fotoUrl;
+      // Adicionar timestamp para forçar atualização da imagem (cache busting)
+      const fotoUrlWithTimestamp = fotoUrl + (fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
       
-      // Update user in local list immediately
+      // CRITICAL: Update current user in modal with the actual URL from backend
+      this.currentUser.fotoUrl = fotoUrlWithTimestamp;
+      
+      // Update user in local list immediately - criar nova referência do objeto
       const userIndex = this.users.findIndex(u => u.id === userId);
       if (userIndex !== -1) {
-        this.users[userIndex].fotoUrl = fotoUrl;
-        this.filterUsers(); // Refresh filtered list
+        // Atualizar o objeto completo para garantir que a referência mude
+        this.users[userIndex] = {
+          ...this.users[userIndex],
+          fotoUrl: fotoUrlWithTimestamp
+        };
       }
       
-      // Update viewing user if it's the same user
-      if (this.viewingUser && this.viewingUser.id === userId) {
-        this.viewingUser.fotoUrl = fotoUrl;
-      }
+      this.notificationService.showSuccess('Foto enviada com sucesso!');
       
-      this.cdr.detectChanges(); // Force change detection
-      
-      // Don't show success notification here - it will be shown after user update completes
-      // Success will be shown in updateUser's callback
+      // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+      // Atualizar photoPreview de forma assíncrona (igual na tela de membros)
+      setTimeout(() => {
+        this.photoPreview = fotoUrlWithTimestamp;
+        
+        // Atualizar viewingUser com nova referência se for o mesmo usuário
+        if (this.viewingUser && this.viewingUser.id === userId) {
+          this.viewingUser = {
+            ...this.viewingUser,
+            fotoUrl: fotoUrlWithTimestamp
+          };
+        }
+        
+        // Atualizar filteredUsers com a nova fotoUrl - criar nova referência do array
+        const filteredIndex = this.filteredUsers.findIndex(u => u.id === userId);
+        if (filteredIndex !== -1) {
+          // Criar nova referência do array filteredUsers para garantir detecção de mudanças
+          this.filteredUsers = this.filteredUsers.map((user, index) => {
+            if (index === filteredIndex) {
+              // Criar nova referência do objeto atualizado
+              return {
+                ...user,
+                fotoUrl: fotoUrlWithTimestamp
+              };
+            }
+            return user;
+          });
+        }
+        
+        // Forçar atualização da tabela recriando os dados (cria nova referência do array)
+        this.getTableData();
+        this.cdr.detectChanges(); // Usar detectChanges() em vez de markForCheck() para forçar atualização imediata
+      }, 0);
       
     } catch (error: any) {
       console.error('Error uploading photo:', error);
@@ -561,9 +606,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       this.notificationService.showError(errorMessage);
       throw error; // Re-throw to stop the save process
     } finally {
-      this.uploadingPhoto = false;
-      // Don't clear selectedPhotoFile here - keep it until save is complete
-      this.cdr.markForCheck();
+      // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+      setTimeout(() => {
+        this.uploadingPhoto = false;
+        this.selectedPhotoFile = null;
+        this.cdr.markForCheck();
+      }, 0);
     }
   }
 
@@ -615,7 +663,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       return this.tableData;
     }
     
-    this.tableData = this.filteredUsers.map(user => {
+    // Criar uma nova referência do array para evitar problemas de detecção de mudanças
+    const newTableData = this.filteredUsers.map(user => {
       // Garantir que sempre tenha um profileName/role válido
       const roleValue = (user.profileName && user.profileName.trim() !== '') 
         ? user.profileName 
@@ -634,9 +683,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     
     // Aplicar ordenação se houver
     if (this.currentSort) {
-      this.tableData.sort((a, b) => {
-        const aValue = a[this.currentSort!.column];
-        const bValue = b[this.currentSort!.column];
+      newTableData.sort((a, b) => {
+        const column = this.currentSort!.column;
+        const aValue = (a as any)[column];
+        const bValue = (b as any)[column];
         
         // Tratar valores nulos ou indefinidos
         if (aValue === null || aValue === undefined || aValue === '-') return 1;
@@ -661,6 +711,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       });
     }
     
+    // Atribuir a nova referência
+    this.tableData = newTableData;
     return this.tableData;
   }
   

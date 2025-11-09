@@ -83,7 +83,7 @@
           <div class="photo-upload-container">
             <div class="photo-preview">
               <img 
-                [src]="getPhotoUrl()"
+                [src]="photoPreview || 'img/avatar-default.png'"
                 alt="Foto do perfil"
                 class="avatar-preview"
                 onerror="this.src='img/avatar-default.png'"
