@@ -520,23 +520,54 @@ public class AppointmentSchedulerService {
 
     /**
      * Executa o envio de mensagens WhatsApp
+     * Valida se há destinatários antes de executar
      */
     private void executeWhatsAppMessage(AppointmentEntity appointment) {
-        if(appointment.getRecipientType() == RecipientType.INDIVIDUAL) {
-            log.info("Individual message start send!");
-            if(!isNull(appointment.getSendTo()) && !appointment.getSendTo().isEmpty()) {
-                sendMessages("individual", appointment, appointment.getSendTo());
-                log.info("Send message whatsApp to: {}", appointment.getSendTo());
-            } else throw new WhatsappMessageException("Individual List is empty!");
+        // Validar se há destinatários antes de executar
+        if (!hasValidRecipients(appointment)) {
+            log.warn("Appointment {} (ID: {}) does not have valid recipients. " +
+                    "RecipientType: {}, sendTo: {}, sendToGroups: {}. Skipping execution.",
+                    appointment.getName(), appointment.getId(),
+                    appointment.getRecipientType(),
+                    appointment.getSendTo(),
+                    appointment.getSendToGroups());
+            // Lançar exceção para que o agendamento seja marcado como falha e não seja re-executado
+            throw new WhatsappMessageException(
+                    String.format("No valid recipients found for appointment '%s' (ID: %d). " +
+                            "Please configure recipients before enabling this appointment.",
+                            appointment.getName(), appointment.getId()));
         }
 
-        if(appointment.getRecipientType() == RecipientType.GROUP) {
-            log.info("Group message start send!");
-            if(!isNull(appointment.getSendToGroups()) && !appointment.getSendToGroups().isEmpty()) {
-                sendMessages("group", appointment, appointment.getSendToGroups());
-                log.info("Send message whatsApp to GroupsList: {}", appointment.getSendToGroups());
-            } else throw new WhatsappMessageException("Groups List is empty!");
+        if(appointment.getRecipientType() == RecipientType.INDIVIDUAL) {
+            log.info("Individual message start send for appointment: {} (ID: {})", 
+                    appointment.getName(), appointment.getId());
+            sendMessages("individual", appointment, appointment.getSendTo());
+            log.info("Send message whatsApp to: {}", appointment.getSendTo());
+        } else if(appointment.getRecipientType() == RecipientType.GROUP) {
+            log.info("Group message start send for appointment: {} (ID: {})", 
+                    appointment.getName(), appointment.getId());
+            sendMessages("group", appointment, appointment.getSendToGroups());
+            log.info("Send message whatsApp to GroupsList: {}", appointment.getSendToGroups());
         }
+    }
+
+    /**
+     * Valida se o agendamento tem destinatários válidos configurados
+     */
+    private boolean hasValidRecipients(AppointmentEntity appointment) {
+        if (appointment.getRecipientType() == null) {
+            return false;
+        }
+
+        if (appointment.getRecipientType() == RecipientType.INDIVIDUAL) {
+            return !isNull(appointment.getSendTo()) && !appointment.getSendTo().isEmpty();
+        }
+
+        if (appointment.getRecipientType() == RecipientType.GROUP) {
+            return !isNull(appointment.getSendToGroups()) && !appointment.getSendToGroups().isEmpty();
+        }
+
+        return false;
     }
 
     /**

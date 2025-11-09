@@ -15,11 +15,14 @@ import { MyProfileComponent } from './pages/my-profile/my-profile.component';
 import { AuthGuard } from './shared/guards/auth.guard';
 import { PermissionGuard } from './shared/guards/permission.guard';
 
+import { AtualizarCadastroComponent } from './pages/atualizar-cadastro/atualizar-cadastro.component';
+
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'esqueci-senha', component: SolicitarResetComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
+  { path: 'atualizar-cadastro', component: AtualizarCadastroComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,

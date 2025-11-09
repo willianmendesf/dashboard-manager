@@ -1,0 +1,328 @@
+<div class="public-update-container">
+  <div class="public-update-card">
+    <div class="header">
+      <h1>Atualização Cadastral</h1>
+      <p class="subtitle">Atualize seus dados cadastrais informando seu CPF</p>
+    </div>
+
+    <!-- Formulário de Busca -->
+    @if (!showEditForm) {
+      <div class="search-section">
+        <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+          <div class="form-group">
+            <label for="cpf">CPF *</label>
+            <input
+              id="cpf"
+              type="text"
+              formControlName="cpf"
+              class="form-control"
+              placeholder="000.000.000-00"
+              mask="000.000.000-00"
+              [disabled]="isLoading"
+            />
+            @if (searchForm.get('cpf')?.invalid && searchForm.get('cpf')?.touched) {
+              <small class="error-text">CPF é obrigatório e deve estar no formato 000.000.000-00</small>
+            }
+          </div>
+
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="searchForm.invalid || isLoading"
+          >
+            @if (isLoading) {
+              Buscando...
+            } @else {
+              Buscar Cadastro
+            }
+          </button>
+        </form>
+      </div>
+    }
+
+    <!-- Formulário de Edição -->
+    @if (showEditForm && foundMember) {
+      <div class="edit-section">
+        <div class="edit-header">
+          <h2>Seus Dados Cadastrais</h2>
+          <button type="button" class="btn-link" (click)="backToSearch()">
+            ← Buscar outro CPF
+          </button>
+        </div>
+
+        <form [formGroup]="editForm" (ngSubmit)="onSave()">
+          <!-- CPF (Read-only) -->
+          <div class="form-group">
+            <label for="edit-cpf">CPF</label>
+            <input
+              id="edit-cpf"
+              type="text"
+              formControlName="cpf"
+              class="form-control"
+              readonly
+            />
+            <small class="form-text text-muted">
+              O CPF não pode ser alterado após o cadastro.
+            </small>
+          </div>
+
+          <!-- Nome -->
+          <div class="form-group">
+            <label for="nome">Nome Completo *</label>
+            <input
+              id="nome"
+              type="text"
+              formControlName="nome"
+              class="form-control"
+              [class.is-invalid]="editForm.get('nome')?.invalid && editForm.get('nome')?.touched"
+            />
+            @if (editForm.get('nome')?.invalid && editForm.get('nome')?.touched) {
+              <small class="error-text">Nome é obrigatório</small>
+            }
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="form-control"
+              [class.is-invalid]="editForm.get('email')?.invalid && editForm.get('email')?.touched"
+            />
+            @if (editForm.get('email')?.invalid && editForm.get('email')?.touched) {
+              <small class="error-text">Email é obrigatório e deve ser válido</small>
+            }
+          </div>
+
+          <!-- Telefones -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="telefone">Telefone</label>
+              <input
+                id="telefone"
+                type="text"
+                formControlName="telefone"
+                class="form-control"
+                mask="(00) 0000-0000"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="comercial">Telefone Comercial</label>
+              <input
+                id="comercial"
+                type="text"
+                formControlName="comercial"
+                class="form-control"
+                mask="(00) 0000-0000"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="celular">Celular</label>
+              <input
+                id="celular"
+                type="text"
+                formControlName="celular"
+                class="form-control"
+                mask="(00) 00000-0000"
+              />
+            </div>
+          </div>
+
+          <!-- Endereço -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cep">CEP</label>
+              <input
+                id="cep"
+                type="text"
+                formControlName="cep"
+                class="form-control"
+                mask="00000-000"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="estado">Estado</label>
+              <input
+                id="estado"
+                type="text"
+                formControlName="estado"
+                class="form-control"
+                maxlength="2"
+                placeholder="SP"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="cidade">Cidade</label>
+              <input
+                id="cidade"
+                type="text"
+                formControlName="cidade"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="logradouro">Logradouro</label>
+              <input
+                id="logradouro"
+                type="text"
+                formControlName="logradouro"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="numero">Número</label>
+              <input
+                id="numero"
+                type="text"
+                formControlName="numero"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="complemento">Complemento</label>
+              <input
+                id="complemento"
+                type="text"
+                formControlName="complemento"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="bairro">Bairro</label>
+            <input
+              id="bairro"
+              type="text"
+              formControlName="bairro"
+              class="form-control"
+            />
+          </div>
+
+          <!-- Outros Campos -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nascimento">Data de Nascimento</label>
+              <input
+                id="nascimento"
+                type="date"
+                formControlName="nascimento"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="estadoCivil">Estado Civil</label>
+              <select
+                id="estadoCivil"
+                formControlName="estadoCivil"
+                class="form-control"
+              >
+                <option [value]="false">Solteiro</option>
+                <option [value]="true">Casado</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="rg">RG</label>
+              <input
+                id="rg"
+                type="text"
+                formControlName="rg"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tipoCadastro">Tipo de Cadastro</label>
+              <input
+                id="tipoCadastro"
+                type="text"
+                formControlName="tipoCadastro"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="operadora">Operadora</label>
+              <input
+                id="operadora"
+                type="text"
+                formControlName="operadora"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="contato">Contato</label>
+              <input
+                id="contato"
+                type="text"
+                formControlName="contato"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="grupos">Grupos</label>
+            <input
+              id="grupos"
+              type="text"
+              formControlName="grupos"
+              class="form-control"
+              placeholder="Ex: Grupo de Jovens, Célula, etc."
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="rede">Rede</label>
+            <input
+              id="rede"
+              type="text"
+              formControlName="rede"
+              class="form-control"
+            />
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="backToSearch()"
+              [disabled]="isLoading"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="editForm.invalid || isLoading"
+            >
+              @if (isLoading) {
+                Salvando...
+              } @else {
+                Salvar Alterações
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</div>
+

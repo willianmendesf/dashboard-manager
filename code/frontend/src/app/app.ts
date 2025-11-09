@@ -48,7 +48,7 @@ export class App implements OnInit {
   }
 
   private isPublicRoute(url: string): boolean {
-    const publicRoutes = ['/login', '/esqueci-senha', '/redefinir-senha'];
+    const publicRoutes = ['/login', '/esqueci-senha', '/redefinir-senha', '/atualizar-cadastro'];
     return publicRoutes.some(route => url.startsWith(route));
   }
 
