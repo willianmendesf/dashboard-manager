@@ -8,12 +8,13 @@ import { Subject, takeUntil } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
-import { NavigationIcons, ActionIcons } from '../../shared/lib/utils/icons';
+import { NavigationIcons, ActionIcons, MessageIcons } from '../../shared/lib/utils/icons';
 import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/utils/data-table.component';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../shared/services/notification.service';
 import { AuthService } from '../../shared/service/auth.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { UtilsService } from '../../shared/services/utils.service';
 
 @Component({
   selector: 'app-user-management',
@@ -26,6 +27,7 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 export class UserManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
+  public utilsService = inject(UtilsService);
 
   users: User[] = [];
   filteredUsers: User[] = [...this.users];
@@ -569,6 +571,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       ...user,
       _original: user, // Manter referência ao objeto original
       foto: user.fotoUrl || null,
+      telefone: user.telefone || '-',
       status: user.status === 'active' ? 'Ativo' : 'Inativo',
       role: user.role || user.profileName || 'USER'
     }));
@@ -581,6 +584,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: string): string {
     return status === 'active' ? 'Ativo' : 'Inativo';
+  }
+
+  getWhatsAppIcon(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      MessageIcons.whatsapp({ size: 20, color: '#25D366' })
+    );
   }
 
   editUser(user: User) {

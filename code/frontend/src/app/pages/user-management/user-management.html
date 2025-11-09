@@ -46,6 +46,20 @@
         <span class="badge" [class]="'role-' + row.role">{{ getRoleLabel(row.role) }}</span>
       } @else if (column.key === 'status') {
         <span class="badge" [class]="row.status === 'Ativo' ? 'active' : 'inactive'">{{ getStatusLabel(row.status === 'Ativo' ? 'active' : 'inactive') }}</span>
+      } @else if (column.key === 'telefone') {
+        <div class="phone-cell">
+          <span>{{ row[column.key] || '-' }}</span>
+          @if (row[column.key] && row[column.key] !== '-' && utilsService.getWhatsAppLink(row[column.key])) {
+            <a 
+              [href]="utilsService.getWhatsAppLink(row[column.key])" 
+              target="_blank" 
+              class="whatsapp-icon-button"
+              title="Abrir no WhatsApp"
+              (click)="$event.stopPropagation()"
+              [innerHTML]="getWhatsAppIcon()"
+            ></a>
+          }
+        </div>
       } @else {
         {{ row[column.key] }}
       }
@@ -320,6 +334,21 @@
           <div class="detail-item">
             <label>Função</label>
             <span class="badge" [class.active]="viewingUser.role">{{ getRoleText(viewingUser.role) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Telefone</label>
+            <div class="phone-display">
+              @if (viewingUser.telefone && utilsService.getWhatsAppLink(viewingUser.telefone)) {
+                <a 
+                  [href]="utilsService.getWhatsAppLink(viewingUser.telefone)" 
+                  target="_blank" 
+                  class="whatsapp-icon-button"
+                  title="Abrir no WhatsApp"
+                  [innerHTML]="getWhatsAppIcon()"
+                ></a>
+              }
+              <span>{{ viewingUser.telefone || 'Não informado' }}</span>
+            </div>
           </div>
           <div class="detail-item">
             <label>Status</label>

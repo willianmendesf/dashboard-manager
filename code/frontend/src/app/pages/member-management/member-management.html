@@ -49,7 +49,27 @@
     [striped]="true"
     [hoverable]="true"
     [enablePagination]="true"
-  ></app-data-table>
+  >
+    <ng-template #rowTemplate let-row let-column="column">
+      @if (column.key === 'telefone' || column.key === 'celular') {
+        <div class="phone-cell">
+          <span>{{ row[column.key] || '-' }}</span>
+          @if (row[column.key] && utilsService.getWhatsAppLink(row[column.key])) {
+            <a 
+              [href]="utilsService.getWhatsAppLink(row[column.key])" 
+              target="_blank" 
+              class="whatsapp-icon-button"
+              title="Abrir no WhatsApp"
+              (click)="$event.stopPropagation()"
+              [innerHTML]="getWhatsAppIcon()"
+            ></a>
+          }
+        </div>
+      } @else {
+        {{ row[column.key] || '-' }}
+      }
+    </ng-template>
+  </app-data-table>
 
   <!-- Edit/Create Member Modal -->
   <app-modal
@@ -474,11 +494,33 @@
           </div>
           <div class="detail-item">
             <label>Telefone</label>
-            <span>{{ viewingMember.telefone || 'Não informado' }}</span>
+            <div class="phone-display">
+              @if (viewingMember.telefone && utilsService.getWhatsAppLink(viewingMember.telefone)) {
+                <a 
+                  [href]="utilsService.getWhatsAppLink(viewingMember.telefone)" 
+                  target="_blank" 
+                  class="whatsapp-icon-button"
+                  title="Abrir no WhatsApp"
+                  [innerHTML]="getWhatsAppIcon()"
+                ></a>
+              }
+              <span>{{ viewingMember.telefone || 'Não informado' }}</span>
+            </div>
           </div>
           <div class="detail-item">
             <label>Celular</label>
-            <span>{{ viewingMember.celular || 'Não informado' }}</span>
+            <div class="phone-display">
+              @if (viewingMember.celular && utilsService.getWhatsAppLink(viewingMember.celular)) {
+                <a 
+                  [href]="utilsService.getWhatsAppLink(viewingMember.celular)" 
+                  target="_blank" 
+                  class="whatsapp-icon-button"
+                  title="Abrir no WhatsApp"
+                  [innerHTML]="getWhatsAppIcon()"
+                ></a>
+              }
+              <span>{{ viewingMember.celular || 'Não informado' }}</span>
+            </div>
           </div>
           <div class="detail-item">
             <label>Comercial</label>

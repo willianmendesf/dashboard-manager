@@ -7,13 +7,14 @@ import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
-import { NavigationIcons, ActionIcons } from '../../shared/lib/utils/icons';
+import { NavigationIcons, ActionIcons, MessageIcons } from '../../shared/lib/utils/icons';
 import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/utils/data-table.component';
 import { environment } from '../../../environments/environment';
 import { Member } from './model/member.model';
 import { NotificationService } from '../../shared/services/notification.service';
 import { SpousePreviewComponent } from './components/spouse-preview.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { UtilsService } from '../../shared/services/utils.service';
 
 @Component({
   selector: 'member-management',
@@ -27,6 +28,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
+  public utilsService = inject(UtilsService);
 
   members: Member[] = [];
   filteredMembers: Member[] = [...this.members];
@@ -338,6 +340,12 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     return cleanCpf.length === 11;
   }
 
+  getWhatsAppIcon(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      MessageIcons.whatsapp({ size: 20, color: '#25D366' })
+    );
+  }
+
   public delete(id: number) {
     this.api.delete("members/" + id)
       .pipe(takeUntil(this.unsubscribe$))
@@ -527,7 +535,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       _original: member, // Manter referência ao objeto original
       foto: member.fotoUrl || null,
       estadoCivil: member.estadoCivil ? 'Casado' : 'Solteiro',
-      telefone: member.telefone || member.celular || member.comercial || '-',
+      telefone: member.telefone || '-',
+      celular: member.celular || '-',
       nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
     }));
     return this.tableData;
