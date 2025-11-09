@@ -9,7 +9,7 @@ import { CronSelectorComponent } from '../../shared/modules/cron-selector/cron-s
 import { ImageUploadComponent } from "../../shared/modules/image-upload/image-upload.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { environment } from '../../../environments/environment';
-import { ActionIcons } from '../../shared/lib/utils/icons';
+import { ActionIcons, NavigationIcons } from '../../shared/lib/utils/icons';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 export interface ChecklistItem {
   id: number;
@@ -27,9 +27,14 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
   public appointments : Appointment[] = [];
+  public filteredAppointments: Appointment[] = [];
   public groups: Group[] = []
   public contacts: Contact[] = []
   public env = environment.apiUrl;
+
+  // Filtros
+  searchTerm = '';
+  statusFilter = '';
 
   showAppointmentModal = false;
   showViewModal = false;
@@ -67,6 +72,44 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   public getDevelopment(status: boolean): string {
     return status == true ? 'Dev' : '';
+  }
+
+  getSearchIcon(): SafeHtml {
+    const html = NavigationIcons.search({ size: 20, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  filterAppointments() {
+    if (!this.appointments || this.appointments.length === 0) {
+      this.filteredAppointments = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.filteredAppointments = this.appointments.filter(appointment => {
+      if (!appointment) return false;
+      
+      // Filtro de busca por palavra-chave
+      const searchLower = this.searchTerm.toLowerCase();
+      const matchesSearch = !this.searchTerm || 
+                            (appointment.name && appointment.name.toLowerCase().includes(searchLower)) ||
+                            (appointment.description && appointment.description.toLowerCase().includes(searchLower)) ||
+                            (appointment.schedule && appointment.schedule.toLowerCase().includes(searchLower));
+      
+      // Filtro por status (Ativo/Pausado)
+      let matchesStatus = true;
+      if (this.statusFilter !== '') {
+        if (this.statusFilter === 'active') {
+          matchesStatus = appointment.enabled === true;
+        } else if (this.statusFilter === 'paused') {
+          matchesStatus = appointment.enabled === false;
+        }
+      }
+
+      return matchesSearch && matchesStatus;
+    });
+    
+    this.cdr.markForCheck();
   }
 
   public getContacts() {
@@ -111,6 +154,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
           // Ativos (true) vêm antes de pausados (false)
           return a.enabled ? -1 : 1;
         });
+        this.filterAppointments(); // Aplicar filtros após carregar
         this.cdr.markForCheck()
       },
       error: error => console.error(error),
@@ -248,9 +292,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   deleteItem(appointment: Appointment) {
-    if (confirm(`Tem certeza que deseja excluir o membro "${appointment.name}"?`)) {
+    if (confirm(`Tem certeza que deseja excluir o agendamento "${appointment.name}"?`)) {
       this.delete(appointment.id);
       this.appointments = this.appointments.filter(m => m.id !== appointment.id);
+      this.filterAppointments(); // Reaplicar filtros após deletar
     }
   }
 

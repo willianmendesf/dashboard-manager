@@ -3,13 +3,26 @@
 
   <div class="actions-bar">
     <div class="search-filters">
-      <!-- Filtros podem ser adicionados aqui no futuro -->
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="filterAppointments()"
+          placeholder="Buscar agendamentos..."
+        />
+        <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
+      </div>
+      <select [(ngModel)]="statusFilter" (change)="filterAppointments()" class="filter-select">
+        <option value="">Todos os Status</option>
+        <option value="active">Ativos</option>
+        <option value="paused">Pausados</option>
+      </select>
     </div>
     <button class="btn-primary" (click)="openAppointmentModal()">+ Novo Agendamento</button>
   </div>
 
   <div class="projects-grid">
-    <div class="project-card" *ngFor="let appointment of appointments" (click)="view(appointment)" style="cursor: pointer;">
+    <div class="project-card" *ngFor="let appointment of filteredAppointments" (click)="view(appointment)" style="cursor: pointer;">
       <div class="project-header">
         <h3>{{ appointment.name }}</h3>
         <div class="project-status-container">
