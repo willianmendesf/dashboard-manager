@@ -34,6 +34,7 @@
   flex-direction: column;
   min-height: 320px; /* Altura mínima padronizada */
   height: 100%;
+  position: relative; /* Garante que o z-index funcione */
 }
 
 .project-card:hover {
@@ -46,6 +47,11 @@
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+  pointer-events: none; /* Permite que cliques passem para o card */
+}
+
+.project-header * {
+  pointer-events: none; /* Todos os elementos filhos também */
 }
 
 .project-header h3 {
@@ -126,6 +132,11 @@
   margin-bottom: 20px;
   min-height: 100px; /* Altura mínima para área de conteúdo */
   flex: 1; /* Ocupa espaço disponível */
+  pointer-events: none; /* Permite que cliques passem para o card */
+}
+
+.project-content-wrapper * {
+  pointer-events: none; /* Todos os elementos filhos também */
 }
 
 .project-content-left {
@@ -170,6 +181,7 @@
   border: none;
   box-shadow: none;
   visibility: hidden; /* Mantém o espaço mas torna invisível */
+  pointer-events: none; /* Permite que cliques passem através */
 }
 
 .project-progress {
@@ -246,6 +258,11 @@
   flex-direction: column;
   gap: 16px;
   margin-top: auto; /* Empurra para o final do card */
+  pointer-events: none; /* Permite que cliques passem para o card */
+}
+
+.project-footer * {
+  pointer-events: none; /* Todos os elementos filhos também */
 }
 
 .project-dates {
@@ -523,6 +540,11 @@
   margin-top: auto; /* Empurra para o final do card */
   padding-top: 16px;
   border-top: 1px solid #E5E7EB;
+  pointer-events: auto; /* Reativa eventos de clique nos botões */
+}
+
+.action-buttons * {
+  pointer-events: auto; /* Reativa eventos de clique nos botões e seus filhos */
 }
 
 .btn-action {
