@@ -1,14 +1,23 @@
 package br.com.willianmendesf.system.repository;
 
-import br.com.willianmendesf.system.model.entity.UserEntity;
+import br.com.willianmendesf.system.model.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
-    @Query("SELECT COALESCE(MAX(u.id), 0) FROM UserEntity u")
-    Long findMaxId();
+import java.util.Optional;
 
-//    List<UserEntity> findFirstByOrderByCreatedAtDesc();
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    
+    /**
+     * Busca usuário por username carregando eager o profile e suas permissões
+     * Isso evita LazyInitializationException quando @PreAuthorize acessa as permissões
+     */
+    @EntityGraph(attributePaths = {"profile", "profile.permissions"})
+    Optional<User> findByUsername(String username);
+    
+    Optional<User> findByEmail(String email);
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 }

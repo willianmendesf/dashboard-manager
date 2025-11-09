@@ -9,17 +9,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
+public class LoginResponse {
+    private String token;
+    private String type = "Bearer";
     private Long id;
     private String username;
-    private String name;
     private String email;
-    private String cpf;
-    private String telefone;
-    private String password; // Only used for creation/update
-    private Boolean enabled;
-    private Long profileId;
+    private String name;
     private String profileName;
-    private List<String> permissions;
     private String fotoUrl;
+    private List<String> permissions;
 }
+
