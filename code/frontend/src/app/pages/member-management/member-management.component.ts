@@ -37,6 +37,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   tipoCadastroFilter = '';
   estadoCivilFilter = '';
   intercessorFilter = '';
+  currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
 
   // Configuração da tabela
   tableColumns: TableColumn[] = [
@@ -44,9 +45,9 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     { key: 'nome', label: 'Nome', sortable: true },
     { key: 'whatsapp', label: 'WhatsApp', width: '80px', align: 'center' },
     { key: 'tipoCadastro', label: 'Tipo de Cadastro', sortable: true },
-    { key: 'intercessor', label: 'Intercessor?', width: '120px', align: 'center' },
+    { key: 'intercessor', label: 'Intercessor?', width: '120px', align: 'center', sortable: true },
     { key: 'nascimento', label: 'Data de Nascimento', sortable: true },
-    { key: 'estadoCivil', label: 'Estado Civil' }
+    { key: 'estadoCivil', label: 'Estado Civil', sortable: true }
   ];
 
   getTableActions(): TableAction[] {
@@ -571,7 +572,43 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
       };
     });
+    
+    // Aplicar ordenação se houver
+    if (this.currentSort) {
+      this.tableData.sort((a, b) => {
+        const aValue = a[this.currentSort!.column];
+        const bValue = b[this.currentSort!.column];
+        
+        // Tratar valores nulos ou indefinidos
+        if (aValue === null || aValue === undefined || aValue === '-') return 1;
+        if (bValue === null || bValue === undefined || bValue === '-') return -1;
+        
+        // Comparação de strings
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue, 'pt-BR', { sensitivity: 'base' });
+          return this.currentSort!.direction === 'asc' ? comparison : -comparison;
+        }
+        
+        // Comparação numérica
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return this.currentSort!.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        // Fallback: converter para string e comparar
+        const aStr = String(aValue);
+        const bStr = String(bValue);
+        const comparison = aStr.localeCompare(bStr, 'pt-BR', { sensitivity: 'base' });
+        return this.currentSort!.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+    
     return this.tableData;
+  }
+  
+  onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
+    this.currentSort = sort;
+    this.getTableData(); // Reaplica a ordenação
+    this.cdr.markForCheck();
   }
 
   editMember(member: Member) {
