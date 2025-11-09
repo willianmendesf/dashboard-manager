@@ -19,6 +19,7 @@ public class MemberDTO {
     private String estadoCivil;
     private String cpf;
     private String rg;
+    private String conjugueCPF;
     private String fotoUrl;
 
     public MemberDTO(MemberEntity member) {
@@ -32,6 +33,7 @@ public class MemberDTO {
         this.estadoCivil = (member.getEstadoCivil() == Boolean.FALSE) ? "Solteiro" : "Casado";
         this.cpf = member.getCpf();
         this.rg = member.getRg();
+        this.conjugueCPF = member.getConjugueCPF();
         this.fotoUrl = member.getFotoUrl();
     }
 }

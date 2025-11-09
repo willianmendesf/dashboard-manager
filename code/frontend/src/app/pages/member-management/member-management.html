@@ -169,9 +169,12 @@
                 mask="000.000.000-00"
                 placeholder="000.000.000-00"
               />
-              @if (isValidCpf(currentMember.conjugueCPF)) {
-                <app-spouse-preview [cpf]="currentMember.conjugueCPF"></app-spouse-preview>
-              }
+            </div>
+          }
+          
+          @if (currentMember.estadoCivil && isValidCpf(currentMember.conjugueCPF)) {
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <app-spouse-preview [cpf]="currentMember.conjugueCPF"></app-spouse-preview>
             </div>
           }
         </div>
@@ -452,6 +455,12 @@
               <label>CPF do Cônjuge</label>
               <span>{{ viewingMember.conjugueCPF }}</span>
             </div>
+            @if (isValidCpf(viewingMember.conjugueCPF)) {
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <label>Informações do Cônjuge</label>
+                <app-spouse-preview [cpf]="viewingMember.conjugueCPF"></app-spouse-preview>
+              </div>
+            }
           }
         </div>
       </div>
