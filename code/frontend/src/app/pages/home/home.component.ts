@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { ApiService } from '../../shared/service/api.service';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { Subject, takeUntil } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
-import { StatusIcons } from '../../shared/lib/utils/icons';
+import { StatusIcons, NavigationIcons } from '../../shared/lib/utils/icons';
 
 @Component({
   selector: 'app-home',
@@ -20,6 +21,8 @@ export class HomeComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   
   public members : any[] = [];
+  public appointments : any[] = [];
+  public users : any[] = [];
   public stats : any[] = [];
 
   recentActivities = [
@@ -43,14 +46,29 @@ export class HomeComponent implements OnInit {
   //private toastr = inject(ToastrService)
   private api = inject(ApiService)
   private cdr = inject(ChangeDetectorRef)
+  private router = inject(Router)
 
   ngOnInit(): void {
     this.getValues()
+    this.getAppointments()
+    this.getUsers()
+    this.updateStats()
+  }
+
+  private updateStats(): void {
+    const activeAppointments = this.appointments.filter(apt => apt.enabled === true).length;
     this.stats = [
-      {icon: this.getSafeIcon(() => StatusIcons.users({ size: 24, color: 'currentColor' })), value: this.members.length, label: 'Membros'},
-      {icon: this.getSafeIcon(() => StatusIcons.money({ size: 24, color: 'currentColor' })), value: 'R$ 18.2K', label: 'Receita Mensal', change: '+8%', trend: 'positive'},
-      {icon: this.getSafeIcon(() => StatusIcons.clock({ size: 24, color: 'currentColor' })), value: '2.4s', label: 'Tempo de Carregamento', change: '+5%', trend: 'negative'}
+      {icon: this.getSafeIcon(() => StatusIcons.users({ size: 24, color: 'currentColor' })), value: this.members.length, label: 'Membros', route: '/member-management'},
+      {icon: this.getSafeIcon(() => NavigationIcons.appointments({ size: 24, color: 'currentColor' })), value: activeAppointments, label: 'Agendamentos Ativos', route: '/appointments'},
+      {icon: this.getSafeIcon(() => StatusIcons.users({ size: 24, color: 'currentColor' })), value: this.users.length, label: 'Usuários do Sistema', route: '/user-management'}
     ]
+    this.cdr.markForCheck()
+  }
+
+  public navigateToRoute(route: string): void {
+    if (route) {
+      this.router.navigate([route]);
+    }
   }
 
   private getValues(){
@@ -59,22 +77,46 @@ export class HomeComponent implements OnInit {
     .subscribe({
       next: res => {
         this.members = Array.isArray(res) ? res : [];
-        this.stats = [
-          {icon: this.getSafeIcon(() => StatusIcons.users({ size: 24, color: 'currentColor' })), value: this.members.length, label: 'Membros'},
-          {icon: this.getSafeIcon(() => StatusIcons.money({ size: 24, color: 'currentColor' })), value: 'R$ 18.2K', label: 'Receita Mensal', change: '+8%', trend: 'positive'},
-          {icon: this.getSafeIcon(() => StatusIcons.clock({ size: 24, color: 'currentColor' })), value: '2.4s', label: 'Tempo de Carregamento', change: '+5%', trend: 'negative'}
-        ]
-        this.cdr.markForCheck()
+        this.updateStats()
       },
       error: error => {
         console.error('Error loading members:', error);
         this.members = [];
-        this.stats = [
-          {icon: this.getSafeIcon(() => StatusIcons.users({ size: 24, color: 'currentColor' })), value: 0, label: 'Membros'},
-          {icon: this.getSafeIcon(() => StatusIcons.money({ size: 24, color: 'currentColor' })), value: 'R$ 18.2K', label: 'Receita Mensal', change: '+8%', trend: 'positive'},
-          {icon: this.getSafeIcon(() => StatusIcons.clock({ size: 24, color: 'currentColor' })), value: '2.4s', label: 'Tempo de Carregamento', change: '+5%', trend: 'negative'}
-        ]
-        this.cdr.markForCheck()
+        this.updateStats()
+      },
+      complete: () => {}
+    })
+  }
+
+  private getAppointments(){
+    this.api.get("appointments")
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => {
+        this.appointments = Array.isArray(res) ? res : [];
+        this.updateStats()
+      },
+      error: error => {
+        console.error('Error loading appointments:', error);
+        this.appointments = [];
+        this.updateStats()
+      },
+      complete: () => {}
+    })
+  }
+
+  private getUsers(){
+    this.api.get("users")
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe({
+      next: res => {
+        this.users = Array.isArray(res) ? res : [];
+        this.updateStats()
+      },
+      error: error => {
+        console.error('Error loading users:', error);
+        this.users = [];
+        this.updateStats()
       },
       complete: () => {}
     })

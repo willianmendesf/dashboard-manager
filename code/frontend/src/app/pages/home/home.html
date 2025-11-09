@@ -5,12 +5,12 @@
   ></pagetitle>
 
   <div class="stats-grid">
-    <div class="stat-card" *ngFor="let stat of stats">
+    <div class="stat-card" *ngFor="let stat of stats" (click)="navigateToRoute(stat.route)" [style.cursor]="stat.route ? 'pointer' : 'default'">
       <div class="stat-icon" [innerHTML]="stat.icon" [attr.aria-hidden]="true"></div>
       <div class="stat-content">
         <h3>{{ stat.value }}</h3>
         <p>{{ stat.label }}</p>
-        <span class="stat-change" [class]="stat.trend">
+        <span class="stat-change" [class]="stat.trend" *ngIf="stat.change">
           {{ stat.change }}
         </span>
       </div>
