@@ -8,6 +8,7 @@ import { UserService } from '../../shared/service/user.service';
 import { environment } from '../../../environments/environment';
 import { PageTitleComponent } from '../../shared/modules/pagetitle/pagetitle.component';
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
+import { Observable, catchError, of, tap } from 'rxjs';
 
 interface UserProfile {
   id: number;
@@ -41,20 +42,21 @@ export class MyProfileComponent implements OnInit {
 
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
-  loading = false;
   saving = false;
   uploadingPhoto = false;
   showPasswordModal = false;
-  currentUser: UserProfile | null = null;
   error = '';
   successMessage = '';
+  
+  // Observable para o perfil do usuário
+  profileData$!: Observable<UserProfile | null>;
 
-  get profilePhotoUrl(): string {
-    if (this.currentUser?.fotoUrl) {
-      if (this.currentUser.fotoUrl.startsWith('/')) {
-        return `${window.location.origin}${this.currentUser.fotoUrl}`;
+  getProfilePhotoUrl(user: UserProfile | null): string {
+    if (user?.fotoUrl) {
+      if (user.fotoUrl.startsWith('/')) {
+        return `${window.location.origin}${user.fotoUrl}`;
       }
-      return this.currentUser.fotoUrl;
+      return user.fotoUrl;
     }
     return './img/avatar-default.png';
   }
@@ -71,26 +73,21 @@ export class MyProfileComponent implements OnInit {
       confirmarNovaSenha: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
 
-    this.loadProfile();
-  }
-
-  loadProfile(): void {
-    this.loading = true;
-    this.userService.getCurrentUserProfile().subscribe({
-      next: (user) => {
-        this.currentUser = user;
+    // Carregar perfil usando Observable com async pipe
+    this.profileData$ = this.userService.getCurrentUserProfile().pipe(
+      tap((user) => {
+        // Popular formulário quando os dados chegarem
         this.profileForm.patchValue({
           name: user.name,
           telefone: user.telefone || ''
         });
-        this.loading = false;
-      },
-      error: (error) => {
+      }),
+      catchError((error) => {
         console.error('Error loading profile:', error);
         this.error = 'Erro ao carregar perfil';
-        this.loading = false;
-      }
-    });
+        return of(null);
+      })
+    );
   }
 
   saveProfile(): void {
@@ -110,7 +107,6 @@ export class MyProfileComponent implements OnInit {
 
     this.http.put<UserProfile>(`${environment.apiUrl}users/me`, request).subscribe({
       next: (updated) => {
-        this.currentUser = updated;
         // Update auth service cache with new user data
         const currentAuth = this.authService.getCurrentUser();
         if (currentAuth) {
@@ -126,6 +122,8 @@ export class MyProfileComponent implements OnInit {
           };
           this.authService.updateUserCache(updatedUserData);
         }
+        // Recarregar o perfil para atualizar o Observable
+        this.profileData$ = of(updated);
         this.successMessage = 'Perfil atualizado com sucesso!';
         this.saving = false;
         setTimeout(() => this.successMessage = '', 3000);
@@ -154,7 +152,6 @@ export class MyProfileComponent implements OnInit {
 
     this.userService.uploadProfilePhoto(file).subscribe({
       next: (updated) => {
-        this.currentUser = updated;
         // Update auth service cache with new photo
         const currentAuth = this.authService.getCurrentUser();
         if (currentAuth) {
@@ -169,6 +166,8 @@ export class MyProfileComponent implements OnInit {
           };
           this.authService.updateUserCache(updatedUserData);
         }
+        // Recarregar o perfil para atualizar o Observable
+        this.profileData$ = of(updated);
         this.successMessage = 'Foto atualizada com sucesso!';
         this.uploadingPhoto = false;
         setTimeout(() => this.successMessage = '', 3000);
@@ -190,7 +189,6 @@ export class MyProfileComponent implements OnInit {
 
     this.http.delete<UserProfile>(`${environment.apiUrl}users/me/remove-foto`).subscribe({
       next: (updated) => {
-        this.currentUser = updated;
         // Update auth service cache
         const currentAuth = this.authService.getCurrentUser();
         if (currentAuth) {
@@ -205,6 +203,8 @@ export class MyProfileComponent implements OnInit {
           };
           this.authService.updateUserCache(updatedUserData);
         }
+        // Recarregar o perfil para atualizar o Observable
+        this.profileData$ = of(updated);
         this.successMessage = 'Foto removida com sucesso!';
         setTimeout(() => this.successMessage = '', 3000);
       },

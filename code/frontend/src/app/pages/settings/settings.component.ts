@@ -7,7 +7,7 @@ import { LogoUploadComponent } from '../../shared/modules/logo-upload/logo-uploa
 import { PageTitleComponent } from '../../shared/modules/pagetitle/pagetitle.component';
 import { IfHasPermissionDirective } from '../../shared/directives/if-has-permission.directive';
 import { environment } from '../../../environments/environment';
-import { timeout, catchError, of, Observable } from 'rxjs';
+import { timeout, catchError, of, Observable, tap } from 'rxjs';
 import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
@@ -20,7 +20,6 @@ import { NotificationService } from '../../shared/services/notification.service'
 export class SettingsComponent implements OnInit {
   settingsForm!: FormGroup;
   configurations$!: Observable<Configuration[]>;
-  loading = true; // Inicia como true para mostrar loading inicial
   saving = false;
   logoUrl: string | null = null;
   apiUrl = environment.apiUrl;
@@ -79,32 +78,28 @@ export class SettingsComponent implements OnInit {
 
   /**
    * Carrega todas as configurações do backend
+   * Usa Observable com async pipe para evitar problemas de change detection
    */
   loadConfigurations(): void {
-    this.loading = true;
     this.configurations$ = this.configService.getAll()
       .pipe(
         timeout(10000), // Timeout de 10 segundos
+        tap((configs) => {
+          console.log('Configurações carregadas:', configs);
+          this.populateFormFromConfigurations(configs || []);
+          this.loadCSSVariables(configs || []); // Load CSS variables on init
+          
+          // Se não houver configurações, mostra aviso mas continua
+          if (configs.length === 0) {
+            console.warn('Nenhuma configuração encontrada. Usando valores padrão.');
+          }
+        }),
         catchError((error) => {
           console.error('Erro ao carregar configurações:', error);
           // Retorna array vazio em caso de erro
           return of([]);
         })
       );
-    
-    this.configurations$.subscribe({
-      next: (configs) => {
-        console.log('Configurações carregadas:', configs);
-        this.populateFormFromConfigurations(configs || []);
-        this.loadCSSVariables(configs || []); // Load CSS variables on init
-        this.loading = false;
-        
-        // Se não houver configurações, mostra aviso mas continua
-        if (configs.length === 0) {
-          console.warn('Nenhuma configuração encontrada. Usando valores padrão.');
-        }
-      }
-    });
   }
 
   /**

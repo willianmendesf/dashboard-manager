@@ -4,11 +4,8 @@
     subtitle="Gerencie as configurações globais do sistema"
   ></pagetitle>
 
-  <div *ngIf="loading" class="loading-message">
-    <p>Carregando configurações...</p>
-  </div>
-
-  <form [formGroup]="settingsForm" *ngIf="!loading && (configurations$ | async) as configurations">
+  <ng-container *ngIf="configurations$ | async as configurations; else loading">
+  <form [formGroup]="settingsForm">
     <div class="settings-grid">
       <!-- Seção Aparência -->
       <div class="settings-section">
@@ -285,4 +282,11 @@
       </button>
     </div>
   </form>
+  </ng-container>
+  
+  <ng-template #loading>
+    <div class="loading-message">
+      <p>Carregando configurações...</p>
+    </div>
+  </ng-template>
 </div>

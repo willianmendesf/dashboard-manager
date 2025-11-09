@@ -4,11 +4,8 @@
     subtitle="Gerencie suas informações pessoais"
   ></pagetitle>
 
-  <div *ngIf="loading" class="loading-message">
-    <p>Carregando perfil...</p>
-  </div>
-
-  <div *ngIf="!loading && currentUser" class="profile-content">
+  <ng-container *ngIf="profileData$ | async as currentUser; else loading">
+  <div class="profile-content">
     <!-- Mensagens de Sucesso/Erro -->
     <div *ngIf="successMessage" class="alert alert-success">
       {{ successMessage }}
@@ -21,7 +18,7 @@
     <div class="profile-photo-section">
       <div class="photo-container">
         <img 
-          [src]="profilePhotoUrl" 
+          [src]="getProfilePhotoUrl(currentUser)" 
           [alt]="currentUser.name"
           class="profile-avatar"
           (error)="onImageError($event)"
@@ -134,6 +131,13 @@
       </div>
     </form>
   </div>
+  </ng-container>
+  
+  <ng-template #loading>
+    <div class="loading-message">
+      <p>Carregando perfil...</p>
+    </div>
+  </ng-template>
 
   <!-- Modal de Alteração de Senha -->
   <app-modal
