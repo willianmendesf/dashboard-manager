@@ -308,6 +308,7 @@ public class AppointmentSchedulerService {
         }
     }
 
+    @Transactional
     public void checkAndExecuteScheduledAppointments() {
         Collection<AppointmentEntity> appointments = appointmentCache.getAllAppointments();
         LocalDateTime now = LocalDateTime.now();
@@ -374,18 +375,9 @@ public class AppointmentSchedulerService {
             }
 
             // Verificar se o próximo horário de execução já chegou ou passou
-            // Usar uma pequena margem de tolerância (até 5 segundos após o horário agendado) para evitar problemas de timing
+            // A verificação de duplicidade (existsByAppointmentIdAndScheduledTime) já é suficiente
+            // para impedir re-execuções, então não precisamos da trava de 5 segundos
             boolean isDue = !nextExecution.isAfter(now);
-            
-            if (isDue) {
-                long secondsSinceScheduled = Duration.between(nextExecution, now).getSeconds();
-                // Se passou mais de 5 segundos do horário agendado, não executar (pode ser uma execução perdida)
-                if (secondsSinceScheduled > 5) {
-                    log.debug("Appointment {} scheduled time {} passed more than 5 seconds ago ({}s), skipping", 
-                            appointment.getId(), nextExecution, secondsSinceScheduled);
-                    return false;
-                }
-            }
             
             if (isDue) {
                 log.debug("Appointment {} is due for execution. Scheduled: {}, Now: {}", 
@@ -406,9 +398,11 @@ public class AppointmentSchedulerService {
     private void executeAppointment(AppointmentEntity appointment) {
         log.info("Start execute appointment: {}", appointment.getName());
         LocalDateTime now = LocalDateTime.now();
-
+        
+        // Calcular o scheduledTime ANTES de executar para garantir consistência
+        // Este será o mesmo valor usado tanto em sucesso quanto em erro
+        LocalDateTime scheduledTime = null;
         try {
-            // Calcular o horário agendado específico que está sendo executado
             CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
             LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
                     appointment.getLastExecution().toLocalDateTime() :
@@ -419,14 +413,25 @@ public class AppointmentSchedulerService {
                 lastExecTime = now.minusMinutes(maxBacklogMinutes);
             }
 
-            LocalDateTime scheduledTime = cronExpression.next(lastExecTime);
+            scheduledTime = cronExpression.next(lastExecTime);
+            
+            if (scheduledTime == null) {
+                log.warn("No next execution time found for appointment {}", appointment.getId());
+                return;
+            }
+        } catch (Exception e) {
+            log.error("Error calculating scheduledTime for appointment {}: {}", appointment.getId(), e.getMessage(), e);
+            return;
+        }
 
-            // Criar registro de execução
-            AppointmentExecution execution = new AppointmentExecution();
-            execution.setAppointmentId(appointment.getId());
-            execution.setScheduledTime(scheduledTime);
-            execution.setExecutionTime(now);
+        // Criar registro de execução ANTES de executar para garantir que seja salvo mesmo em caso de erro
+        AppointmentExecution execution = new AppointmentExecution();
+        execution.setAppointmentId(appointment.getId());
+        execution.setScheduledTime(scheduledTime);
+        execution.setExecutionTime(now);
+        execution.setStatus(TaskStatus.PENDING); // Status inicial
 
+        try {
             // Executar a tarefa conforme o tipo
             switch (appointment.getTaskType()) {
                 case WHATSAPP_MESSAGE:
@@ -453,53 +458,20 @@ public class AppointmentSchedulerService {
             saveAppointmentSafely(appointment);
             executionRepository.save(execution);
             appointmentCache.updateCacheAppointment(appointment);
+            
+            log.info("Successfully executed appointment: {} at scheduled time: {}", appointment.getName(), scheduledTime);
 
         } catch (Exception e) {
             log.error("Error ao executar agendamento {}: {}", appointment.getId(), e.getMessage(), e);
 
-            // Calcular o scheduledTime para usar no lastExecution mesmo em caso de erro
-            LocalDateTime scheduledTimeForError = null;
-            try {
-                CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
-                LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
-                        appointment.getLastExecution().toLocalDateTime() :
-                        now.minusMinutes(maxBacklogMinutes);
-                if (lastExecTime.isBefore(now.minusMinutes(maxBacklogMinutes))) {
-                    lastExecTime = now.minusMinutes(maxBacklogMinutes);
-                }
-                scheduledTimeForError = cronExpression.next(lastExecTime);
-            } catch (Exception ex) {
-                log.warn("Could not calculate scheduledTime for error handling: {}", ex.getMessage());
-            }
-
             // Atualizar status em caso de erro
-            // Usar scheduledTime se disponível, senão usar now como fallback
-            appointment.setLastExecution(Timestamp.valueOf(scheduledTimeForError != null ? scheduledTimeForError : now));
+            // Usar o scheduledTime calculado no início para garantir consistência
+            appointment.setLastExecution(Timestamp.valueOf(scheduledTime));
             appointment.setLastStatus(TaskStatus.FAILURE);
+            execution.setStatus(TaskStatus.FAILURE);
 
-            // Criar registro de execução com falha
+            // Salvar registro de execução com falha
             try {
-                // Usar o scheduledTime calculado anteriormente se disponível
-                LocalDateTime scheduledTime = scheduledTimeForError != null ? scheduledTimeForError : null;
-                
-                if (scheduledTime == null) {
-                    CronExpression cronExpression = CronExpression.parse(appointment.getSchedule());
-                    LocalDateTime lastExecTime = !isNull(appointment.getLastExecution()) ?
-                            appointment.getLastExecution().toLocalDateTime() :
-                            now.minusMinutes(maxBacklogMinutes);
-
-                    if (lastExecTime.isBefore(now.minusMinutes(maxBacklogMinutes))) {
-                        lastExecTime = now.minusMinutes(maxBacklogMinutes);
-                    }
-
-                    scheduledTime = cronExpression.next(lastExecTime);
-                }
-
-                AppointmentExecution execution = new AppointmentExecution();
-                execution.setAppointmentId(appointment.getId());
-                execution.setScheduledTime(scheduledTime);
-                execution.setExecutionTime(now);
-                execution.setStatus(TaskStatus.FAILURE);
                 executionRepository.save(execution);
             } catch (Exception ex) {
                 log.error("Erro ao registrar falha de execução: {}", ex.getMessage(), ex);
@@ -507,6 +479,9 @@ public class AppointmentSchedulerService {
 
             saveAppointmentSafely(appointment);
             appointmentCache.updateCacheAppointment(appointment);
+            
+            log.warn("Appointment {} failed but lastExecution updated to {} to prevent re-execution", 
+                    appointment.getId(), scheduledTime);
         }
     }
 

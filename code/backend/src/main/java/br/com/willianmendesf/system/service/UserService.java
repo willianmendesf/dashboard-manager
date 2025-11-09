@@ -143,8 +143,14 @@ public class UserService {
             log.warn("User {} attempted to change their own enabled status. Ignored.", loggedUser.getUsername());
         }
 
-        // SECURITY: Only update profile if NOT editing self
-        if (userDTO.getProfileId() != null && !isEditingSelf) {
+        // CRITICAL BUSINESS RULE: Root users cannot have their function changed by anyone
+        boolean isTargetRoot = isRootUser(user);
+        if (isTargetRoot && userDTO.getProfileId() != null && !userDTO.getProfileId().equals(user.getProfile().getId())) {
+            throw new AccessDeniedException("A função de um usuário Root não pode ser alterada.");
+        }
+
+        // SECURITY: Only update profile if NOT editing self and target is NOT Root
+        if (userDTO.getProfileId() != null && !isEditingSelf && !isTargetRoot) {
             if (!userDTO.getProfileId().equals(user.getProfile().getId())) {
                 Profile newProfile = profileRepository.findById(userDTO.getProfileId())
                     .orElseThrow(() -> new IllegalArgumentException("Profile not found: " + userDTO.getProfileId()));
@@ -158,6 +164,8 @@ public class UserService {
             }
         } else if (isEditingSelf && userDTO.getProfileId() != null) {
             log.warn("User {} attempted to change their own profile. Ignored.", loggedUser.getUsername());
+        } else if (isTargetRoot && userDTO.getProfileId() != null) {
+            log.warn("User {} attempted to change profile of Root user {}. Ignored.", loggedUser.getUsername(), user.getUsername());
         }
 
         // Update CPF if provided and validate uniqueness
