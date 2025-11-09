@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, TemplateRef, OnChanges, SimpleChanges, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, TemplateRef, OnChanges, SimpleChanges, ChangeDetectorRef, OnInit, ContentChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActionIcons } from './icons';
@@ -35,6 +35,7 @@ export class DataTableComponent implements OnChanges, OnInit {
   @Input() loading: boolean = false;
   @Input() emptyMessage: string = 'Nenhum dado encontrado';
   @Input() rowTemplate?: TemplateRef<any>;
+  @ContentChild('rowTemplate') contentRowTemplate?: TemplateRef<any>;
   @Input() showHeader: boolean = true;
   @Input() striped: boolean = true;
   @Input() hoverable: boolean = true;
@@ -84,6 +85,10 @@ export class DataTableComponent implements OnChanges, OnInit {
       return '';
     }
     return this.currentSort.direction === 'asc' ? '↑' : '↓';
+  }
+
+  getRowTemplate(): TemplateRef<any> | undefined {
+    return this.rowTemplate || this.contentRowTemplate;
   }
 
   onRowClick(row: any, event: MouseEvent): void {

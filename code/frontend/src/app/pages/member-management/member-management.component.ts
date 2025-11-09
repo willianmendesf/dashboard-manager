@@ -42,12 +42,12 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   tableColumns: TableColumn[] = [
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
+    { key: 'whatsapp', label: 'WhatsApp', width: '80px', align: 'center' },
     { key: 'cpf', label: 'CPF', sortable: true },
     { key: 'rg', label: 'RG' },
     { key: 'nascimento', label: 'Data de Nascimento', sortable: true },
     { key: 'estadoCivil', label: 'Estado Civil' },
-    { key: 'telefone', label: 'Telefone' },
-    { key: 'email', label: 'Email', sortable: true }
+    { key: 'telefone', label: 'Telefone' }
   ];
 
   getTableActions(): TableAction[] {
@@ -553,15 +553,23 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       return this.tableData;
     }
     
-    this.tableData = this.filteredMembers.map(member => ({
-      ...member,
-      _original: member, // Manter referência ao objeto original
-      foto: member.fotoUrl || null,
-      estadoCivil: member.estadoCivil ? 'Casado' : 'Solteiro',
-      telefone: member.telefone || '-',
-      celular: member.celular || '-',
-      nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
-    }));
+    this.tableData = this.filteredMembers.map(member => {
+      // Prioriza celular, se não tiver usa telefone
+      const phoneNumber = (member.celular && member.celular.trim() !== '') 
+        ? member.celular 
+        : ((member.telefone && member.telefone.trim() !== '') ? member.telefone : null);
+      
+      return {
+        ...member,
+        _original: member, // Manter referência ao objeto original
+        foto: member.fotoUrl || null,
+        estadoCivil: member.estadoCivil ? 'Casado' : 'Solteiro',
+        telefone: member.telefone || '-',
+        celular: member.celular || '-',
+        whatsapp: phoneNumber, // Campo para a coluna WhatsApp (número limpo ou null)
+        nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
+      };
+    });
     return this.tableData;
   }
 

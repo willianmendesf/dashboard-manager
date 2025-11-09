@@ -58,10 +58,25 @@
     [enablePagination]="true"
   >
     <ng-template #rowTemplate let-row let-column="column">
-      @if (column.key === 'telefone' || column.key === 'celular') {
+      @if (column.key === 'whatsapp') {
+        <div class="whatsapp-cell">
+          @if (row.whatsapp && row.whatsapp !== '-' && row.whatsapp !== null && row.whatsapp !== '' && utilsService.getWhatsAppLink(row.whatsapp)) {
+            <a 
+              [href]="utilsService.getWhatsAppLink(row.whatsapp)" 
+              target="_blank" 
+              class="whatsapp-icon-button"
+              title="Abrir no WhatsApp"
+              (click)="$event.stopPropagation()"
+              [innerHTML]="getWhatsAppIcon()"
+            ></a>
+          } @else {
+            <span class="no-whatsapp">-</span>
+          }
+        </div>
+      } @else if (column.key === 'telefone' || column.key === 'celular') {
         <div class="phone-cell">
           <span>{{ row[column.key] || '-' }}</span>
-          @if (row[column.key] && utilsService.getWhatsAppLink(row[column.key])) {
+          @if (row[column.key] && row[column.key] !== '-' && utilsService.getWhatsAppLink(row[column.key])) {
             <a 
               [href]="utilsService.getWhatsAppLink(row[column.key])" 
               target="_blank" 

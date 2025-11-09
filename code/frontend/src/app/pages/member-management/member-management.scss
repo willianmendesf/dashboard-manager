@@ -30,6 +30,37 @@
   gap: 8px;
 }
 
+.whatsapp-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .whatsapp-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(37, 211, 102, 0.1);
+      transform: scale(1.1);
+    }
+    
+    svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  .no-whatsapp {
+    color: #9CA3AF;
+    font-size: 14px;
+  }
+}
+
 .phone-display {
   display: flex;
   align-items: center;

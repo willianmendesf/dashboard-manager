@@ -77,15 +77,15 @@
                   [style.text-align]="column.align || 'left'"
                   [class.avatar-cell]="column.key === 'foto'"
                 >
-                  @if (rowTemplate) {
-                    <ng-container *ngTemplateOutlet="rowTemplate; context: { $implicit: row, column: column }"></ng-container>
-                  } @else if (column.key === 'foto') {
+                  @if (column.key === 'foto') {
                     <img 
                       [src]="row[column.key] || 'img/avatar-default.png'"
                       alt="Foto do perfil"
                       class="table-avatar"
                       onerror="this.src='img/avatar-default.png'"
                     />
+                  } @else if (getRowTemplate()) {
+                    <ng-container *ngTemplateOutlet="getRowTemplate()!; context: { $implicit: row, column: column }"></ng-container>
                   } @else {
                     {{ row[column.key] || '-' }}
                   }
