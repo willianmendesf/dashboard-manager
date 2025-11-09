@@ -35,6 +35,11 @@
             {{ getStatus(appointment.enabled) }}
           </div>
           }
+          @if(appointment.taskType) {
+          <div class="project-status" [class.status-api]="appointment.taskType === 'API_CALL'" [class.status-whatsapp]="appointment.taskType === 'WHATSAPP_MESSAGE'">
+            {{ getTaskTypeLabel(appointment.taskType) }}
+          </div>
+          }
           @if(appointment.development) {
           <div class="project-status status-dev">
             {{ getDevelopment(appointment.development) }}

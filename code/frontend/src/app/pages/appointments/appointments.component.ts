@@ -74,6 +74,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     return status == true ? 'Dev' : '';
   }
 
+  public getTaskTypeLabel(taskType: string): string {
+    if (taskType === 'API_CALL') {
+      return 'API';
+    } else if (taskType === 'WHATSAPP_MESSAGE') {
+      return 'WhatsApp';
+    }
+    return taskType || 'N/A';
+  }
+
   getSearchIcon(): SafeHtml {
     const html = NavigationIcons.search({ size: 20, color: 'currentColor' });
     return this.sanitizer.bypassSecurityTrustHtml(html);
