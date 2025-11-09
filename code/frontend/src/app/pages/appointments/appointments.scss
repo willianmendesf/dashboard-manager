@@ -142,6 +142,9 @@
 .project-content-left {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .project-description {
@@ -150,11 +153,40 @@
   line-height: 1.5;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Limita a 3 linhas */
+  -webkit-line-clamp: 2; /* Limita a 2 linhas para dar espaço ao destino */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 63px; /* Altura mínima para 3 linhas (14px * 1.5 * 3) */
+  min-height: 42px; /* Altura mínima para 2 linhas (14px * 1.5 * 2) */
+}
+
+.project-destination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+  padding-top: 8px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.destination-label {
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.destination-value {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-image-preview {

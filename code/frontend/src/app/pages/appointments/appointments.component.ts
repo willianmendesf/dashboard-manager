@@ -83,6 +83,41 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     return taskType || 'N/A';
   }
 
+  public getGroupName(groupId: string): string {
+    const group = this.groups.find(g => this.compareIds(g.id, groupId));
+    return group ? group.name : groupId;
+  }
+
+  public getDestinationText(appointment: Appointment): string {
+    if (appointment.taskType !== 'WHATSAPP_MESSAGE') {
+      return '';
+    }
+
+    const destinations: string[] = [];
+
+    // Adicionar grupos
+    if (appointment.sendToGroups && appointment.sendToGroups.length > 0) {
+      const groupNames = appointment.sendToGroups.map(id => this.getGroupName(id));
+      destinations.push(...groupNames);
+    }
+
+    // Adicionar contatos individuais
+    if (appointment.sendTo && appointment.sendTo.length > 0) {
+      destinations.push(...appointment.sendTo);
+    }
+
+    if (destinations.length === 0) {
+      return 'Sem destino definido';
+    }
+
+    // Limitar a exibição a 2 itens, mostrando "e mais X" se houver mais
+    if (destinations.length <= 2) {
+      return destinations.join(', ');
+    } else {
+      return destinations.slice(0, 2).join(', ') + ` e mais ${destinations.length - 2}`;
+    }
+  }
+
   getSearchIcon(): SafeHtml {
     const html = NavigationIcons.search({ size: 20, color: 'currentColor' });
     return this.sanitizer.bypassSecurityTrustHtml(html);

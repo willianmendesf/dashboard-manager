@@ -53,6 +53,12 @@
           <div class="team-avatars">
             <p class="project-description">{{ appointment.description || 'Sem descrição' }}</p>
           </div>
+          @if(appointment.taskType === 'WHATSAPP_MESSAGE') {
+          <div class="project-destination">
+            <span class="destination-label">Destino:</span>
+            <span class="destination-value">{{ getDestinationText(appointment) }}</span>
+          </div>
+          }
         </div>
         @if(appointment.taskType === 'WHATSAPP_MESSAGE' && appointment.sendImage && appointment.imageToSend) {
         <div class="project-image-preview">
