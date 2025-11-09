@@ -1,28 +1,27 @@
 <div class="page-container">
-  <div class="page-header">
-    <div>
-      <h1>Configurações</h1>
-      <p>Gerencie as configurações globais do sistema</p>
-    </div>
-    <div class="actions-bar">
-      <button 
-        type="button" 
-        class="btn-secondary" 
-        (click)="cancelChanges()"
-        [disabled]="saving"
-      >
-        Cancelar
-      </button>
-      <button 
-        type="button" 
-        class="btn-primary" 
-        (click)="saveSettings()"
-        [disabled]="saving || settingsForm.invalid"
-      >
-        <span *ngIf="!saving">Salvar Alterações</span>
-        <span *ngIf="saving">Salvando...</span>
-      </button>
-    </div>
+  <pagetitle
+    title="Configurações"
+    subtitle="Gerencie as configurações globais do sistema"
+  ></pagetitle>
+
+  <div class="actions-bar">
+    <button 
+      type="button" 
+      class="btn-secondary" 
+      (click)="cancelChanges()"
+      [disabled]="saving"
+    >
+      Cancelar
+    </button>
+    <button 
+      type="button" 
+      class="btn-primary" 
+      (click)="saveSettings()"
+      [disabled]="saving || settingsForm.invalid"
+    >
+      <span *ngIf="!saving">Salvar Alterações</span>
+      <span *ngIf="saving">Salvando...</span>
+    </button>
   </div>
 
   <ng-container *ngIf="configurations$ | async as configurations; else loading">

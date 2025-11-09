@@ -122,13 +122,19 @@
           <div class="form-group">
             <label>Usuário</label>
             <input
-              type="tel"
+              type="text"
               [(ngModel)]="currentUser.username"
               name="username"
               class="form-control"
               placeholder=""
+              [disabled]="isEditingSelf"
               required
             />
+            @if (isEditingSelf) {
+              <small class="form-text text-muted">
+                Seu nome de usuário não pode ser alterado.
+              </small>
+            }
           </div>
 
           <div class="form-group">

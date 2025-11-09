@@ -47,6 +47,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   ];
 
   getTableActions(): TableAction[] {
+    const loggedInUser = this.authService.getCurrentUser();
+    const isLoggedInRoot = loggedInUser?.profileName?.toUpperCase() === 'ROOT';
+    
     return [
       {
         label: 'Visualizar',
@@ -61,7 +64,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         action: (row) => {
           if (row._original) this.editUser(row._original);
         },
-        condition: (row) => row.role !== 'root'
+        condition: (row) => {
+          const isTargetRoot = row.role?.toUpperCase() === 'ROOT' || 
+                              row.profileName?.toUpperCase() === 'ROOT';
+          // Allow edit if: not ROOT, or if ROOT and user is editing themselves
+          if (isTargetRoot) {
+            return isLoggedInRoot && loggedInUser?.id === row._original?.id;
+          }
+          return true; // Non-ROOT users can always be edited
+        }
       },
       {
         label: 'Excluir',
@@ -69,7 +80,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         action: (row) => {
           if (row._original) this.deleteUser(row._original);
         },
-        condition: (row) => row.role !== 'root'
+        condition: (row) => {
+          const isTargetRoot = row.role?.toUpperCase() === 'ROOT' || 
+                              row.profileName?.toUpperCase() === 'ROOT';
+          return !isTargetRoot; // ROOT users cannot be deleted
+        }
       }
     ];
   }
@@ -296,7 +311,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
     
     // WRITE-ONCE: Don't send CPF/Telefone if user is editing themselves and fields already have values
+    // SECURITY: Don't send username if user is editing themselves (username cannot be changed)
     if (this.isEditingSelf) {
+      // Remove username from update payload - username cannot be changed
+      delete newUser.username;
+      
       if (this.isCpfDisabled) {
         delete newUser.cpf;
       }
@@ -676,36 +695,68 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   editUser(user: User) {
+    // SECURITY: Check if trying to edit ROOT user
+    const loggedInUser = this.authService.getCurrentUser();
+    const isTargetRoot = (user.role?.toUpperCase() === 'ROOT' || 
+                         user.profileName?.toUpperCase() === 'ROOT');
+    const isLoggedInRoot = loggedInUser?.profileName?.toUpperCase() === 'ROOT';
+    
+    // Block editing ROOT users unless the logged-in user is the ROOT themselves
+    if (isTargetRoot) {
+      if (!isLoggedInRoot || loggedInUser?.id !== user.id) {
+        this.notificationService.showError('Usuários ROOT só podem ser editados por si mesmos.');
+        return;
+      }
+    }
+    
     this.closeViewModal();
     this.openUserModal(user);
   }
 
   getViewModalButtons(): ModalButton[] {
-    if (!this.viewingUser) {
-      return [
-        {
-          label: 'Fechar',
-          type: 'secondary',
-          action: () => this.closeViewModal()
-        }
-      ];
-    }
-    return [
+    const buttons: ModalButton[] = [
       {
         label: 'Fechar',
         type: 'secondary',
         action: () => this.closeViewModal()
-      },
-      {
-        label: 'Editar Usuário',
-        type: 'primary',
-        action: () => {
-          if (this.viewingUser) {
-            this.editUser(this.viewingUser);
-          }
-        }
       }
     ];
+
+    // Add "Editar Usuário" button only if user can edit
+    if (this.viewingUser) {
+      const loggedInUser = this.authService.getCurrentUser();
+      const isTargetRoot = (this.viewingUser.role?.toUpperCase() === 'ROOT' || 
+                           this.viewingUser.profileName?.toUpperCase() === 'ROOT');
+      const isLoggedInRoot = loggedInUser?.profileName?.toUpperCase() === 'ROOT';
+      
+      // Show edit button only if: not ROOT, or if ROOT and user is editing themselves
+      const canEdit = !isTargetRoot || (isLoggedInRoot && loggedInUser?.id === this.viewingUser.id);
+      
+      if (canEdit) {
+        buttons.push({
+          label: 'Editar Usuário',
+          type: 'primary',
+          action: () => {
+            if (this.viewingUser) {
+              // Check if can edit (same security check as editUser)
+              const loggedInUser = this.authService.getCurrentUser();
+              const isTargetRoot = (this.viewingUser.role?.toUpperCase() === 'ROOT' || 
+                                   this.viewingUser.profileName?.toUpperCase() === 'ROOT');
+              const isLoggedInRoot = loggedInUser?.profileName?.toUpperCase() === 'ROOT';
+              
+              if (isTargetRoot && (!isLoggedInRoot || loggedInUser?.id !== this.viewingUser.id)) {
+                this.notificationService.showError('Usuários ROOT só podem ser editados por si mesmos.');
+                return;
+              }
+              
+              this.editUser(this.viewingUser);
+            }
+          }
+        });
+      }
+    }
+
+    return buttons;
   }
 
   getEditModalButtons(): ModalButton[] {

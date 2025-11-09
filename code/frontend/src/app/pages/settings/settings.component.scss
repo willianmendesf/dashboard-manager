@@ -1,30 +1,11 @@
 // .page-container está definido em shared/styles/layout.scss
 // O componente pagetitle já tem seus próprios estilos definidos
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-}
-
-.page-header h1 {
-  margin: 0 0 8px 0;
-  color: #1F2937;
-  font-size: 32px;
-  font-weight: bold;
-}
-
-.page-header p {
-  margin: 0;
-  color: #6B7280;
-  font-size: 16px;
-}
-
 .actions-bar {
   display: flex;
   gap: 12px;
   align-items: center;
+  margin-bottom: 32px;
 }
 
 .btn-primary {
