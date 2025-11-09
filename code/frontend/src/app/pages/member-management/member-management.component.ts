@@ -70,9 +70,16 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   showMemberModal = false;
   showViewModal = false;
+  showImportModal = false;
   isEditing = false;
   currentMember: any = {};
   viewingMember: Member | null = null;
+  
+  // Import modal state
+  selectedImportFile: File | null = null;
+  importProgress = '';
+  importResult: any = null;
+  isImporting = false;
 
   currentPage = 1;
   itemsPerPage = 10;
@@ -92,6 +99,143 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
+  }
+
+  // Import methods
+  openImportModal(): void {
+    this.showImportModal = true;
+    this.selectedImportFile = null;
+    this.importProgress = '';
+    this.importResult = null;
+    this.isImporting = false;
+  }
+
+  closeImportModal(): void {
+    this.showImportModal = false;
+    this.selectedImportFile = null;
+    this.importProgress = '';
+    this.importResult = null;
+    this.isImporting = false;
+  }
+
+  onImportFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      const validExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      
+      if (!validExtensions.includes(fileExtension)) {
+        this.notificationService.showError('Formato de arquivo inválido. Use .xlsx, .xls ou .csv');
+        return;
+      }
+      
+      this.selectedImportFile = file;
+      this.importProgress = `Arquivo selecionado: ${file.name}`;
+    }
+  }
+
+  onImportFileDropped(event: DragEvent): void {
+    event.preventDefault();
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const validExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      
+      if (!validExtensions.includes(fileExtension)) {
+        this.notificationService.showError('Formato de arquivo inválido. Use .xlsx, .xls ou .csv');
+        return;
+      }
+      
+      this.selectedImportFile = file;
+      this.importProgress = `Arquivo selecionado: ${file.name}`;
+    }
+  }
+
+  onImportDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  downloadTemplate(): void {
+    this.http.get(`${environment.apiUrl}members/import/template`, { 
+      responseType: 'blob',
+      withCredentials: true 
+    })
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'modelo_importacao_membros.xlsx';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          this.notificationService.showSuccess('Modelo baixado com sucesso!');
+        },
+        error: (error) => {
+          console.error('Error downloading template:', error);
+          this.notificationService.showError('Erro ao baixar modelo de planilha');
+        }
+      });
+  }
+
+  uploadImportFile(): void {
+    if (!this.selectedImportFile) {
+      this.notificationService.showError('Selecione um arquivo para importar');
+      return;
+    }
+
+    this.isImporting = true;
+    this.importProgress = 'Processando arquivo...';
+
+    const formData = new FormData();
+    formData.append('file', this.selectedImportFile);
+
+    this.http.post(`${environment.apiUrl}members/import`, formData, { withCredentials: true })
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (result: any) => {
+          this.importResult = result;
+          this.isImporting = false;
+          
+          const successCount = result.successCount || 0;
+          const errorCount = result.errorCount || 0;
+          const totalRows = result.totalRows || 0;
+          const createdCount = result.createdCount || 0;
+          const updatedCount = result.updatedCount || 0;
+
+          if (errorCount === 0) {
+            this.notificationService.showSuccess(
+              `Importação concluída! ${successCount} membro(s) processado(s) com sucesso.`
+            );
+          } else {
+            this.notificationService.showError(
+              `Importação concluída com erros: ${successCount} sucesso(s), ${errorCount} erro(s).`
+            );
+          }
+
+          // Refresh members list
+          this.getMembers();
+          
+          // Show detailed result
+          this.importProgress = `
+            Total de linhas: ${totalRows}
+            Criados: ${createdCount}
+            Atualizados: ${updatedCount}
+            Sucessos: ${successCount}
+            Erros: ${errorCount}
+          `;
+        },
+        error: (error) => {
+          console.error('Error importing file:', error);
+          this.isImporting = false;
+          const errorMessage = error?.error?.message || error?.error || 'Erro ao importar arquivo';
+          this.notificationService.showError(`Erro na importação: ${errorMessage}`);
+          this.importProgress = 'Erro ao processar arquivo';
+        }
+      });
   }
 
   ngOnInit() {
@@ -318,6 +462,11 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
+  getImportIcon(): SafeHtml {
+    const html = ActionIcons.upload({ size: 18, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
   getActionIcon(iconName: 'view' | 'edit' | 'delete'): SafeHtml {
     const icons = {
       view: ActionIcons.view({ size: 16, color: 'currentColor' }),
@@ -440,6 +589,22 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  getImportModalButtons(): ModalButton[] {
+    return [
+      {
+        label: 'Cancelar',
+        type: 'secondary',
+        action: () => this.closeImportModal()
+      },
+      {
+        label: this.isImporting ? 'Processando...' : 'Enviar',
+        type: 'primary',
+        action: () => this.uploadImportFile(),
+        disabled: !this.selectedImportFile || this.isImporting
+      }
+    ];
+  }
+
   getItemsPerPageOptions(): number[] {
     const total = this.filteredMembers.length;
     const options: number[] = [];
@@ -458,8 +623,10 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     
     return options;
   }
-}
-function provideAnimations(): readonly any[] | import("@angular/core").Type<any> {
-  throw new Error('Function not implemented.');
+
+  formatImportProgress(progress: string): string {
+    if (!progress) return '';
+    return progress.replace(/\n/g, '<br>');
+  }
 }
 

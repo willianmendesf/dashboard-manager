@@ -30,8 +30,14 @@
         <option [value]="true">Casado</option>
       </select> -->
     </div>
-    <button class="btn-secondary" (click)="getMembers()">Atualizar</button>
-    <button class="btn-primary" (click)="openMemberModal()">+ Novo Membro</button>
+    <div class="action-buttons">
+      <button class="btn-secondary" (click)="getMembers()" type="button">Atualizar</button>
+      <button class="btn-secondary" (click)="openImportModal()" type="button">
+        <span class="btn-icon" [innerHTML]="getImportIcon()" [attr.aria-hidden]="true"></span>
+        Importar Planilha
+      </button>
+      <button class="btn-primary" (click)="openMemberModal()" type="button">+ Novo Membro</button>
+    </div>
   </div>
 
   <app-data-table
@@ -565,5 +571,70 @@
         </div>
       </div>
     }
+  </app-modal>
+
+  <!-- Import Members Modal -->
+  <app-modal
+    [title]="'Importar Membros'"
+    [isOpen]="showImportModal"
+    [size]="'medium'"
+    [footerButtons]="getImportModalButtons()"
+    (close)="closeImportModal()">
+    
+    <div class="import-container">
+      <div class="import-info">
+        <p>Faça o upload de um arquivo Excel (.xlsx) ou CSV para importar membros em lote.</p>
+        <p class="text-muted">O arquivo deve seguir o formato do modelo disponível abaixo.</p>
+      </div>
+
+      <div class="import-actions">
+        <button type="button" class="btn-secondary" (click)="downloadTemplate()">
+          📥 Baixar Modelo de Planilha
+        </button>
+      </div>
+
+      <div 
+        class="import-dropzone"
+        [class.drag-over]="false"
+        (dragover)="onImportDragOver($event)"
+        (drop)="onImportFileDropped($event)"
+      >
+        <div class="dropzone-content">
+          <div class="dropzone-icon">📤</div>
+          <p class="dropzone-text">
+            {{ selectedImportFile ? selectedImportFile.name : 'Arraste e solte o arquivo aqui' }}
+          </p>
+          <p class="dropzone-hint">ou</p>
+          <label for="importFileInput" class="btn-primary">
+            Selecionar Arquivo
+          </label>
+          <input
+            type="file"
+            id="importFileInput"
+            accept=".xlsx,.xls,.csv"
+            (change)="onImportFileSelected($event)"
+            style="display: none;"
+          />
+          <p class="dropzone-formats">Formatos aceitos: .xlsx, .xls, .csv</p>
+        </div>
+      </div>
+
+      @if (importProgress) {
+        <div class="import-progress">
+          <p [innerHTML]="formatImportProgress(importProgress)"></p>
+        </div>
+      }
+
+      @if (importResult && importResult.errors && importResult.errors.length > 0) {
+        <div class="import-errors">
+          <h5>Erros encontrados:</h5>
+          <ul>
+            @for (error of importResult.errors; track $index) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
   </app-modal>
 </div>

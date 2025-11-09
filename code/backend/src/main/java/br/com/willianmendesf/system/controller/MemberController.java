@@ -1,15 +1,20 @@
 package br.com.willianmendesf.system.controller;
 
+import br.com.willianmendesf.system.model.dto.ImportResultDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
+import br.com.willianmendesf.system.service.MemberImportService;
 import br.com.willianmendesf.system.service.MemberService;
 import br.com.willianmendesf.system.service.storage.StorageService;
 import br.com.willianmendesf.system.service.utils.CPFUtil;
 import br.com.willianmendesf.system.service.utils.RGUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +31,7 @@ public class MemberController {
     private final MemberService service;
     private final MemberRepository memberRepository;
     private final StorageService storageService;
+    private final MemberImportService memberImportService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_MEMBERS')")
@@ -136,6 +142,60 @@ public class MemberController {
         } catch (Exception e) {
             log.error("Error uploading profile photo for member ID: {}", id, e);
             return ResponseEntity.internalServerError().body(java.util.Map.of("error", "Error uploading photo"));
+        }
+    }
+
+    /**
+     * POST /api/v1/members/import
+     * Imports members from Excel (.xlsx) or CSV file
+     * Requires WRITE_MEMBERS permission
+     */
+    @PostMapping("/import")
+    @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
+    public ResponseEntity<ImportResultDTO> importMembers(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file == null || file.isEmpty()) {
+                ImportResultDTO errorResult = new ImportResultDTO();
+                errorResult.addError(0, "Arquivo não fornecido ou vazio");
+                return ResponseEntity.badRequest().body(errorResult);
+            }
+
+            ImportResultDTO result = memberImportService.importMembers(file);
+            log.info("Import completed: {} success, {} errors", result.getSuccessCount(), result.getErrorCount());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error importing members", e);
+            ImportResultDTO errorResult = new ImportResultDTO();
+            errorResult.addError(0, "Erro ao processar importação: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * GET /api/v1/members/import/template
+     * Downloads Excel template file for member import
+     * Requires WRITE_MEMBERS permission
+     */
+    @GetMapping("/import/template")
+    @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
+    public ResponseEntity<ByteArrayResource> downloadTemplate() {
+        try {
+            byte[] templateBytes = memberImportService.generateTemplate();
+            ByteArrayResource resource = new ByteArrayResource(templateBytes);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=modelo_importacao_membros.xlsx");
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(templateBytes.length)
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(resource);
+        } catch (Exception e) {
+            log.error("Error generating template", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
