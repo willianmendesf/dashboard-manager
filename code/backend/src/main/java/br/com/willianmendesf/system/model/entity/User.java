@@ -32,10 +32,10 @@ public class User implements UserDetails {
     @Column(name = "email", unique = true, nullable = false, length = 200)
     private String email;
 
-    @Column(name = "cpf", length = 14)
+    @Column(name = "cpf", unique = true, length = 14)
     private String cpf;
 
-    @Column(name = "telefone", length = 20)
+    @Column(name = "telefone", unique = true, length = 20)
     private String telefone;
 
     @Column(name = "password", nullable = false)

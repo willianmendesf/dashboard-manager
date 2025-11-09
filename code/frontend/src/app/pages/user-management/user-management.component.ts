@@ -13,11 +13,13 @@ import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/u
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../shared/services/notification.service';
 import { AuthService } from '../../shared/service/auth.service';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DataTableComponent],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DataTableComponent, NgxMaskDirective],
+  providers: [provideNgxMask()],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss'
 })
@@ -219,7 +221,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       },
       error: error => {
         console.error('Erro ao criar usuário:', error);
-        this.notificationService.showError('Erro ao criar usuário. Verifique os dados e tente novamente.');
+        // Handle 409 Conflict (duplicate data)
+        if (error?.status === 409) {
+          const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique CPF, Email, Telefone ou Nome de usuário.';
+          this.notificationService.showError(errorMessage);
+        } else {
+          const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao criar usuário. Verifique os dados e tente novamente.';
+          this.notificationService.showError(errorMessage);
+        }
       },
       complete: () => this.getUsers()
     })
@@ -281,8 +290,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       },
       error: error => {
         console.error('Erro ao atualizar usuário:', error);
-        const errorMessage = error?.error?.error || 'Erro ao atualizar usuário. Verifique os dados e tente novamente.';
-        this.notificationService.showError(errorMessage);
+        // Handle 409 Conflict (duplicate data)
+        if (error?.status === 409) {
+          const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique CPF, Email, Telefone ou Nome de usuário.';
+          this.notificationService.showError(errorMessage);
+        } else {
+          const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao atualizar usuário. Verifique os dados e tente novamente.';
+          this.notificationService.showError(errorMessage);
+        }
       },
       complete: () => this.getUsers()
     })

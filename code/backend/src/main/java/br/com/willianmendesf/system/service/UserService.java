@@ -8,11 +8,13 @@ import br.com.willianmendesf.system.repository.UserRepository;
 import br.com.willianmendesf.system.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,10 +48,24 @@ public class UserService {
 
         // Validate if username or email already exists
         if (userRepository.existsByUsername(userDTO.getUsername())) {
-            throw new IllegalArgumentException("Username already exists: " + userDTO.getUsername());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nome de usuário já existe.");
         }
         if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado.");
+        }
+        
+        // Validate CPF if provided
+        if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
+            if (userRepository.existsByCpf(userDTO.getCpf())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
+            }
+        }
+        
+        // Validate telefone if provided
+        if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
+            if (userRepository.existsByTelefone(userDTO.getTelefone())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefone já cadastrado.");
+            }
         }
 
         // Load profile
@@ -66,6 +82,8 @@ public class UserService {
         user.setUsername(userDTO.getUsername());
         user.setName(userDTO.getName());
         user.setEmail(userDTO.getEmail());
+        user.setCpf(userDTO.getCpf());
+        user.setTelefone(userDTO.getTelefone());
         user.setPassword(passwordEncoder.encode(userDTO.getPassword() != null ? userDTO.getPassword() : "changeme"));
         user.setEnabled(userDTO.getEnabled() != null ? userDTO.getEnabled() : true);
         user.setProfile(profile);
@@ -94,10 +112,18 @@ public class UserService {
             user.setName(userDTO.getName());
         }
         if (userDTO.getEmail() != null && !userDTO.getEmail().equals(user.getEmail())) {
-            if (userRepository.existsByEmail(userDTO.getEmail())) {
-                throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
+            if (userRepository.existsByEmailAndIdNot(userDTO.getEmail(), id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado.");
             }
             user.setEmail(userDTO.getEmail());
+        }
+        
+        // Validate username if changed
+        if (userDTO.getUsername() != null && !userDTO.getUsername().equals(user.getUsername())) {
+            if (userRepository.existsByUsernameAndIdNot(userDTO.getUsername(), id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Nome de usuário já existe.");
+            }
+            user.setUsername(userDTO.getUsername());
         }
 
         // Update password (use novaSenha if provided, otherwise password for backward compatibility)
@@ -134,11 +160,19 @@ public class UserService {
             log.warn("User {} attempted to change their own profile. Ignored.", loggedUser.getUsername());
         }
 
-        // Update CPF and telefone if provided
-        if (userDTO.getCpf() != null) {
+        // Update CPF if provided and validate uniqueness
+        if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
+            if (!userDTO.getCpf().equals(user.getCpf()) && userRepository.existsByCpfAndIdNot(userDTO.getCpf(), id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
+            }
             user.setCpf(userDTO.getCpf());
         }
-        if (userDTO.getTelefone() != null) {
+        
+        // Update telefone if provided and validate uniqueness
+        if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
+            if (!userDTO.getTelefone().equals(user.getTelefone()) && userRepository.existsByTelefoneAndIdNot(userDTO.getTelefone(), id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefone já cadastrado.");
+            }
             user.setTelefone(userDTO.getTelefone());
         }
 
