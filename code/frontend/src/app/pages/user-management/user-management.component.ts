@@ -35,6 +35,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   searchTerm = '';
   statusFilter = '';
   roleFilter = '';
+  currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
 
   // Configuração da tabela
   tableColumns: TableColumn[] = [
@@ -42,7 +43,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     { key: 'username', label: 'Usuário', sortable: true },
     { key: 'name', label: 'Nome', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
-    { key: 'role', label: 'Perfil', sortable: true },
     { key: 'status', label: 'Status', sortable: true }
   ];
 
@@ -602,15 +602,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         ? user.profileName 
         : ((user.role && user.role.trim() !== '') ? user.role : 'USER');
       
-      // Debug: log para verificar os dados
-      console.log('getTableData - mapeando user:', {
-        id: user.id,
-        username: user.username,
-        profileName: user.profileName,
-        role: user.role,
-        roleValue: roleValue
-      });
-      
       return {
         ...user,
         _original: user, // Manter referência ao objeto original
@@ -621,7 +612,43 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         profileName: roleValue // Garantir que profileName sempre tenha um valor
       };
     });
+    
+    // Aplicar ordenação se houver
+    if (this.currentSort) {
+      this.tableData.sort((a, b) => {
+        const aValue = a[this.currentSort!.column];
+        const bValue = b[this.currentSort!.column];
+        
+        // Tratar valores nulos ou indefinidos
+        if (aValue === null || aValue === undefined || aValue === '-') return 1;
+        if (bValue === null || bValue === undefined || bValue === '-') return -1;
+        
+        // Comparação de strings
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue, 'pt-BR', { sensitivity: 'base' });
+          return this.currentSort!.direction === 'asc' ? comparison : -comparison;
+        }
+        
+        // Comparação numérica
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return this.currentSort!.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        // Fallback: converter para string e comparar
+        const aStr = String(aValue);
+        const bStr = String(bValue);
+        const comparison = aStr.localeCompare(bStr, 'pt-BR', { sensitivity: 'base' });
+        return this.currentSort!.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+    
     return this.tableData;
+  }
+  
+  onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
+    this.currentSort = sort;
+    this.getTableData(); // Reaplica a ordenação
+    this.cdr.markForCheck();
   }
 
   getRoleLabel(role: string | null | undefined): string {

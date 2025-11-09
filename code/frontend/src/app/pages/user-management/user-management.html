@@ -40,11 +40,10 @@
     [striped]="true"
     [hoverable]="true"
     [enablePagination]="true"
+    (sortChange)="onSortChange($event)"
   >
     <ng-template #rowTemplate let-row let-column="column">
-      @if (column.key === 'role') {
-        <span class="badge" [class]="'role-' + (getRoleForDisplay(row) || 'user').toLowerCase()">{{ getRoleLabel(getRoleForDisplay(row) || 'USER') }}</span>
-      } @else if (column.key === 'status') {
+      @if (column.key === 'status') {
         <span class="badge" [class]="row.status === 'Ativo' ? 'active' : 'inactive'">{{ getStatusLabel(row.status === 'Ativo' ? 'active' : 'inactive') }}</span>
       } @else if (column.key === 'telefone') {
         <div class="phone-cell">
