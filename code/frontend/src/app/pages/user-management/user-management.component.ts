@@ -87,6 +87,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   // Security: Track if user is editing themselves
   isEditingSelf = false;
+  isTargetRoot = false; // Indica se o usuário sendo editado é Root
   loggedInUser: any = null;
   
   // Profile mapping: role name -> profileId (will be loaded from backend)
@@ -249,7 +250,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     // Security: Don't send role/status if editing self (backend will also validate)
-    if (!this.isEditingSelf) {
+    // CRITICAL: Don't send role if target user is Root (Root function cannot be changed)
+    if (!this.isEditingSelf && !this.isTargetRoot) {
       // Map role to profileId if role is provided
       if (user.role) {
         const profileId = this.getProfileIdFromRole(user.role);
@@ -290,8 +292,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       },
       error: error => {
         console.error('Erro ao atualizar usuário:', error);
-        // Handle 409 Conflict (duplicate data)
-        if (error?.status === 409) {
+        // Handle 403 Forbidden (e.g., trying to change Root user function)
+        if (error?.status === 403) {
+          const errorMessage = error?.error?.message || error?.error || 'Operação não permitida. Você não tem permissão para realizar esta ação.';
+          this.notificationService.showError(errorMessage);
+        } else if (error?.status === 409) {
+          // Handle 409 Conflict (duplicate data)
           const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique CPF, Email, Telefone ou Nome de usuário.';
           this.notificationService.showError(errorMessage);
         } else {
@@ -384,6 +390,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       this.isEditingSelf = false;
     }
     
+    // Check if the user being edited is Root - CRITICAL: Root users cannot have their function changed
+    if (user) {
+      const userRole = user.role || user.profileName || '';
+      this.isTargetRoot = userRole.toUpperCase() === 'ROOT';
+    } else {
+      this.isTargetRoot = false;
+    }
+    
     // Set photo preview - ensure fotoUrl is set on currentUser
     if (user?.fotoUrl && user.fotoUrl.trim() !== '') {
       this.photoPreview = user.fotoUrl;
@@ -404,6 +418,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.photoPreview = null;
     this.selectedPhotoFile = null;
     this.uploadingPhoto = false;
+    this.isEditingSelf = false;
+    this.isTargetRoot = false;
     this.cdr.markForCheck();
   }
 
@@ -647,6 +663,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             delete userToUpdate.status;
           }
           
+          // CRITICAL: Don't send role if target user is Root (Root function cannot be changed)
+          if (this.isTargetRoot) {
+            delete userToUpdate.role;
+          }
+          
           // STEP 3: Update user data using PUT to /api/v1/users/{id}
           // This sends JSON data, NOT FormData
           this.updateUser(userToUpdate);
@@ -667,6 +688,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         if (this.isEditingSelf) {
           delete userToUpdate.role;
           delete userToUpdate.status;
+        }
+        
+        // CRITICAL: Don't send role if target user is Root (Root function cannot be changed)
+        if (this.isTargetRoot) {
+          delete userToUpdate.role;
         }
         
         // Update user data using PUT to /api/v1/users/{id}

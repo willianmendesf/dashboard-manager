@@ -146,11 +146,11 @@
 
           <div class="form-group">
             <label>Função *</label>
-            <select 
+            <select
               [(ngModel)]="currentUser.role" 
               name="role" 
               class="form-control" 
-              [disabled]="isEditingSelf"
+              [disabled]="isEditingSelf || isTargetRoot"
               required>
               <option value="">Selecione uma função</option>
               <!-- <option value="root">Root</option> -->
@@ -161,6 +161,11 @@
             @if (isEditingSelf) {
               <small class="form-text text-muted">
                 Você não pode alterar sua própria função.
+              </small>
+            }
+            @if (isTargetRoot && !isEditingSelf) {
+              <small class="form-text text-muted">
+                A função de um usuário Root não pode ser alterada.
               </small>
             }
           </div>
