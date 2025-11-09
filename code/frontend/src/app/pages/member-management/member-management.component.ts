@@ -43,11 +43,10 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
     { key: 'whatsapp', label: 'WhatsApp', width: '80px', align: 'center' },
-    { key: 'cpf', label: 'CPF', sortable: true },
-    { key: 'rg', label: 'RG' },
+    { key: 'tipoCadastro', label: 'Tipo de Cadastro', sortable: true },
+    { key: 'intercessor', label: 'Intercessor?', width: '120px', align: 'center' },
     { key: 'nascimento', label: 'Data de Nascimento', sortable: true },
-    { key: 'estadoCivil', label: 'Estado Civil' },
-    { key: 'telefone', label: 'Telefone' }
+    { key: 'estadoCivil', label: 'Estado Civil' }
   ];
 
   getTableActions(): TableAction[] {
@@ -567,6 +566,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         telefone: member.telefone || '-',
         celular: member.celular || '-',
         whatsapp: phoneNumber, // Campo para a coluna WhatsApp (número limpo ou null)
+        tipoCadastro: member.tipoCadastro || '-',
+        intercessor: member.intercessor ? 'Sim' : 'Não',
         nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
       };
     });

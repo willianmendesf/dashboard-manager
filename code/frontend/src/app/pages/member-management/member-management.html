@@ -73,20 +73,10 @@
             <span class="no-whatsapp">-</span>
           }
         </div>
-      } @else if (column.key === 'telefone' || column.key === 'celular') {
-        <div class="phone-cell">
-          <span>{{ row[column.key] || '-' }}</span>
-          @if (row[column.key] && row[column.key] !== '-' && utilsService.getWhatsAppLink(row[column.key])) {
-            <a 
-              [href]="utilsService.getWhatsAppLink(row[column.key])" 
-              target="_blank" 
-              class="whatsapp-icon-button"
-              title="Abrir no WhatsApp"
-              (click)="$event.stopPropagation()"
-              [innerHTML]="getWhatsAppIcon()"
-            ></a>
-          }
-        </div>
+      } @else if (column.key === 'intercessor') {
+        <span class="badge" [class.active]="row.intercessor === 'Sim'" [class.inactive]="row.intercessor === 'Não'">
+          {{ row[column.key] || '-' }}
+        </span>
       } @else {
         {{ row[column.key] || '-' }}
       }
