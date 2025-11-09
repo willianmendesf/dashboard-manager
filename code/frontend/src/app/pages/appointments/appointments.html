@@ -51,13 +51,15 @@
       <div class="project-content-wrapper">
         <div class="project-content-left">
           <div class="team-avatars">
-            <p class="project-description">{{ appointment.description }}</p>
+            <p class="project-description">{{ appointment.description || 'Sem descrição' }}</p>
           </div>
         </div>
         @if(appointment.taskType === 'WHATSAPP_MESSAGE' && appointment.sendImage && appointment.imageToSend) {
         <div class="project-image-preview">
           <img [src]="env + 'images/' + appointment.imageToSend" alt="Preview da imagem" />
         </div>
+        } @else {
+        <div class="project-image-preview project-image-placeholder"></div>
         }
       </div>
 
