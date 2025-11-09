@@ -12,9 +12,12 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -45,7 +48,11 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    // REMOVIDO: @Bean CorsConfigurationSource - Agora está no WebConfig.java com prioridade máxima
+    // Bean para SecurityContextRepository - garante que a sessão seja persistida
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
 
     // Bean da Cadeia de Filtros de Segurança (Onde tudo é amarrado)
     @Bean
@@ -53,49 +60,48 @@ public class SecurityConfig {
         http
             // 1. O WebConfig.java (CorsFilter) já cuida do CORS com prioridade máxima
 
-            // 2. FORÇAR A DESABILITAÇÃO DO CSRF (CRÍTICO PARA API JSON - CORREÇÃO DO 403)
-            // O CSRF está EXPLICITAMENTE desabilitado porque:
-            // - Usamos autenticação via cookie/sessão (stateful)
-            // - Todas as requisições são via API JSON (não formulários HTML)
-            // - O CSRF é necessário apenas para formulários HTML tradicionais
-            // SEM esta linha, o Spring Security ativa CSRF por padrão em modo stateful
+            // 2. FORÇAR A DESABILITAÇÃO DO CSRF (CRÍTICO PARA API JSON)
+            // O CSRF está desabilitado porque usamos autenticação via cookie/sessão stateful
+            // e todas as requisições são via API JSON (não formulários HTML tradicionais)
             .csrf(csrf -> csrf.disable())
 
-            // 3. AUTORIZE AS REQUISIÇÕES
-            .authorizeHttpRequests(authorize -> authorize
-                // 3a. CORS e OPTIONS são gerenciados exclusivamente pelo WebConfig.java (CorsFilter com HIGHEST_PRECEDENCE)
-                // Não precisamos de regra de OPTIONS aqui para evitar conflitos
+            // 3. CONFIGURAR GERENCIAMENTO DE SESSÃO (CRÍTICO - CRIA JSESSIONID)
+            // ALWAYS: Spring Security sempre cria uma sessão HTTP se ela não existir
+            // Isso garante que o cookie JSESSIONID seja criado no login
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                .maximumSessions(1) // Permite apenas uma sessão por usuário
+                .maxSessionsPreventsLogin(false) // Permite login mesmo com sessão existente
+            )
 
-                // 3b. Permita rotas públicas de autenticação
+            // 4. AUTORIZE AS REQUISIÇÕES
+            .authorizeHttpRequests(authorize -> authorize
+                // 4a. Permita rotas públicas de autenticação
                 .requestMatchers("/auth/login").permitAll()
                 .requestMatchers("/auth/logout").permitAll()
                 .requestMatchers("/auth/solicitar-reset").permitAll()
                 .requestMatchers("/auth/redefinir-senha").permitAll()
 
-                // 3c. Permita outras rotas públicas essenciais
+                // 4b. Permita outras rotas públicas essenciais
                 .requestMatchers("/emergency/**").permitAll()
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
 
-                // 3d. Exija autenticação para todo o resto
+                // 4c. Exija autenticação para todo o resto
                 .anyRequest().authenticated()
             )
 
-            // 4. Configure o authentication provider
+            // 5. Configure o authentication provider
             .authenticationProvider(authenticationProvider())
 
-            // 5. CONFIGURE O LOGOUT (O Spring cuida disso)
+            // 6. CONFIGURE O LOGOUT
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")
-                .deleteCookies("JSESSIONID") // Limpa o cookie
-                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID") // Limpa o cookie de sessão
+                .invalidateHttpSession(true) // Invalida a sessão HTTP
+                .clearAuthentication(true) // Limpa a autenticação
                 .logoutSuccessHandler((req, res, auth) -> res.setStatus(HttpServletResponse.SC_OK))
             );
-
-        // NÃO USAMOS .formLogin() (porque você tem um AuthController)
-        // NÃO USAMOS .addFilterBefore() (porque não temos JWT)
-        // NÃO USAMOS .sessionManagement(STATELESS) (porque queremos sessões stateful)
-        // NÃO USAMOS .cors() (porque agora está no WebConfig.java com prioridade máxima)
 
         return http.build();
     }

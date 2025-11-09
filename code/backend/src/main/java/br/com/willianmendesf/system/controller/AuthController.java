@@ -4,13 +4,18 @@ import br.com.willianmendesf.system.model.dto.LoginRequest;
 import br.com.willianmendesf.system.model.dto.LoginResponse;
 import br.com.willianmendesf.system.model.entity.User;
 import br.com.willianmendesf.system.service.CustomUserDetailsService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,29 +32,51 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final br.com.willianmendesf.system.service.PasswordResetService passwordResetService;
+    
+    // Repository para persistir o SecurityContext na sessão HTTP
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        // Authenticate user (Spring Security gerencia a sessão automaticamente)
+    public ResponseEntity<LoginResponse> login(
+            @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+        
+        log.debug("Login attempt for user: {}", request.getUsername());
+        
+        // 1. Autenticar o usuário
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        // Set authentication in security context (Spring Security faz isso automaticamente, mas garantimos)
+        log.debug("Authentication successful for user: {}", request.getUsername());
+
+        // 2. Criar ou obter a sessão HTTP (CRÍTICO - garante criação do JSESSIONID)
+        HttpSession session = httpRequest.getSession(true); // true = cria sessão se não existir
+        
+        // 3. Criar SecurityContext e definir a autenticação
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        
+        // 4. Persistir o SecurityContext na sessão HTTP
+        // Isso garante que o Spring Security reconheça a autenticação em requisições subsequentes
+        securityContextRepository.saveContext(securityContext, httpRequest, null);
+        
+        // 5. Também definir no SecurityContextHolder (para uso imediato)
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Load user details
+        log.debug("Session created: {}, JSESSIONID will be set in response", session.getId());
+
+        // 6. Carregar detalhes do usuário
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         User user = (User) userDetails;
 
-        // Extract permissions
+        // 7. Extrair permissões
         List<String> permissions = user.getAuthorities().stream()
             .map(auth -> auth.getAuthority())
             .collect(Collectors.toList());
 
-        // Build response (SEM TOKEN JWT - a sessão é gerenciada pelo Spring Security)
+        // 8. Construir resposta (SEM TOKEN JWT - apenas dados do usuário)
         LoginResponse response = new LoginResponse();
-        // response.setToken(null); // Não precisamos mais do token
         response.setId(user.getId());
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
@@ -57,6 +84,8 @@ public class AuthController {
         response.setProfileName(user.getProfile().getName());
         response.setFotoUrl(user.getFotoUrl());
         response.setPermissions(permissions);
+
+        log.debug("Login successful for user: {}, session ID: {}", user.getUsername(), session.getId());
 
         return ResponseEntity.ok(response);
     }

@@ -18,7 +18,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
+// DESABILITADO: Este filtro não é mais necessário pois o sistema usa autenticação baseada em sessão HTTP (JSESSIONID)
+// Mantido apenas para referência. Para reativar, descomente @Component abaixo.
+// @Component
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {

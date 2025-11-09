@@ -27,7 +27,7 @@ export interface LoginResponse {
 })
 export class AuthService {
   private apiUrl = environment.apiUrl;
-  private tokenKey = 'auth_token';
+  // REMOVIDO: tokenKey não é mais necessário (sistema usa sessão HTTP/JSESSIONID)
   private userKey = 'auth_user';
   private currentUser: LoginResponse | null = null;
   private authStatus$ = new BehaviorSubject<boolean>(this.isAuthenticated());
