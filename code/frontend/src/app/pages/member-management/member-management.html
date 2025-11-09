@@ -16,19 +16,21 @@
         <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
       </div>
       <select [(ngModel)]="tipoCadastroFilter" (change)="filterMembers()" class="filter-select">
-        <option value="">Membros por tipo</option>
+        <option value="">Todos os Tipos</option>
         <option value="Membro">Membro</option>
         <option value="Visitante">Visitante</option>
         <option value="Seminarista">Seminarista</option>
         <option value="Presbítero">Presbítero</option>
         <option value="Pastor">Pastor</option>
-        <!-- Adicione mais opções conforme necessário -->
+        <option value="Pastor Auxiliar">Pastor Auxiliar</option>
+        <option value="Ex-Membro">Ex-Membro</option>
+        <option value="Excomungado">Excomungado</option>
       </select>
-      <!-- <select [(ngModel)]="estadoCivilFilter" (change)="filterMembers()" class="filter-select">
-        <option value="">Buscar por Status Civil</option>
-        <option [value]="false">Solteiro</option>
-        <option [value]="true">Casado</option>
-      </select> -->
+      <select [(ngModel)]="estadoCivilFilter" (change)="filterMembers()" class="filter-select">
+        <option value="">Todos os Estados Civis</option>
+        <option value="Solteiro">Solteiro</option>
+        <option value="Casado">Casado</option>
+      </select>
     </div>
     <div class="action-buttons">
       <button class="btn-secondary" (click)="getMembers()" type="button">Atualizar</button>

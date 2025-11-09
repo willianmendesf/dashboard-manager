@@ -34,8 +34,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   filteredMembers: Member[] = [...this.members];
   tableData: any[] = []; // Dados formatados para a tabela
   searchTerm = '';
-  estadoCivilFilter: boolean | '' = '';
   tipoCadastroFilter = '';
+  estadoCivilFilter = '';
 
   // Configuração da tabela
   tableColumns: TableColumn[] = [
@@ -371,8 +371,20 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
                             (member.nome && member.nome.toLowerCase().includes(searchLower)) ||
                             (member.email && member.email.toLowerCase().includes(searchLower)) ||
                             (member.cpf && member.cpf.toLowerCase().includes(searchLower));
-      const matchesEstadoCivil = this.estadoCivilFilter === '' || member.estadoCivil === this.estadoCivilFilter;
-      const matchesTipoCadastro = !this.tipoCadastroFilter || member.tipoCadastro === this.tipoCadastroFilter;
+      // Filtro por Tipo de Cadastro
+      const matchesTipoCadastro = !this.tipoCadastroFilter || 
+                                   this.tipoCadastroFilter === '' || 
+                                   (member.tipoCadastro && member.tipoCadastro === this.tipoCadastroFilter);
+      
+      // Filtro por Estado Civil
+      let matchesEstadoCivil = true;
+      if (this.estadoCivilFilter !== '') {
+        if (this.estadoCivilFilter === 'Casado') {
+          matchesEstadoCivil = member.estadoCivil === true;
+        } else if (this.estadoCivilFilter === 'Solteiro') {
+          matchesEstadoCivil = member.estadoCivil === false;
+        }
+      }
 
       return matchesSearch && matchesEstadoCivil && matchesTipoCadastro;
     });
