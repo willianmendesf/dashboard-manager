@@ -29,6 +29,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   users: User[] = [];
   filteredUsers: User[] = [...this.users];
+  tableData: any[] = []; // Dados formatados para a tabela
   searchTerm = '';
   statusFilter = '';
   roleFilter = '';
@@ -77,9 +78,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   currentUser: any = {};
   viewingUser: User | null = null;
 
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalPages = Math.ceil(this.users.length / this.itemsPerPage);
+  // Paginação agora é gerenciada pelo DataTableComponent
 
   selectedPhotoFile: File | null = null;
   photoPreview: string | null = null;
@@ -183,7 +182,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             telefone: user.telefone
           }));
           this.filterUsers();
-          this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
           this.cdr.markForCheck()
         },
         error: error => {
@@ -193,9 +191,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         complete: () => {
-          this.filterUsers()
-          this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
-          this.cdr.markForCheck()
+          this.filterUsers();
+          this.cdr.markForCheck();
         }
       })
   }
@@ -341,8 +338,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   filterUsers() {
     if (!this.users || this.users.length === 0) {
       this.filteredUsers = [];
-      this.totalPages = 1;
-      this.currentPage = 1;
+      this.getTableData(); // Atualizar tableData
       return;
     }
     
@@ -356,8 +352,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       return matchesSearch && matchesStatus && matchesRole;
     });
 
-    this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
-    this.currentPage = 1;
+    // Atualizar tableData após filtrar
+    this.getTableData();
   }
 
   getRoleText(role: string): string {
@@ -565,16 +561,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   getTableData(): any[] {
     if (!this.filteredUsers || this.filteredUsers.length === 0) {
-      return [];
+      this.tableData = [];
+      return this.tableData;
     }
     
-    return this.filteredUsers.map(user => ({
+    this.tableData = this.filteredUsers.map(user => ({
       ...user,
       _original: user, // Manter referência ao objeto original
       foto: user.fotoUrl || null,
       status: user.status === 'active' ? 'Ativo' : 'Inativo',
       role: user.role || user.profileName || 'USER'
     }));
+    return this.tableData;
   }
 
   getRoleLabel(role: string): string {
@@ -790,41 +788,5 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     return permissions[role as keyof typeof permissions] || [];
   }
 
-  previousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
-  }
-
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-    }
-  }
-
-  onItemsPerPageChange() {
-    this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = this.totalPages || 1;
-    }
-  }
-
-  getItemsPerPageOptions(): number[] {
-    const total = this.filteredUsers.length;
-    const options: number[] = [];
-    
-    if (total <= 10) {
-      options.push(10);
-    } else if (total <= 25) {
-      options.push(10, 25);
-    } else if (total <= 50) {
-      options.push(10, 25, 50);
-    } else if (total <= 100) {
-      options.push(10, 25, 50, 100);
-    } else {
-      options.push(10, 25, 50, 100, 200);
-    }
-    
-    return options;
-  }
+  // Métodos de paginação removidos - agora gerenciados pelo DataTableComponent
 }

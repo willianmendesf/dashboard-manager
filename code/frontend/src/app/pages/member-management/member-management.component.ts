@@ -26,6 +26,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   members: Member[] = [];
   filteredMembers: Member[] = [...this.members];
+  tableData: any[] = []; // Dados formatados para a tabela
   searchTerm = '';
   estadoCivilFilter: boolean | '' = '';
   tipoCadastroFilter = '';
@@ -81,9 +82,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   importResult: any = null;
   isImporting = false;
 
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalPages = Math.ceil(this.members.length / this.itemsPerPage);
+  // Paginação agora é gerenciada pelo DataTableComponent
 
   selectedPhotoFile: File | null = null;
   photoPreview: string | null = null;
@@ -252,20 +251,17 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
             ...member,
             fotoUrl: member.fotoUrl || null
           }));
-          this.filterMembers();
-          this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
+          this.filterMembers(); // Isso já chama getTableData() internamente
           this.cdr.markForCheck();
         },
         error: error => {
           console.error('Error loading members:', error);
           this.members = [];
           this.filterMembers();
-          this.totalPages = 1;
           this.cdr.markForCheck();
         },
         complete: () => {
           this.filterMembers();
-          this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
           this.cdr.markForCheck();
         }
       });
@@ -310,8 +306,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   filterMembers() {
     if (!this.members || this.members.length === 0) {
       this.filteredMembers = [];
-      this.totalPages = 1;
-      this.currentPage = 1;
+      this.getTableData(); // Atualizar tableData
       return;
     }
 
@@ -329,8 +324,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       return matchesSearch && matchesEstadoCivil && matchesTipoCadastro;
     });
 
-    this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage) || 1;
-    this.currentPage = 1;
+    // Atualizar tableData após filtrar
+    this.getTableData();
   }
 
   openMemberModal(member?: Member) {
@@ -479,10 +474,11 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   getTableData(): any[] {
     if (!this.filteredMembers || this.filteredMembers.length === 0) {
-      return [];
+      this.tableData = [];
+      return this.tableData;
     }
     
-    return this.filteredMembers.map(member => ({
+    this.tableData = this.filteredMembers.map(member => ({
       ...member,
       _original: member, // Manter referência ao objeto original
       foto: member.fotoUrl || null,
@@ -490,6 +486,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       telefone: member.telefone || member.celular || member.comercial || '-',
       nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
     }));
+    return this.tableData;
   }
 
   editMember(member: Member) {
@@ -570,24 +567,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  previousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
-  }
-
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-    }
-  }
-
-  onItemsPerPageChange() {
-    this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = this.totalPages || 1;
-    }
-  }
+  // Métodos de paginação removidos - agora gerenciados pelo DataTableComponent
 
   getImportModalButtons(): ModalButton[] {
     return [
@@ -605,24 +585,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     ];
   }
 
-  getItemsPerPageOptions(): number[] {
-    const total = this.filteredMembers.length;
-    const options: number[] = [];
-    
-    if (total <= 10) {
-      options.push(10);
-    } else if (total <= 25) {
-      options.push(10, 25);
-    } else if (total <= 50) {
-      options.push(10, 25, 50);
-    } else if (total <= 100) {
-      options.push(10, 25, 50, 100);
-    } else {
-      options.push(10, 25, 50, 100, 200);
-    }
-    
-    return options;
-  }
+  // Método removido - paginação agora é gerenciada pelo DataTableComponent
 
   formatImportProgress(progress: string): string {
     if (!progress) return '';

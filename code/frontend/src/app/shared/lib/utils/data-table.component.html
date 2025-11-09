@@ -9,6 +9,42 @@
       <p>{{ emptyMessage }}</p>
     </div>
   } @else {
+    @if (enablePagination) {
+      <div class="pagination-controls">
+        <div class="pagination-left">
+          <label for="pageSizeSelect" class="pagination-label">Itens por página:</label>
+          <select 
+            id="pageSizeSelect" 
+            class="pagination-select" 
+            [ngModel]="pageSize" 
+            (ngModelChange)="onPageSizeChange($event)"
+          >
+            @for (option of getItemsPerPageOptions(); track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </div>
+        <div class="pagination-center">
+          <button 
+            class="btn-pagination" 
+            [disabled]="currentPage === 1" 
+            (click)="previousPage()"
+          >
+            ← Anterior
+          </button>
+          <span class="pagination-info">
+            Página {{ currentPage }} de {{ totalPages }}
+          </span>
+          <button 
+            class="btn-pagination" 
+            [disabled]="currentPage === totalPages" 
+            (click)="nextPage()"
+          >
+            Próxima →
+          </button>
+        </div>
+      </div>
+    }
     <div class="table-container">
       <table class="data-table" [class.striped]="striped" [class.hoverable]="hoverable">
         @if (showHeader) {
@@ -34,7 +70,7 @@
           </thead>
         }
         <tbody>
-          @for (row of data; track $index) {
+          @for (row of paginatedData; track $index) {
             <tr (click)="onRowClick(row, $event)" [class.clickable]="rowClick.observed">
               @for (column of columns; track column.key) {
                 <td 

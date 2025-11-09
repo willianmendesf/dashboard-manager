@@ -33,12 +33,13 @@
 
   <app-data-table
     [columns]="tableColumns"
-    [data]="getTableData()"
+    [data]="tableData"
     [actions]="getTableActions()"
     [loading]="false"
     emptyMessage="Nenhum usuário encontrado"
     [striped]="true"
     [hoverable]="true"
+    [enablePagination]="true"
   >
     <ng-template #rowTemplate let-row let-column="column">
       @if (column.key === 'role') {
@@ -50,33 +51,6 @@
       }
     </ng-template>
   </app-data-table>
-
-  <div class="pagination">
-    <div class="pagination-left">
-      <label for="itemsPerPage" class="pagination-label">Itens por página:</label>
-      <select 
-        id="itemsPerPage" 
-        class="pagination-select" 
-        [(ngModel)]="itemsPerPage" 
-        (change)="onItemsPerPageChange()"
-      >
-        @for (option of getItemsPerPageOptions(); track option) {
-          <option [value]="option">{{ option }}</option>
-        }
-      </select>
-    </div>
-    <div class="pagination-center">
-      <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">
-        ← Anterior
-      </button>
-      <span class="pagination-info">
-        Página {{ currentPage }} de {{ totalPages }}
-      </span>
-      <button class="btn-pagination" [disabled]="currentPage === totalPages" (click)="nextPage()">
-        Próxima →
-      </button>
-    </div>
-  </div>
 
   <!-- Edit/Create User Modal -->
   <app-modal

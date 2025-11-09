@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter, TemplateRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, TemplateRef, OnChanges, SimpleChanges, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActionIcons } from './icons';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { inject } from '@angular/core';
@@ -23,11 +24,11 @@ export interface TableAction {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
 })
-export class DataTableComponent {
+export class DataTableComponent implements OnChanges, OnInit {
   @Input() columns: TableColumn[] = [];
   @Input() data: any[] = [];
   @Input() actions: TableAction[] = [];
@@ -37,12 +38,21 @@ export class DataTableComponent {
   @Input() showHeader: boolean = true;
   @Input() striped: boolean = true;
   @Input() hoverable: boolean = true;
+  @Input() enablePagination: boolean = true;
+  @Input() pageSizeOptions: number[] = [10, 20, 50, 100];
   
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChange = new EventEmitter<{ column: string; direction: 'asc' | 'desc' }>();
   
   private sanitizer = inject(DomSanitizer);
+  private cdr = inject(ChangeDetectorRef);
   currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
+
+  // Variáveis de paginação interna
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  paginatedData: any[] = [];
 
   getActionIcon(iconName: TableAction['icon']): SafeHtml {
     const icons = {
@@ -94,6 +104,85 @@ export class DataTableComponent {
   onActionClick(action: TableAction, row: any, event: MouseEvent): void {
     event.stopPropagation();
     action.action(row);
+  }
+
+  // Métodos de paginação
+  ngOnInit(): void {
+    // Inicializar paginação quando o componente é criado
+    if (this.data && this.data.length > 0) {
+      this.totalItems = this.data.length;
+      this.refreshTable();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['data']) {
+      this.totalItems = this.data?.length || 0;
+      this.currentPage = 1; // Reset para a página 1 quando os dados mudarem
+      this.refreshTable();
+    }
+  }
+
+  refreshTable(): void {
+    if (!this.enablePagination) {
+      this.paginatedData = [...(this.data || [])]; // Criar nova referência para forçar detecção de mudanças
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (!this.data || this.data.length === 0) {
+      this.paginatedData = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    // Criar nova referência do array para garantir detecção de mudanças
+    this.paginatedData = [...this.data.slice(startIndex, endIndex)];
+    this.cdr.markForCheck(); // Forçar detecção de mudanças
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize = newSize;
+    this.currentPage = 1; // Volta para a primeira página
+    this.refreshTable();
+  }
+
+  onPageChange(newPage: number): void {
+    const maxPages = this.totalPages;
+    if (newPage >= 1 && newPage <= maxPages) {
+      this.currentPage = newPage;
+      this.refreshTable();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      const newPage = this.currentPage - 1;
+      this.currentPage = newPage;
+      this.refreshTable();
+    }
+  }
+
+  nextPage(): void {
+    const maxPages = this.totalPages;
+    if (this.currentPage < maxPages) {
+      const newPage = this.currentPage + 1;
+      this.currentPage = newPage;
+      this.refreshTable();
+    }
+  }
+
+  get totalPages(): number {
+    if (!this.enablePagination) {
+      return 1;
+    }
+    return Math.ceil(this.totalItems / this.pageSize) || 1;
+  }
+
+  getItemsPerPageOptions(): number[] {
+    return this.pageSizeOptions;
   }
 }
 
