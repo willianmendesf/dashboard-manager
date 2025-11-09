@@ -102,7 +102,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: appointments => {
-        this.appointments = appointments
+        // Ordenar: ativos primeiro (enabled = true), depois pausados (enabled = false)
+        this.appointments = (appointments || []).sort((a: Appointment, b: Appointment) => {
+          // Se ambos são ativos ou ambos são pausados, manter ordem original
+          if (a.enabled === b.enabled) {
+            return 0;
+          }
+          // Ativos (true) vêm antes de pausados (false)
+          return a.enabled ? -1 : 1;
+        });
         this.cdr.markForCheck()
       },
       error: error => console.error(error),

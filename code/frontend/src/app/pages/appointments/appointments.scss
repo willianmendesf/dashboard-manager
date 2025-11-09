@@ -39,8 +39,8 @@
 
 .project-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
@@ -49,16 +49,43 @@
   color: #1F2937;
   font-size: 20px;
   font-weight: bold;
-  flex: 1;
+  order: -1; /* Título sempre primeiro */
+}
+
+.project-status-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .project-status {
-  padding: 4px 12px;
-  border-radius: 16px;
+  padding: 6px 14px;
+  border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-active-prominent {
+  background: #10B981 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+.status-paused {
+  background: #FEF3C7 !important;
+  color: #B45309 !important;
+}
+
+.status-dev {
+  background: #9e9e9e !important;
+  color: #fff !important;
 }
 
 .project-status.active {
@@ -76,11 +103,40 @@
   color: #1E40AF;
 }
 
+.project-content-wrapper {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.project-content-left {
+  flex: 1;
+  min-width: 0;
+}
+
 .project-description {
   color: #6B7280;
   font-size: 14px;
   line-height: 1.5;
-  margin-bottom: 20px;
+  margin: 0;
+}
+
+.project-image-preview {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #E5E7EB;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.project-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .project-progress {
