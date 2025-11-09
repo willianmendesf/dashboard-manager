@@ -2,6 +2,7 @@ package br.com.willianmendesf.system.controller;
 
 import br.com.willianmendesf.system.model.dto.ImportResultDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
+import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
 import br.com.willianmendesf.system.service.MemberImportService;
@@ -51,6 +52,26 @@ public class MemberController {
     public ResponseEntity<MemberEntity> getByCPF(@PathVariable String cpf) {
         MemberEntity response = service.getByCPF(cpf);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/v1/members/cpf/{cpf}/spouse
+     * Returns basic spouse information (nomeCompleto and fotoUrl) for relationship preview
+     * Requires READ_MEMBERS permission
+     */
+    @GetMapping("/cpf/{cpf}/spouse")
+    @PreAuthorize("hasAuthority('READ_MEMBERS')")
+    public ResponseEntity<MemberSpouseDTO> getSpouseByCpf(@PathVariable String cpf) {
+        try {
+            MemberSpouseDTO spouse = service.getSpouseByCpf(cpf);
+            if (spouse == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(spouse);
+        } catch (Exception e) {
+            log.error("Error getting spouse by CPF: {}", cpf, e);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping

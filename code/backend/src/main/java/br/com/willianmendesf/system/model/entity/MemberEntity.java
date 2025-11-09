@@ -76,9 +76,6 @@ public class MemberEntity {
     @Column(name = "celular")
     private String celular;
 
-    @Column(name = "operadora")
-    private String operadora;
-
     @Column(name = "contato")
     private String contato;
 
@@ -128,7 +125,6 @@ public class MemberEntity {
         this.telefone = member.getTelefone();
         this.comercial = member.getComercial();
         this.celular = member.getCelular();
-        this.operadora = member.getOperadora();
         this.contato = member.getContato();
         this.email = member.getEmail();
         this.grupos = member.getGrupos();
@@ -161,7 +157,6 @@ public class MemberEntity {
         this.telefone = (isNotEmpty(actual.getTelefone())) ? actual.getTelefone() : newValue.getTelefone();
         this.comercial = (isNotEmpty(actual.getComercial())) ? actual.getComercial() : newValue.getComercial();
         this.celular = (isNotEmpty(actual.getCelular())) ? actual.getCelular() : newValue.getCelular();
-        this.operadora = (isNotEmpty(actual.getOperadora())) ? actual.getOperadora() : newValue.getOperadora();
         this.contato = (isNotEmpty(actual.getContato())) ? actual.getContato() : newValue.getContato();
         this.email = (isNotEmpty(actual.getEmail())) ? actual.getEmail() : newValue.getEmail();
         this.grupos = (isNotEmpty(actual.getGrupos())) ? actual.getGrupos() : newValue.getGrupos();

@@ -3,6 +3,7 @@ package br.com.willianmendesf.system.service;
 import br.com.willianmendesf.system.exception.MembersException;
 import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
+import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
 import br.com.willianmendesf.system.model.dto.UpdateMemberDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
@@ -53,6 +54,31 @@ public class MemberService {
             else return null;
         } catch (Exception e) {
             throw new MembersException("ID " + cpf + " not found");
+        }
+    }
+
+    /**
+     * Gets spouse information by CPF (returns only nomeCompleto and fotoUrl)
+     * Used for relationship preview in member forms
+     */
+    public MemberSpouseDTO getSpouseByCpf(String cpf) {
+        try {
+            log.info("Getting spouse by CPF: {}", cpf);
+            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
+            MemberEntity entity = repository.findByCpf(formattedCpf);
+            
+            if (entity == null) {
+                return null;
+            }
+            
+            MemberSpouseDTO spouse = new MemberSpouseDTO();
+            spouse.setNomeCompleto(entity.getNome());
+            spouse.setFotoUrl(entity.getFotoUrl());
+            
+            return spouse;
+        } catch (Exception e) {
+            log.error("Error getting spouse by CPF: {}", cpf, e);
+            return null;
         }
     }
 
@@ -215,10 +241,6 @@ public class MemberService {
             
             if (dto.getRede() != null) {
                 existingMember.setRede(dto.getRede());
-            }
-            
-            if (dto.getOperadora() != null) {
-                existingMember.setOperadora(dto.getOperadora());
             }
             
             if (dto.getContato() != null) {

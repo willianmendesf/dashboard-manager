@@ -12,17 +12,21 @@ import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/u
 import { environment } from '../../../environments/environment';
 import { Member } from './model/member.model';
 import { NotificationService } from '../../shared/services/notification.service';
+import { SpousePreviewComponent } from './components/spouse-preview.component';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
   selector: 'member-management',
   standalone: true,
   templateUrl: './member-management.html',
   styleUrl: './member-management.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe, DataTableComponent]
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe, DataTableComponent, NgxMaskDirective, SpousePreviewComponent],
+  providers: [provideNgxMask()]
 })
 export class MemberManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
+  private http = inject(HttpClient);
 
   members: Member[] = [];
   filteredMembers: Member[] = [...this.members];
@@ -90,7 +94,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   constructor(
     private api: ApiService,
-    private http: HttpClient,
     private cdr: ChangeDetectorRef,
     private notificationService: NotificationService
   ) {}
@@ -276,10 +279,15 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
           if (this.selectedPhotoFile && res && res.id) {
             await this.uploadMemberPhoto(res.id);
           }
+          this.notificationService.showSuccess("Membro criado com sucesso!");
           this.getMembers();
+          this.closeMemberModal();
         },
-        error: error => console.error(error),
-        complete: () => this.getMembers()
+        error: (error) => {
+          console.error(error);
+          const errorMessage = error?.error?.message || error?.error || 'Erro ao criar membro. Tente novamente.';
+          this.notificationService.showError(errorMessage);
+        }
       });
   }
 
@@ -287,10 +295,47 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     this.api.update(`members/${member.id}`, member)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
-        next: () => this.getMembers(),
-        error: error => console.error(error),
-        complete: () => this.getMembers()
+        next: () => {
+          this.notificationService.showSuccess("Membro atualizado com sucesso!");
+          this.getMembers();
+          this.closeMemberModal();
+        },
+        error: (error) => {
+          console.error(error);
+          const errorMessage = error?.error?.message || error?.error || 'Erro ao atualizar membro. Tente novamente.';
+          this.notificationService.showError(errorMessage);
+        }
       });
+  }
+  
+  lookupCep(cep: string) {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) {
+      return;
+    }
+    
+    const cleanCep = cep.replace(/\D/g, '');
+    this.http.get(`https://viacep.com.br/ws/${cleanCep}/json/`)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (endereco: any) => {
+          if (endereco && !endereco.erro) {
+            this.currentMember.logradouro = endereco.logradouro || '';
+            this.currentMember.bairro = endereco.bairro || '';
+            this.currentMember.cidade = endereco.localidade || '';
+            this.currentMember.estado = endereco.uf || '';
+            this.cdr.markForCheck();
+          }
+        },
+        error: (error) => {
+          console.error('Erro ao buscar CEP:', error);
+        }
+      });
+  }
+  
+  isValidCpf(cpf: string | null | undefined): boolean {
+    if (!cpf) return false;
+    const cleanCpf = cpf.replace(/\D/g, '');
+    return cleanCpf.length === 11;
   }
 
   public delete(id: number) {
@@ -352,7 +397,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       telefone: '',
       comercial: '',
       celular: '',
-      operadora: '',
       contato: '',
       email: '',
       grupos: '',
@@ -538,15 +582,23 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   async saveMember() {
+    // Validate LGPD date if LGPD is accepted
+    if (this.currentMember.lgpd === true && !this.currentMember.lgpdAceitoEm) {
+      this.notificationService.showError('Por favor, informe a data de aceite do LGPD.');
+      return;
+    }
+    
     if (this.isEditing) {
       const index = this.members.findIndex(m => m.id === this.currentMember.id);
       if (index !== -1) this.members[index] = { ...this.currentMember };
-      this.updateMember(this.members[index]);
       
-      // Upload photo if selected
+      // Upload photo first if selected
       if (this.selectedPhotoFile && this.currentMember.id) {
         await this.uploadMemberPhoto(this.currentMember.id);
       }
+      
+      // Then update member data
+      this.updateMember(this.members[index]);
     } else {
       const newMember = {
         ...this.currentMember
@@ -556,7 +608,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       // Upload photo after member is created (need to get the new member ID from response)
       // This will be handled in the createMember response
     }
-    this.closeMemberModal();
   }
 
   deleteMember(member: Member) {
