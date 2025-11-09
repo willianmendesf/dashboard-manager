@@ -1,0 +1,77 @@
+<div class="data-table-wrapper">
+  @if (loading) {
+    <div class="table-loading">
+      <div class="loading-spinner"></div>
+      <p>Carregando dados...</p>
+    </div>
+  } @else if (data.length === 0) {
+    <div class="table-empty">
+      <p>{{ emptyMessage }}</p>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table class="data-table" [class.striped]="striped" [class.hoverable]="hoverable">
+        @if (showHeader) {
+          <thead>
+            <tr>
+              @for (column of columns; track column.key) {
+                <th 
+                  [style.width]="column.width"
+                  [style.text-align]="column.align || 'left'"
+                  [class.sortable]="column.sortable"
+                  (click)="onSort(column)"
+                >
+                  <span>{{ column.label }}</span>
+                  @if (column.sortable) {
+                    <span class="sort-icon">{{ getSortIcon(column) }}</span>
+                  }
+                </th>
+              }
+              @if (actions.length > 0) {
+                <th class="actions-header">Ações</th>
+              }
+            </tr>
+          </thead>
+        }
+        <tbody>
+          @for (row of data; track $index) {
+            <tr (click)="onRowClick(row, $event)" [class.clickable]="rowClick.observed">
+              @for (column of columns; track column.key) {
+                <td 
+                  [style.text-align]="column.align || 'left'"
+                >
+                  @if (rowTemplate) {
+                    <ng-container *ngTemplateOutlet="rowTemplate; context: { $implicit: row, column: column }"></ng-container>
+                  } @else {
+                    {{ row[column.key] || '-' }}
+                  }
+                </td>
+              }
+              @if (actions.length > 0) {
+                <td class="actions-cell">
+                  <div class="action-buttons">
+                    @for (action of actions; track action.label) {
+                      @if (shouldShowAction(action, row)) {
+                        <button
+                          type="button"
+                          class="btn-action"
+                          [class]="action.class || action.icon"
+                          [title]="action.label"
+                          (click)="onActionClick(action, row, $event)"
+                          [attr.aria-label]="action.label"
+                        >
+                          <span [innerHTML]="getActionIcon(action.icon)" [attr.aria-hidden]="true"></span>
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+

@@ -1,0 +1,102 @@
+<div class="reset-container">
+  <div class="reset-card">
+    <div class="reset-header">
+      <h1>Redefinir senha</h1>
+      <p>Digite o código recebido no WhatsApp e sua nova senha</p>
+    </div>
+
+    @if (success) {
+      <div class="success-message">
+        <p>✓ Senha alterada com sucesso!</p>
+        <p class="redirect-message">Redirecionando para o login...</p>
+      </div>
+    } @else {
+      <form [formGroup]="resetForm" (ngSubmit)="onSubmit()" class="reset-form">
+        <div *ngIf="error" class="error-message">
+          {{ error }}
+        </div>
+
+        <div class="form-group">
+          <label for="cpf">CPF</label>
+          <input
+            id="cpf"
+            type="text"
+            formControlName="cpf"
+            [attr.disabled]="true"
+            class="disabled-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="codigo">Código de verificação (6 dígitos)</label>
+          <input
+            id="codigo"
+            type="text"
+            formControlName="codigo"
+            placeholder="000000"
+            (input)="formatCode($event)"
+            maxlength="6"
+            [class.error]="resetForm.get('codigo')?.invalid && resetForm.get('codigo')?.touched"
+          />
+          <span *ngIf="resetForm.get('codigo')?.hasError('required') && resetForm.get('codigo')?.touched" class="field-error">
+            Código é obrigatório
+          </span>
+          <span *ngIf="resetForm.get('codigo')?.hasError('pattern') && resetForm.get('codigo')?.touched" class="field-error">
+            Código deve ter 6 dígitos
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="novaSenha">Nova senha</label>
+          <input
+            id="novaSenha"
+            type="password"
+            formControlName="novaSenha"
+            placeholder="Mínimo 6 caracteres"
+            [class.error]="resetForm.get('novaSenha')?.invalid && resetForm.get('novaSenha')?.touched"
+          />
+          <span *ngIf="resetForm.get('novaSenha')?.hasError('required') && resetForm.get('novaSenha')?.touched" class="field-error">
+            Nova senha é obrigatória
+          </span>
+          <span *ngIf="resetForm.get('novaSenha')?.hasError('minlength') && resetForm.get('novaSenha')?.touched" class="field-error">
+            Senha deve ter pelo menos 6 caracteres
+          </span>
+          <span *ngIf="resetForm.get('novaSenha')?.hasError('weakPassword') && resetForm.get('novaSenha')?.touched" class="field-error">
+            Senha muito fraca
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmarSenha">Confirmar nova senha</label>
+          <input
+            id="confirmarSenha"
+            type="password"
+            formControlName="confirmarSenha"
+            placeholder="Digite a senha novamente"
+            [class.error]="resetForm.get('confirmarSenha')?.invalid && resetForm.get('confirmarSenha')?.touched"
+          />
+          <span *ngIf="resetForm.get('confirmarSenha')?.hasError('required') && resetForm.get('confirmarSenha')?.touched" class="field-error">
+            Confirmação de senha é obrigatória
+          </span>
+          <span *ngIf="resetForm.get('confirmarSenha')?.hasError('passwordMismatch') && resetForm.get('confirmarSenha')?.touched" class="field-error">
+            As senhas não coincidem
+          </span>
+        </div>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="loading || resetForm.invalid"
+        >
+          <span *ngIf="!loading">Redefinir senha</span>
+          <span *ngIf="loading">Processando...</span>
+        </button>
+      </form>
+    }
+
+    <div class="reset-footer">
+      <a routerLink="/login">Voltar para o login</a>
+    </div>
+  </div>
+</div>
+

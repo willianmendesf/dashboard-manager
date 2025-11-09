@@ -10,7 +10,7 @@
 
   <nav class="sidebar-nav">
     <ul>
-      <li *ngFor="let item of menuItems">
+      <li *ngFor="let item of filteredMenuItems">
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
@@ -18,10 +18,31 @@
           class="nav-link"
           (click)="close()"
         >
-          <span class="nav-icon" [innerHTML]="item.icon"></span>
+          <span class="nav-icon" [innerHTML]="item.icon" [attr.aria-hidden]="true"></span>
           <span class="nav-text">{{ item.label }}</span>
         </a>
       </li>
     </ul>
   </nav>
+
+  <div class="sidebar-footer" *ngIf="currentUser">
+    <div class="user-info">
+      <img 
+        [src]="userPhotoUrl" 
+        [alt]="currentUser.name || currentUser.username"
+        class="user-avatar"
+        (error)="onImageError($event)"
+      />
+      <div class="user-text">
+        <span class="user-name">{{ currentUser.name || currentUser.username }}</span>
+        <span class="user-profile">{{ currentUser.profileName }}</span>
+      </div>
+    </div>
+    <a routerLink="/meu-perfil" class="btn-edit-profile" (click)="close()">
+      Editar Perfil
+    </a>
+    <button class="btn-logout" (click)="logout()">
+      Sair
+    </button>
+  </div>
 </div>

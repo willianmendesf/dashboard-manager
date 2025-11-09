@@ -1,0 +1,55 @@
+<div class="logo-upload">
+  <div *ngIf="currentLogoUrl" class="logo-preview-container">
+    <img 
+      [src]="displayLogoUrl" 
+      alt="Logo atual"
+      class="logo-preview"
+      (error)="onImageError($event)"
+    />
+    <div class="logo-actions">
+      <label for="logo-upload-input" class="btn-change-logo">
+        <input 
+          type="file" 
+          id="logo-upload-input"
+          accept="image/jpeg,image/png,image/gif"
+          (change)="onFileSelected($event)"
+          [disabled]="uploading"
+          style="display: none;"
+        />
+        {{ uploading ? 'Enviando...' : 'Alterar Logo' }}
+      </label>
+      <button 
+        type="button" 
+        class="btn-remove-logo"
+        (click)="removeLogo()"
+        [disabled]="uploading"
+      >
+        Remover
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!currentLogoUrl" class="logo-upload-placeholder">
+    <label for="logo-upload-input-empty" class="upload-area">
+      <input 
+        type="file" 
+        id="logo-upload-input-empty"
+        accept="image/jpeg,image/png,image/gif"
+        (change)="onFileSelected($event)"
+        [disabled]="uploading"
+        style="display: none;"
+      />
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <span>{{ uploading ? 'Enviando...' : 'Selecione uma imagem' }}</span>
+    </label>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+</div>
+

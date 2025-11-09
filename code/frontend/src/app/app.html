@@ -1,17 +1,19 @@
-<app-sidebar #sidebar></app-sidebar>
-@if (isMobile() && sidebar.isOpen()) {
-  <div class="sidebar-overlay" (click)="sidebar.close()"></div>
+@if (showSidebar()) {
+  <app-sidebar #sidebar></app-sidebar>
+  @if (isMobile() && sidebar.isOpen()) {
+    <div class="sidebar-overlay" (click)="sidebar.close()"></div>
+  }
+  @if (isMobile()) {
+    <nav class="mobile-navbar">
+      <a routerLink="/home" class="navbar-logo">
+        <img src="./img/logo.png" alt="Logo" />
+      </a>
+      <button class="navbar-menu-btn" (click)="sidebar.toggle()" [attr.aria-label]="'Menu'">
+        <span class="menu-icon" [innerHTML]="menuIcon" [attr.aria-hidden]="true"></span>
+      </button>
+    </nav>
+  }
 }
-@if (isMobile()) {
-  <nav class="mobile-navbar">
-    <a routerLink="/home" class="navbar-logo">
-      <img src="./img/logo.png" alt="Logo" />
-    </a>
-    <button class="navbar-menu-btn" (click)="sidebar.toggle()" [attr.aria-label]="'Menu'">
-      <span class="menu-icon">☰</span>
-    </button>
-  </nav>
-}
-<main class="main-content">
+<main class="main-content" [class.full-width]="!showSidebar()">
   <router-outlet></router-outlet>
 </main>

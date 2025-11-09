@@ -20,7 +20,7 @@
                 placeholder="Digite emails separados por vírgula"
                 class="form-control"
               />
-              <button type="button" class="btn-contacts">📋</button>
+              <button type="button" class="btn-contacts" [innerHTML]="getActionIcon('copy')" [attr.aria-label]="'Copiar contatos'"></button>
             </div>
           </div>
 
@@ -38,10 +38,10 @@
           <div class="form-group">
             <label>Tipo de Mensagem</label>
             <select [(ngModel)]="newMessage.type" name="type" class="form-control">
-              <option value="email">📧 Email</option>
-              <option value="sms">📱 SMS</option>
-              <option value="whatsapp">💬 WhatsApp</option>
-              <option value="push">🔔 Push Notification</option>
+              <option value="email">Email</option>
+              <option value="sms">SMS</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="push">Push Notification</option>
             </select>
           </div>
 
@@ -125,17 +125,19 @@
             </div>
           </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="saveDraft()">
-              💾 Salvar Rascunho
-            </button>
-            <button type="button" class="btn-secondary" (click)="previewMessage()">
-              👁️ Visualizar
-            </button>
-            <button type="submit" class="btn-primary">
-              {{ getSubmitButtonText() }}
-            </button>
-          </div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="saveDraft()">
+                  <span [innerHTML]="getActionIcon('save')" [attr.aria-hidden]="true"></span>
+                  Salvar Rascunho
+                </button>
+                <button type="button" class="btn-secondary" (click)="previewMessage()">
+                  <span [innerHTML]="getActionIcon('view')" [attr.aria-hidden]="true"></span>
+                  Visualizar
+                </button>
+                <button type="submit" class="btn-primary">
+                  {{ getSubmitButtonText() }}
+                </button>
+              </div>
         </form>
       </div>
     </div>
@@ -177,9 +179,7 @@
             [class.scheduled]="message.status === 'scheduled'"
             [class.draft]="message.status === 'draft'"
           >
-            <div class="message-icon">
-              {{ getMessageIcon(message.type) }}
-            </div>
+            <div class="message-icon" [innerHTML]="getMessageIcon(message.type)" [attr.aria-hidden]="true"></div>
             <div class="message-content">
               <div class="message-header">
                 <h4>{{ message.subject }}</h4>
@@ -197,20 +197,14 @@
               </div>
             </div>
             <div class="message-actions">
-              <button class="btn-action edit" (click)="editMessage(message)" *ngIf="message.status !== 'sent'">
-                ✏️
-              </button>
-              <button class="btn-action duplicate" (click)="duplicateMessage(message)">
-                📋
-              </button>
-              <button class="btn-action delete" (click)="deleteMessage(message.id)">
-                🗑️
-              </button>
+              <button class="btn-action edit" (click)="editMessage(message)" *ngIf="message.status !== 'sent'" [innerHTML]="getActionIcon('edit')" [attr.aria-label]="'Editar'"></button>
+              <button class="btn-action duplicate" (click)="duplicateMessage(message)" [innerHTML]="getActionIcon('duplicate')" [attr.aria-label]="'Duplicar'"></button>
+              <button class="btn-action delete" (click)="deleteMessage(message.id)" [innerHTML]="getActionIcon('delete')" [attr.aria-label]="'Excluir'"></button>
             </div>
           </div>
 
           <div class="empty-state" *ngIf="getFilteredMessages().length === 0">
-            <div class="empty-icon">📭</div>
+            <div class="empty-icon" [innerHTML]="getMessageIcon('empty')" [attr.aria-hidden]="true"></div>
             <h3>Nenhuma mensagem encontrada</h3>
             <p>{{ getEmptyStateText() }}</p>
           </div>

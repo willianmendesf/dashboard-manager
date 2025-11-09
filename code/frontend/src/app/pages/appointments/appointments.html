@@ -1,6 +1,13 @@
 <div class="page-container">
   <pagetitle title="Agendamentos" subtitle="Gerencie seus agendamentos"></pagetitle>
 
+  <div class="actions-bar">
+    <div class="search-filters">
+      <!-- Filtros podem ser adicionados aqui no futuro -->
+    </div>
+    <button class="btn-primary" (click)="openAppointmentModal()">+ Novo Agendamento</button>
+  </div>
+
   <div class="projects-grid">
     <div class="project-card" *ngFor="let appointment of appointments" (click)="view(appointment)" style="cursor: pointer;">
       <div class="project-header">
@@ -44,9 +51,9 @@
         </div>
       </div>
       <div class="action-buttons" (click)="$event.stopPropagation()">
-        <button class="btn-action view" (click)="view(appointment)" title="Visualizar">👁️</button>
-        <button class="btn-action edit" (click)="edit(appointment)" title="Editar">✏️</button>
-        <button class="btn-action delete" (click)="deleteItem(appointment)" title="Excluir">🗑️</button>
+        <button class="btn-action view" (click)="view(appointment)" title="Visualizar" [innerHTML]="getIcon('view')" [attr.aria-label]="'Visualizar'"></button>
+        <button class="btn-action edit" (click)="edit(appointment)" title="Editar" [innerHTML]="getIcon('edit')" [attr.aria-label]="'Editar'"></button>
+        <button class="btn-action delete" (click)="deleteItem(appointment)" title="Excluir" [innerHTML]="getIcon('delete')" [attr.aria-label]="'Excluir'"></button>
       </div>
     </div>
 

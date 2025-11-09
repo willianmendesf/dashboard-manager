@@ -4,6 +4,7 @@
 */
 
 @use "../assets/scss/main" as *;
+@use "./shared/styles/layout" as *;
 
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
@@ -142,6 +143,16 @@ table {
 	min-height: 100vh;
 	transition: margin-left 0.3s ease;
 	width: calc(100% - 250px);
+	padding: 24px;
+	box-sizing: border-box;
+	overflow-y: auto;
+	
+	// Quando não há sidebar (rotas públicas como login), remover padding
+	&.full-width {
+		margin-left: 0 !important;
+		width: 100% !important;
+		padding: 0 !important; // Remover padding para rotas públicas
+	}
 }
 
 @media (max-width: 768px) {
@@ -158,21 +169,22 @@ table {
 	.main-content {
 		margin-left: 0 !important;
 		width: 100% !important;
-		padding-top: 85px !important;
-		padding-left: 0 !important;
+		padding: 85px 16px 16px 16px !important; // 75px navbar + 10px top, 16px sides/bottom
 		min-height: calc(100vh - 75px);
 		box-sizing: border-box;
 		position: relative;
 		z-index: 1;
+		
+		// Remover padding para rotas públicas (full-width) em mobile
+		&.full-width {
+			padding: 0 !important;
+		}
 	}
 
 	// Garantir que os containers das páginas tenham espaço adequado em mobile
 	.main-content .page-container {
-		padding-top: 8px !important;
-		padding-bottom: 24px;
-		padding-left: 16px;
-		padding-right: 16px;
-		margin-top: 0 !important;
+		padding: 16px !important;
+		margin: 0 auto;
 		box-sizing: border-box;
 	}
 

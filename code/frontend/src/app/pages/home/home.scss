@@ -1,8 +1,4 @@
-.page-container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+// .page-container está definido em shared/styles/layout.scss
 
 .page-header {
   margin-bottom: 32px;
@@ -46,6 +42,19 @@
 .stat-icon {
   font-size: 40px;
   margin-right: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  svg,
+  [innerHTML] svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
 }
 
 .stat-content h3 {
@@ -120,6 +129,19 @@
   font-size: 24px;
   margin-right: 12px;
   margin-top: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  svg,
+  [innerHTML] svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
 }
 
 .activity-content h4 {

@@ -1,8 +1,4 @@
-.page-container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+// .page-container está definido em shared/styles/layout.scss
 
 .page-header {
   margin-bottom: 32px;
@@ -193,12 +189,24 @@
   background: #3B82F6;
   color: white;
   border: none;
-  padding: 8px 16px;
+  padding: 8px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg,
+  [innerHTML] svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
 }
 
 .btn-action:hover {
@@ -247,11 +255,7 @@
 }
 
 
-.page-container {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+// .page-container está definido em shared/styles/layout.scss
 
 .page-header {
   margin-bottom: 32px;
@@ -343,35 +347,7 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
-.users-table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.users-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.users-table th {
-  background: #F9FAFB;
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  color: #1F2937;
-  border-bottom: 1px solid #E5E7EB;
-  font-size: 14px;
-}
-
-.users-table td {
-  padding: 16px;
-  border-bottom: 1px solid #E5E7EB;
-  font-size: 14px;
-  color: #374151;
-}
+// .table-container e .data-table estão definidos em shared/styles/layout.scss
 
 .user-row:hover {
   background: #F9FAFB;
@@ -509,6 +485,7 @@
 }
 
 .pagination {
+  margin-top: 32px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1070,11 +1047,11 @@ app-modal textarea {
     max-width: none;
   }
 
-  .users-table-container {
+  .table-container {
     overflow-x: auto;
   }
 
-  .users-table {
+  .data-table {
     min-width: 800px;
   }
 

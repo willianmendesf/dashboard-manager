@@ -5,7 +5,12 @@ interface User {
   username: string;
   status: 'active' | 'inactive';
   role: string;
-  password: string
+  password?: string;
+  profileName?: string;
+  permissions?: string[];
+  fotoUrl?: string;
+  enabled?: boolean;
+  profileId?: number;
   //created: string;
   //avatar?: string;
   //lastLogin?: string;

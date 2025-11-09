@@ -1,0 +1,73 @@
+<div class="reset-container">
+  <div class="reset-card">
+    <div class="reset-header">
+      <h1>Esqueci minha senha</h1>
+      <p>Informe seu CPF e telefone para receber um código de verificação</p>
+    </div>
+
+    @if (success) {
+      <div class="success-message">
+        <p>✓ Verifique seu WhatsApp. Você receberá um código de verificação em instantes.</p>
+        <p class="redirect-message">Redirecionando...</p>
+      </div>
+    } @else {
+      <form [formGroup]="resetForm" (ngSubmit)="onSubmit()" class="reset-form">
+        <div *ngIf="error" class="error-message">
+          {{ error }}
+        </div>
+
+        <div class="form-group">
+          <label for="cpf">CPF</label>
+          <input
+            id="cpf"
+            type="text"
+            formControlName="cpf"
+            placeholder="000.000.000-00"
+            (input)="formatCPF($event)"
+            maxlength="14"
+            [class.error]="resetForm.get('cpf')?.invalid && resetForm.get('cpf')?.touched"
+          />
+          <span *ngIf="resetForm.get('cpf')?.hasError('required') && resetForm.get('cpf')?.touched" class="field-error">
+            CPF é obrigatório
+          </span>
+          <span *ngIf="resetForm.get('cpf')?.hasError('invalidCpf') && resetForm.get('cpf')?.touched" class="field-error">
+            CPF inválido
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="telefone">Telefone/Celular</label>
+          <input
+            id="telefone"
+            type="text"
+            formControlName="telefone"
+            placeholder="(00) 00000-0000"
+            (input)="formatPhone($event)"
+            maxlength="15"
+            [class.error]="resetForm.get('telefone')?.invalid && resetForm.get('telefone')?.touched"
+          />
+          <span *ngIf="resetForm.get('telefone')?.hasError('required') && resetForm.get('telefone')?.touched" class="field-error">
+            Telefone é obrigatório
+          </span>
+          <span *ngIf="resetForm.get('telefone')?.hasError('invalidPhone') && resetForm.get('telefone')?.touched" class="field-error">
+            Telefone inválido
+          </span>
+        </div>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="loading || resetForm.invalid"
+        >
+          <span *ngIf="!loading">Enviar código</span>
+          <span *ngIf="loading">Enviando...</span>
+        </button>
+      </form>
+    }
+
+    <div class="reset-footer">
+      <a routerLink="/login">Voltar para o login</a>
+    </div>
+  </div>
+</div>
+

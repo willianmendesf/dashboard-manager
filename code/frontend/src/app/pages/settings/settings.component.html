@@ -1,184 +1,288 @@
 <div class="page-container">
-  <div class="page-header">
-    <h1>Configurações</h1>
-    <p>Gerencie as configurações do sistema e sua conta</p>
+  <pagetitle
+    title="Configurações"
+    subtitle="Gerencie as configurações globais do sistema"
+  ></pagetitle>
+
+  <div *ngIf="loading" class="loading-message">
+    <p>Carregando configurações...</p>
   </div>
 
-  <div class="settings-grid">
-    <div class="settings-section">
-      <h2>Perfil</h2>
-      <div class="setting-group">
-        <div class="setting-item">
-          <label>Nome Completo</label>
-          <input type="text" value="João Silva" />
-        </div>
-        <div class="setting-item">
-          <label>Email</label>
-          <input type="email" value="joao.silva@email.com" />
-        </div>
-        <div class="setting-item">
-          <label>Telefone</label>
-          <input type="tel" value="+55 11 99999-9999" />
-        </div>
-        <div class="setting-item">
-          <label>Cargo</label>
-          <select>
-            <option>Administrador</option>
-            <option>Gerente</option>
-            <option>Analista</option>
-          </select>
-        </div>
-      </div>
-    </div>
+  <form [formGroup]="settingsForm" *ngIf="!loading">
+    <div class="settings-grid">
+      <!-- Seção Aparência -->
+      <div class="settings-section">
+        <h2>Aparência</h2>
+        <div class="setting-group">
+          <!-- Upload de Logo -->
+          <div class="setting-item">
+            <label>Logo da Empresa</label>
+            <app-logo-upload
+              [currentLogoUrl]="logoUrl"
+              (logoUploaded)="onLogoUploaded($event)"
+              (logoRemoved)="onLogoRemoved()"
+            ></app-logo-upload>
+          </div>
 
-    <div class="settings-section">
-      <h2>Notificações</h2>
-      <div class="setting-group">
-        <div class="setting-toggle">
-          <label>
-            <input type="checkbox" checked />
-            <span class="toggle-slider"></span>
-            Notificações por email
-          </label>
-        </div>
-        <div class="setting-toggle">
-          <label>
-            <input type="checkbox" checked />
-            <span class="toggle-slider"></span>
-            Notificações push
-          </label>
-        </div>
-        <div class="setting-toggle">
-          <label>
-            <input type="checkbox" />
-            <span class="toggle-slider"></span>
-            Relatórios semanais
-          </label>
-        </div>
-        <div class="setting-toggle">
-          <label>
-            <input type="checkbox" checked />
-            <span class="toggle-slider"></span>
-            Alertas de segurança
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <h2>Aparência</h2>
-      <div class="setting-group">
-        <div class="setting-item">
-          <label>Tema</label>
-          <select>
-            <option>Claro</option>
-            <option>Escuro</option>
-            <option>Automático</option>
-          </select>
-        </div>
-        <div class="setting-item">
-          <label>Idioma</label>
-          <select>
-            <option>Português (BR)</option>
-            <option>English</option>
-            <option>Español</option>
-          </select>
-        </div>
-        <div class="setting-item">
-          <label>Formato de Data</label>
-          <select>
-            <option>DD/MM/AAAA</option>
-            <option>MM/DD/AAAA</option>
-            <option>AAAA-MM-DD</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <h2>Segurança</h2>
-      <div class="setting-group">
-        <div class="setting-item">
-          <label>Alterar Senha</label>
-          <button class="btn-secondary">Alterar</button>
-        </div>
-        <div class="setting-toggle">
-          <label>
-            <input type="checkbox" checked />
-            <span class="toggle-slider"></span>
-            Autenticação de dois fatores
-          </label>
-        </div>
-        <div class="setting-item">
-          <label>Sessões Ativas</label>
-          <div class="sessions-list">
-            <div class="session-item">
-              <div class="session-info">
-                <span class="session-device">💻 Chrome - Windows</span>
-                <span class="session-time">Ativo agora</span>
-              </div>
-              <button class="btn-danger-small">Encerrar</button>
+          <!-- Cor Primária -->
+          <div class="setting-item">
+            <label>Cor Primária</label>
+            <div class="color-input-wrapper">
+              <input 
+                type="color" 
+                formControlName="primaryColor" 
+                class="color-picker"
+              />
+              <input 
+                type="text" 
+                formControlName="primaryColor" 
+                placeholder="#3B82F6"
+                class="color-text-input"
+                pattern="^#[0-9A-Fa-f]{6}$"
+              />
             </div>
-            <div class="session-item">
-              <div class="session-info">
-                <span class="session-device">📱 Safari - iPhone</span>
-                <span class="session-time">2h atrás</span>
-              </div>
-              <button class="btn-danger-small">Encerrar</button>
+          </div>
+
+          <!-- Cor Secundária -->
+          <div class="setting-item">
+            <label>Cor Secundária</label>
+            <div class="color-input-wrapper">
+              <input 
+                type="color" 
+                formControlName="secondaryColor" 
+                class="color-picker"
+              />
+              <input 
+                type="text" 
+                formControlName="secondaryColor" 
+                placeholder="#10B981"
+                class="color-text-input"
+                pattern="^#[0-9A-Fa-f]{6}$"
+              />
+            </div>
+          </div>
+
+          <!-- Cor Fundo Menu Lateral -->
+          <div class="setting-item">
+            <label>Cor Fundo Menu Lateral</label>
+            <div class="color-input-wrapper">
+              <input 
+                type="color" 
+                formControlName="menuBackgroundColor" 
+                class="color-picker"
+              />
+              <input 
+                type="text" 
+                formControlName="menuBackgroundColor" 
+                placeholder="#1F2937"
+                class="color-text-input"
+                pattern="^#[0-9A-Fa-f]{6}$"
+              />
+            </div>
+          </div>
+
+          <!-- Cor Texto/Ícones Menu -->
+          <div class="setting-item">
+            <label>Cor Texto/Ícones Menu</label>
+            <div class="color-input-wrapper">
+              <input 
+                type="color" 
+                formControlName="menuTextColor" 
+                class="color-picker"
+              />
+              <input 
+                type="text" 
+                formControlName="menuTextColor" 
+                placeholder="#FFFFFF"
+                class="color-text-input"
+                pattern="^#[0-9A-Fa-f]{6}$"
+              />
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="settings-section">
-      <h2>Sistema</h2>
-      <div class="setting-group">
-        <div class="setting-item">
-          <label>Backup Automático</label>
-          <select>
-            <option>Diário</option>
-            <option>Semanal</option>
-            <option>Mensal</option>
-            <option>Desabilitado</option>
-          </select>
-        </div>
-        <div class="setting-item">
-          <label>Retenção de Logs</label>
-          <select>
-            <option>30 dias</option>
-            <option>90 dias</option>
-            <option>1 ano</option>
-          </select>
-        </div>
-        <div class="setting-toggle">
-          <label>
-            <input type="checkbox" checked />
-            <span class="toggle-slider"></span>
-            Coleta de dados de uso
-          </label>
+      <!-- Seção Notificações -->
+      <div class="settings-section">
+        <h2>Notificações</h2>
+        <div class="setting-group">
+          <div class="setting-toggle">
+            <label>
+              <input 
+                type="checkbox" 
+                formControlName="notificationsEmail"
+              />
+              <span class="toggle-slider"></span>
+              Notificações por email
+            </label>
+          </div>
+          <div class="setting-toggle">
+            <label>
+              <input 
+                type="checkbox" 
+                formControlName="notificationsPush"
+              />
+              <span class="toggle-slider"></span>
+              Notificações push
+            </label>
+          </div>
+          
+          <!-- Toggle WhatsApp -->
+          <div class="setting-toggle">
+            <label>
+              <input 
+                type="checkbox" 
+                formControlName="notificationsWhatsApp"
+              />
+              <span class="toggle-slider"></span>
+              Notificações por WhatsApp
+            </label>
+          </div>
+
+          <!-- Sub-seleções WhatsApp -->
+          <div *ngIf="isWhatsAppEnabled" class="whatsapp-sub-options">
+            <div class="setting-toggle whatsapp-option">
+              <label>
+                <input 
+                  type="checkbox" 
+                  formControlName="whatsAppWeeklyReports"
+                />
+                <span class="toggle-slider"></span>
+                Relatórios semanais
+              </label>
+            </div>
+            <div class="setting-toggle whatsapp-option">
+              <label>
+                <input 
+                  type="checkbox" 
+                  formControlName="whatsAppSecurityAlerts"
+                />
+                <span class="toggle-slider"></span>
+                Alertas de segurança
+              </label>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="settings-section danger-zone">
-      <h2>Zona de Perigo</h2>
-      <div class="setting-group">
-        <div class="setting-item">
-          <label>Exportar Dados</label>
-          <button class="btn-secondary">Exportar</button>
-        </div>
-        <div class="setting-item">
-          <label>Excluir Conta</label>
-          <button class="btn-danger">Excluir Permanentemente</button>
+      <!-- Seção Sistema -->
+      <div class="settings-section">
+        <h2>Sistema</h2>
+        <div class="setting-group">
+          <!-- Gerenciamento de Jobs - Recorrências -->
+          <div class="setting-subsection">
+            <h3>Gerenciamento de Jobs</h3>
+            
+            <div class="setting-item">
+              <label>Recorrência - Relatórios Semanais</label>
+              <input 
+                type="text" 
+                formControlName="jobRecurrenceWeeklyReports"
+                placeholder="0 9 * * 1"
+                title="Formato cron: minuto hora dia mês dia-semana (ex: 0 9 * * 1 = Segunda às 9h)"
+              />
+              <small class="field-hint">Formato cron: 0 9 * * 1 (Segunda-feira às 9h)</small>
+            </div>
+
+            <div class="setting-item">
+              <label>Recorrência - Sincronização de Dados</label>
+              <input 
+                type="text" 
+                formControlName="jobRecurrenceDataSync"
+                placeholder="*/30 * * * *"
+                title="Formato cron: */30 * * * * (A cada 30 minutos)"
+              />
+              <small class="field-hint">Formato cron: */30 * * * * (A cada 30 minutos)</small>
+            </div>
+
+            <div class="setting-item">
+              <label>Recorrência - Carregamento de Agendamentos</label>
+              <input 
+                type="text" 
+                formControlName="jobRecurrenceLoadAppointments"
+                placeholder="0 */5 * * * *"
+                title="Formato cron: 0 */5 * * * * (A cada 5 minutos)"
+              />
+              <small class="field-hint">Formato cron: 0 */5 * * * * (A cada 5 minutos)</small>
+            </div>
+          </div>
+
+          <!-- Configurações de API -->
+          <div class="setting-subsection">
+            <h3>Configurações de API</h3>
+            
+            <div class="setting-item">
+              <label>Chave API - Serviço Externo 1</label>
+              <input 
+                type="password" 
+                formControlName="apiKeyExternalService1"
+                placeholder="Digite a chave de API"
+                autocomplete="off"
+              />
+              <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
+            </div>
+
+            <div class="setting-item">
+              <label>Chave API - Serviço Externo 2</label>
+              <input 
+                type="password" 
+                formControlName="apiKeyExternalService2"
+                placeholder="Digite a chave de API"
+                autocomplete="off"
+              />
+              <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
+            </div>
+          </div>
+
+          <!-- Outras configurações do sistema -->
+          <div class="setting-item">
+            <label>Backup Automático</label>
+            <select>
+              <option>Diário</option>
+              <option>Semanal</option>
+              <option>Mensal</option>
+              <option>Desabilitado</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Retenção de Logs</label>
+            <select>
+              <option>30 dias</option>
+              <option>90 dias</option>
+              <option>1 ano</option>
+            </select>
+          </div>
+          <div class="setting-toggle">
+            <label>
+              <input type="checkbox" checked />
+              <span class="toggle-slider"></span>
+              Coleta de dados de uso
+            </label>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="settings-footer">
-    <button class="btn-primary">Salvar Alterações</button>
-    <button class="btn-secondary">Cancelar</button>
-  </div>
+    </div>
+
+    <!-- Footer com botões de ação -->
+    <div class="settings-footer">
+      <button 
+        type="button" 
+        class="btn-primary" 
+        (click)="saveSettings()"
+        [disabled]="saving || settingsForm.invalid"
+      >
+        <span *ngIf="!saving">Salvar Alterações</span>
+        <span *ngIf="saving">Salvando...</span>
+      </button>
+      <button 
+        type="button" 
+        class="btn-secondary" 
+        (click)="cancelChanges()"
+        [disabled]="saving"
+      >
+        Cancelar
+      </button>
+    </div>
+  </form>
 </div>
-

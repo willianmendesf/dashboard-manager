@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
+import { MessageIcons, ActionIcons } from '../../shared/lib/utils/icons';
 
 @Component({
   selector: 'app-messages',
@@ -11,6 +13,7 @@ import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.co
   styleUrl: './messages.component.scss'
 })
 export class MessagesComponent {
+  private sanitizer = inject(DomSanitizer);
   activeTab: 'scheduled' | 'sent' | 'drafts' = 'scheduled';
   showPreview = false;
 
@@ -99,14 +102,30 @@ export class MessagesComponent {
     return this.messages.filter(m => m.status === this.activeTab);
   }
 
-  getMessageIcon(type: string): string {
-    const icons = {
-      'email': '📧',
-      'sms': '📱',
-      'whatsapp': '💬',
-      'push': '🔔'
+  getMessageIcon(type: string): SafeHtml {
+    const icons: { [key: string]: (options?: any) => string } = {
+      'email': MessageIcons.email,
+      'sms': MessageIcons.sms,
+      'whatsapp': MessageIcons.whatsapp,
+      'push': MessageIcons.push,
+      'empty': MessageIcons.empty
     };
-    return icons[type as keyof typeof icons] || '📧';
+    const iconFunction = icons[type] || icons['email'];
+    const html = iconFunction({ size: 24, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getActionIcon(iconName: 'edit' | 'duplicate' | 'delete' | 'save' | 'view' | 'copy'): SafeHtml {
+    const icons = {
+      edit: ActionIcons.edit({ size: 16, color: 'currentColor' }),
+      duplicate: ActionIcons.duplicate({ size: 16, color: 'currentColor' }),
+      delete: ActionIcons.delete({ size: 16, color: 'currentColor' }),
+      save: ActionIcons.save({ size: 16, color: 'currentColor' }),
+      view: ActionIcons.view({ size: 16, color: 'currentColor' }),
+      copy: ActionIcons.duplicate({ size: 16, color: 'currentColor' })
+    };
+    const html = icons[iconName] || '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
   getStatusText(status: string): string {

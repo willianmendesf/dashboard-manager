@@ -1,0 +1,297 @@
+/**
+ * Sistema de Layout Padronizado
+ * Define larguras, margens e espaçamentos consistentes em todas as páginas
+ */
+
+// Variáveis de layout
+$page-max-width: 1400px;
+$page-padding-desktop: 64px;
+$page-padding-mobile: 16px;
+$content-gap: 24px;
+$card-gap: 20px;
+$section-spacing: 32px;
+
+// Container principal de página
+.page-container {
+  width: 100%;
+  max-width: $page-max-width;
+  margin: 0 auto;
+  padding: 32px 40px;
+  box-sizing: border-box;
+  
+  @media (max-width: 1024px) {
+    padding: 24px 32px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
+}
+
+// Garantir espaçamento adequado do menu lateral
+// O .main-content já tem padding de 24px, então o page-container pode ter padding reduzido
+.main-content .page-container {
+  padding: 24px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  max-width: 100%;
+  
+  @media (max-width: 1024px) {
+    padding: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+// Barra de ações (busca, filtros, botões)
+.actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $content-gap;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $section-spacing;
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+// Grids padronizados
+.stats-grid,
+.projects-grid,
+.content-grid {
+  display: grid;
+  gap: $card-gap;
+  width: 100%;
+  margin-bottom: $section-spacing;
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
+}
+
+.stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.projects-grid {
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.content-grid {
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Cards padronizados
+.stat-card,
+.project-card,
+.content-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  width: 100%;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+// Tabelas padronizadas
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: $section-spacing;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  
+  thead {
+    background: #f9fafb;
+    
+    th {
+      padding: 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 2px solid #e5e7eb;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  tbody {
+    tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background 0.2s ease;
+      
+      &:hover {
+        background: #f9fafb;
+      }
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+    
+    td {
+      padding: 16px;
+      color: #374151;
+      font-size: 14px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    thead th,
+    tbody td {
+      padding: 12px 8px;
+      font-size: 13px;
+    }
+  }
+}
+
+// Formulários padronizados
+.form-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+}
+
+// Espaçamento consistente entre seções
+.section-spacing {
+  margin-bottom: $section-spacing;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Utilitários de largura
+.full-width {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.half-width {
+  width: calc(50% - calc($content-gap / 2));
+  
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+}
+
+// Garantir que todos os elementos dentro de page-container respeitem o padrão
+.page-container > * {
+  box-sizing: border-box;
+}
+
+// Estilos para ícones SVG
+[innerHTML] svg,
+svg {
+  display: inline-block;
+  vertical-align: middle;
+  
+  path {
+    stroke: currentColor;
+    fill: none;
+  }
+}
+
+// Garantir que ícones em botões e links sejam visíveis
+.btn-action svg,
+.btn-action [innerHTML] svg,
+.nav-icon svg,
+.nav-icon [innerHTML] svg,
+.stat-icon svg,
+.stat-icon [innerHTML] svg,
+.activity-icon svg,
+.activity-icon [innerHTML] svg,
+.message-icon svg,
+.message-icon [innerHTML] svg,
+.search-icon svg,
+.search-icon [innerHTML] svg,
+.empty-icon svg,
+.empty-icon [innerHTML] svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex-shrink: 0;
+  
+  path {
+    stroke: currentColor;
+    fill: none;
+  }
+}
+
+// Tamanhos específicos para diferentes tipos de ícones
+.stat-icon svg,
+.stat-icon [innerHTML] svg {
+  width: 24px;
+  height: 24px;
+}
+
+.activity-icon svg,
+.activity-icon [innerHTML] svg {
+  width: 20px;
+  height: 20px;
+}
+
+.message-icon svg,
+.message-icon [innerHTML] svg {
+  width: 24px;
+  height: 24px;
+}
+
+.search-icon svg,
+.search-icon [innerHTML] svg {
+  width: 20px;
+  height: 20px;
+}
+
+.empty-icon svg,
+.empty-icon [innerHTML] svg {
+  width: 48px;
+  height: 48px;
+}
+

@@ -1,27 +1,68 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
+import { NavigationIcons, ActionIcons } from '../../shared/lib/utils/icons';
+import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/utils/data-table.component';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DataTableComponent],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss'
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
+  private sanitizer = inject(DomSanitizer);
 
   users: User[] = [];
   filteredUsers: User[] = [...this.users];
   searchTerm = '';
   statusFilter = '';
   roleFilter = '';
+
+  // Configuração da tabela
+  tableColumns: TableColumn[] = [
+    { key: 'username', label: 'Usuário', sortable: true },
+    { key: 'name', label: 'Nome', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'role', label: 'Perfil', sortable: true },
+    { key: 'status', label: 'Status', sortable: true }
+  ];
+
+  getTableActions(): TableAction[] {
+    return [
+      {
+        label: 'Visualizar',
+        icon: 'view',
+        action: (row) => {
+          if (row._original) this.viewUser(row._original);
+        }
+      },
+      {
+        label: 'Editar',
+        icon: 'edit',
+        action: (row) => {
+          if (row._original) this.editUser(row._original);
+        },
+        condition: (row) => row.role !== 'root'
+      },
+      {
+        label: 'Excluir',
+        icon: 'delete',
+        action: (row) => {
+          if (row._original) this.deleteUser(row._original);
+        },
+        condition: (row) => row.role !== 'root'
+      }
+    ];
+  }
 
   showUserModal = false;
   showViewModal = false;
@@ -51,19 +92,37 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   public getUsers() {
     this.api.get("users")
-    .pipe(takeUntil(this.unsubscribe$))
-    .subscribe({
-      next: res => {
-        this.users = res
-        this.filterUsers();
-        this.cdr.markForCheck()
-      },
-      error: error => console.error(error),
-      complete: () => {
-        this.filterUsers()
-        this.cdr.markForCheck()
-      }
-    })
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: res => {
+          // Map backend DTO to frontend User model
+          this.users = res.map((user: any) => ({
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            role: user.profileName || 'USER',
+            status: user.enabled ? 'active' : 'inactive',
+            profileName: user.profileName,
+            permissions: user.permissions || [],
+            fotoUrl: user.fotoUrl
+          }));
+          this.filterUsers();
+          this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+          this.cdr.markForCheck()
+        },
+        error: error => {
+          console.error('Error loading users:', error);
+          this.users = [];
+          this.filterUsers();
+          this.cdr.markForCheck();
+        },
+        complete: () => {
+          this.filterUsers()
+          this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+          this.cdr.markForCheck()
+        }
+      })
   }
 
   public createUser(user : User) {
@@ -115,11 +174,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   filterUsers() {
+    if (!this.users || this.users.length === 0) {
+      this.filteredUsers = [];
+      this.totalPages = 1;
+      this.currentPage = 1;
+      return;
+    }
+    
     this.filteredUsers = this.users.filter(user => {
-      const matchesSearch = user.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                           user.email.toLowerCase().includes(this.searchTerm.toLowerCase());
+      const matchesSearch = (user.name?.toLowerCase().includes(this.searchTerm.toLowerCase()) || false) ||
+                           (user.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) || false) ||
+                           (user.username?.toLowerCase().includes(this.searchTerm.toLowerCase()) || false);
       const matchesStatus = !this.statusFilter || user.status === this.statusFilter;
-      const matchesRole = !this.roleFilter || user.role === this.roleFilter;
+      const matchesRole = !this.roleFilter || user.role?.toLowerCase() === this.roleFilter.toLowerCase();
 
       return matchesSearch && matchesStatus && matchesRole;
     });
@@ -165,6 +232,42 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   closeViewModal() {
     this.showViewModal = false;
     this.viewingUser = null;
+  }
+
+  getSearchIcon(): SafeHtml {
+    const html = NavigationIcons.search({ size: 20, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getActionIcon(iconName: 'view' | 'edit' | 'delete'): SafeHtml {
+    const icons = {
+      view: ActionIcons.view({ size: 16, color: 'currentColor' }),
+      edit: ActionIcons.edit({ size: 16, color: 'currentColor' }),
+      delete: ActionIcons.delete({ size: 16, color: 'currentColor' })
+    };
+    const html = icons[iconName] || '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getTableData(): any[] {
+    if (!this.filteredUsers || this.filteredUsers.length === 0) {
+      return [];
+    }
+    
+    return this.filteredUsers.map(user => ({
+      ...user,
+      _original: user, // Manter referência ao objeto original
+      status: user.status === 'active' ? 'Ativo' : 'Inativo',
+      role: user.role || user.profileName || 'USER'
+    }));
+  }
+
+  getRoleLabel(role: string): string {
+    return this.getRoleText(role);
+  }
+
+  getStatusLabel(status: string): string {
+    return status === 'active' ? 'Ativo' : 'Inativo';
   }
 
   editUser(user: User) {
@@ -281,5 +384,31 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
     }
+  }
+
+  onItemsPerPageChange() {
+    this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages || 1;
+    }
+  }
+
+  getItemsPerPageOptions(): number[] {
+    const total = this.filteredUsers.length;
+    const options: number[] = [];
+    
+    if (total <= 10) {
+      options.push(10);
+    } else if (total <= 25) {
+      options.push(10, 25);
+    } else if (total <= 50) {
+      options.push(10, 25, 50);
+    } else if (total <= 100) {
+      options.push(10, 25, 50, 100);
+    } else {
+      options.push(10, 25, 50, 100, 200);
+    }
+    
+    return options;
   }
 }

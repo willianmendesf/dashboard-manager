@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { ApiService } from '../../shared/service/api.service';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Appointment } from './model/appointment.model';
@@ -9,6 +9,8 @@ import { CronSelectorComponent } from '../../shared/modules/cron-selector/cron-s
 import { ImageUploadComponent } from "../../shared/modules/image-upload/image-upload.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { environment } from '../../../environments/environment';
+import { ActionIcons } from '../../shared/lib/utils/icons';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 export interface ChecklistItem {
   id: number;
   nome: string;
@@ -23,6 +25,7 @@ export interface ChecklistItem {
 })
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
+  private sanitizer = inject(DomSanitizer);
   public appointments : Appointment[] = [];
   public groups: Group[] = []
   public contacts: Contact[] = []
@@ -211,6 +214,16 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   compareIds(id1: any, id2: any): boolean {
     return String(id1) === String(id2);
+  }
+
+  getIcon(iconName: 'view' | 'edit' | 'delete'): SafeHtml {
+    const icons = {
+      view: ActionIcons.view({ size: 16, color: 'currentColor' }),
+      edit: ActionIcons.edit({ size: 16, color: 'currentColor' }),
+      delete: ActionIcons.delete({ size: 16, color: 'currentColor' })
+    };
+    const html = icons[iconName] || '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
   edit(appointment: Appointment) {

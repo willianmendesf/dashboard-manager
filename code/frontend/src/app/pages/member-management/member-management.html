@@ -13,7 +13,7 @@
           (input)="filterMembers()"
           placeholder="Buscar membros..."
         />
-        <div class="search-icon">🔍</div>
+        <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
       </div>
       <select [(ngModel)]="tipoCadastroFilter" (change)="filterMembers()" class="filter-select">
         <option value="">Membros por tipo</option>
@@ -34,57 +34,41 @@
     <button class="btn-primary" (click)="openMemberModal()">+ Novo Membro</button>
   </div>
 
-  <div class="members-table-container">
-    <table class="members-table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>CPF</th>
-          <th>RG</th>
-          <th>Data de Nascimento</th>
-          <th>Estado Civil</th>
-          <th>Telefone</th>
-          <th>Email</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let member of filteredMembers" class="member-row">
-          <td>{{ member.nome }}</td>
-          <td>{{ member.cpf }}</td>
-          <td>{{ member.rg }}</td>
-          <td>{{ member.nascimento | date:'dd/MM/yyyy' }}</td>
-          <td>{{ member.estadoCivil ? 'Casado' : 'Solteiro' }}</td>
-          <td>{{ member.telefone || member.celular || member.comercial || '-' }}</td>
-          <td>{{ member.email }}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn-action view" (click)="viewMember(member)" title="Visualizar">👁️</button>
-              <button class="btn-action edit" (click)="editMember(member)" title="Editar">✏️</button>
-              <button class="btn-action delete" (click)="deleteMember(member)" title="Excluir">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="empty-state" *ngIf="filteredMembers.length === 0">
-      <div class="empty-icon">👤</div>
-      <h3>Nenhum membro encontrado</h3>
-      <p>Tente ajustar os filtros ou criar um novo membro</p>
-    </div>
-  </div>
+  <app-data-table
+    [columns]="tableColumns"
+    [data]="getTableData()"
+    [actions]="getTableActions()"
+    [loading]="false"
+    emptyMessage="Nenhum membro encontrado"
+    [striped]="true"
+    [hoverable]="true"
+  ></app-data-table>
 
   <div class="pagination">
-    <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">
-      ← Anterior
-    </button>
-    <span class="pagination-info">
-      Página {{ currentPage }} de {{ totalPages }}
-    </span>
-    <button class="btn-pagination" [disabled]="currentPage === totalPages" (click)="nextPage()">
-      Próxima →
-    </button>
+    <div class="pagination-left">
+      <label for="itemsPerPage" class="pagination-label">Itens por página:</label>
+      <select 
+        id="itemsPerPage" 
+        class="pagination-select" 
+        [(ngModel)]="itemsPerPage" 
+        (change)="onItemsPerPageChange()"
+      >
+        @for (option of getItemsPerPageOptions(); track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </div>
+    <div class="pagination-center">
+      <button class="btn-pagination" [disabled]="currentPage === 1" (click)="previousPage()">
+        ← Anterior
+      </button>
+      <span class="pagination-info">
+        Página {{ currentPage }} de {{ totalPages }}
+      </span>
+      <button class="btn-pagination" [disabled]="currentPage === totalPages" (click)="nextPage()">
+        Próxima →
+      </button>
+    </div>
   </div>
 
   <!-- Edit/Create Member Modal -->

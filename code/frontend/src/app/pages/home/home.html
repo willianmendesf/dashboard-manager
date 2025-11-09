@@ -6,7 +6,7 @@
 
   <div class="stats-grid">
     <div class="stat-card" *ngFor="let stat of stats">
-      <div class="stat-icon">{{ stat.icon }}</div>
+      <div class="stat-icon" [innerHTML]="stat.icon" [attr.aria-hidden]="true"></div>
       <div class="stat-content">
         <h3>{{ stat.value }}</h3>
         <p>{{ stat.label }}</p>
@@ -22,7 +22,7 @@
       <h2>Atividades Recentes</h2>
       <div class="activity-list">
         <div class="activity-item" *ngFor="let activity of recentActivities">
-          <div class="activity-icon">{{ activity.icon }}</div>
+          <div class="activity-icon" [innerHTML]="activity.icon" [attr.aria-hidden]="true"></div>
           <div class="activity-content">
             <h4>{{ activity.title }}</h4>
             <p>{{ activity.description }}</p>

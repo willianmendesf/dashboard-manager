@@ -1,26 +1,67 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
+import { NavigationIcons, ActionIcons } from '../../shared/lib/utils/icons';
+import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/utils/data-table.component';
 
 @Component({
   selector: 'member-management',
   standalone: true,
   templateUrl: './member-management.html',
   styleUrl: './member-management.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe]
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe, DataTableComponent]
 })
 export class MemberManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
+  private sanitizer = inject(DomSanitizer);
 
   members: Member[] = [];
   filteredMembers: Member[] = [...this.members];
   searchTerm = '';
   estadoCivilFilter: boolean | '' = '';
   tipoCadastroFilter = '';
+
+  // Configuração da tabela
+  tableColumns: TableColumn[] = [
+    { key: 'nome', label: 'Nome', sortable: true },
+    { key: 'cpf', label: 'CPF', sortable: true },
+    { key: 'rg', label: 'RG' },
+    { key: 'nascimento', label: 'Data de Nascimento', sortable: true },
+    { key: 'estadoCivil', label: 'Estado Civil' },
+    { key: 'telefone', label: 'Telefone' },
+    { key: 'email', label: 'Email', sortable: true }
+  ];
+
+  getTableActions(): TableAction[] {
+    return [
+      {
+        label: 'Visualizar',
+        icon: 'view',
+        action: (row) => {
+          if (row._original) this.viewMember(row._original);
+        }
+      },
+      {
+        label: 'Editar',
+        icon: 'edit',
+        action: (row) => {
+          if (row._original) this.editMember(row._original);
+        }
+      },
+      {
+        label: 'Excluir',
+        icon: 'delete',
+        action: (row) => {
+          if (row._original) this.deleteMember(row._original);
+        }
+      }
+    ];
+  }
 
   showMemberModal = false;
   showViewModal = false;
@@ -51,13 +92,21 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: res => {
-          this.members = res;
+          this.members = res || [];
           this.filterMembers();
+          this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
           this.cdr.markForCheck();
         },
-        error: error => console.error(error),
+        error: error => {
+          console.error('Error loading members:', error);
+          this.members = [];
+          this.filterMembers();
+          this.totalPages = 1;
+          this.cdr.markForCheck();
+        },
         complete: () => {
           this.filterMembers();
+          this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
           this.cdr.markForCheck();
         }
       });
@@ -94,17 +143,28 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   filterMembers() {
+    if (!this.members || this.members.length === 0) {
+      this.filteredMembers = [];
+      this.totalPages = 1;
+      this.currentPage = 1;
+      return;
+    }
+
     this.filteredMembers = this.members.filter(member => {
-      const matchesSearch = member.nome?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                            member.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                            member.cpf?.toLowerCase().includes(this.searchTerm.toLowerCase());
+      if (!member) return false;
+      
+      const searchLower = this.searchTerm.toLowerCase();
+      const matchesSearch = !this.searchTerm || 
+                            (member.nome && member.nome.toLowerCase().includes(searchLower)) ||
+                            (member.email && member.email.toLowerCase().includes(searchLower)) ||
+                            (member.cpf && member.cpf.toLowerCase().includes(searchLower));
       const matchesEstadoCivil = this.estadoCivilFilter === '' || member.estadoCivil === this.estadoCivilFilter;
       const matchesTipoCadastro = !this.tipoCadastroFilter || member.tipoCadastro === this.tipoCadastroFilter;
 
       return matchesSearch && matchesEstadoCivil && matchesTipoCadastro;
     });
 
-    this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
+    this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage) || 1;
     this.currentPage = 1;
   }
 
@@ -157,6 +217,35 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   closeViewModal() {
     this.showViewModal = false;
     this.viewingMember = null;
+  }
+
+  getSearchIcon(): SafeHtml {
+    const html = NavigationIcons.search({ size: 20, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getActionIcon(iconName: 'view' | 'edit' | 'delete'): SafeHtml {
+    const icons = {
+      view: ActionIcons.view({ size: 16, color: 'currentColor' }),
+      edit: ActionIcons.edit({ size: 16, color: 'currentColor' }),
+      delete: ActionIcons.delete({ size: 16, color: 'currentColor' })
+    };
+    const html = icons[iconName] || '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getTableData(): any[] {
+    if (!this.filteredMembers || this.filteredMembers.length === 0) {
+      return [];
+    }
+    
+    return this.filteredMembers.map(member => ({
+      ...member,
+      _original: member, // Manter referência ao objeto original
+      estadoCivil: member.estadoCivil ? 'Casado' : 'Solteiro',
+      telefone: member.telefone || member.celular || member.comercial || '-',
+      nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
+    }));
   }
 
   editMember(member: Member) {
@@ -239,6 +328,32 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
     }
+  }
+
+  onItemsPerPageChange() {
+    this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages || 1;
+    }
+  }
+
+  getItemsPerPageOptions(): number[] {
+    const total = this.filteredMembers.length;
+    const options: number[] = [];
+    
+    if (total <= 10) {
+      options.push(10);
+    } else if (total <= 25) {
+      options.push(10, 25);
+    } else if (total <= 50) {
+      options.push(10, 25, 50);
+    } else if (total <= 100) {
+      options.push(10, 25, 50, 100);
+    } else {
+      options.push(10, 25, 50, 100, 200);
+    }
+    
+    return options;
   }
 }
 function provideAnimations(): readonly any[] | import("@angular/core").Type<any> {

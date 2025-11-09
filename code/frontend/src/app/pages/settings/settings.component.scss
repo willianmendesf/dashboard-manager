@@ -1,25 +1,5 @@
-.page-container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 32px;
-}
-
-.page-header h1 {
-  margin: 0 0 8px 0;
-  color: #1F2937;
-  font-size: 32px;
-  font-weight: bold;
-}
-
-.page-header p {
-  margin: 0;
-  color: #6B7280;
-  font-size: 16px;
-}
+// .page-container está definido em shared/styles/layout.scss
+// O componente pagetitle já tem seus próprios estilos definidos
 
 .settings-grid {
   display: grid;
@@ -231,6 +211,121 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.loading-message {
+  text-align: center;
+  padding: 40px;
+  color: #6B7280;
+}
+
+.logo-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.logo-preview-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
+  padding: 4px;
+}
+
+.logo-url {
+  font-size: 12px;
+  color: #6B7280;
+  word-break: break-all;
+}
+
+.color-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.color-picker {
+  width: 60px;
+  height: 40px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.color-text-input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: monospace;
+}
+
+.setting-subsection {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.setting-subsection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.setting-subsection h3 {
+  margin: 0 0 16px 0;
+  color: #4B5563;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6B7280;
+  font-style: italic;
+}
+
+.whatsapp-sub-options {
+  margin-left: 56px;
+  margin-top: 12px;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border-left: 3px solid #10B981;
+}
+
+.whatsapp-option {
+  margin-bottom: 8px;
+}
+
+.whatsapp-option:last-child {
+  margin-bottom: 0;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary:disabled:hover {
+  transform: none;
+  background: #3B82F6;
+}
+
 @media (max-width: 768px) {
   .settings-grid {
     grid-template-columns: 1fr;
@@ -238,6 +333,19 @@
   
   .settings-footer {
     flex-direction: column;
+  }
+
+  .color-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .color-picker {
+    width: 100%;
+  }
+
+  .whatsapp-sub-options {
+    margin-left: 0;
   }
 }
 

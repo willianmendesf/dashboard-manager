@@ -1,8 +1,4 @@
-.page-container {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+// .page-container está definido em shared/styles/layout.scss
 
 .page-header {
   margin-bottom: 32px;
@@ -64,6 +60,18 @@
   transform: translateY(-50%);
   color: #9CA3AF;
   font-size: 16px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg,
+  [innerHTML] svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
 }
 
 .filter-select {
@@ -94,35 +102,7 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
-.members-table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.members-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.members-table th {
-  background: #F9FAFB;
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  color: #1F2937;
-  border-bottom: 1px solid #E5E7EB;
-  font-size: 14px;
-}
-
-.members-table td {
-  padding: 16px;
-  border-bottom: 1px solid #E5E7EB;
-  font-size: 14px;
-  color: #374151;
-}
+// .table-container e .data-table estão definidos em shared/styles/layout.scss
 
 .user-row:hover {
   background: #F9FAFB;
@@ -260,8 +240,55 @@
 }
 
 .pagination {
+  margin-top: 32px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+.pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-label {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pagination-select {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #9CA3AF;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.pagination-center {
+  display: flex;
   align-items: center;
   gap: 16px;
 }
@@ -612,11 +639,11 @@
     max-width: none;
   }
 
-  .members-table-container {
+  .table-container {
     overflow-x: auto;
   }
 
-  .members-table {
+    .data-table {
     min-width: 800px;
   }
 

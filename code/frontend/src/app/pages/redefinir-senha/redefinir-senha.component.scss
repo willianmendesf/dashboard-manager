@@ -1,0 +1,8 @@
+@use '../solicitar-reset/solicitar-reset.component.scss';
+
+.disabled-input {
+  background-color: #F3F4F6;
+  color: #6B7280;
+  cursor: not-allowed;
+}
+

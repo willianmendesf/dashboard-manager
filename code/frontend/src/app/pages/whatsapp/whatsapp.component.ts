@@ -1,10 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../../shared/service/api.service';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { Subject, takeUntil } from 'rxjs';
+import { NavigationIcons, StatusIcons, MessageIcons } from '../../shared/lib/utils/icons';
 
 @Component({
   selector: 'app-whatsapp',
@@ -15,6 +17,7 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class WhatsAppComponent implements OnInit {
   private unsubscribe$ = new Subject<void>();
+  private sanitizer = inject(DomSanitizer);
 
   activeTab: 'contacts' | 'groups' = 'contacts';
   searchTerm = '';
@@ -52,17 +55,31 @@ export class WhatsAppComponent implements OnInit {
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
-        this.contacts = res
-        let newList : any[] = [];
-        this.contacts.forEach(item => {
-          (item.name == '') ? item.name="Sem Nome" : item.name;
-          item.phone = item.id.replace('@s.whatsapp.net','');
-          newList.push(item)
-        })
-        this.contacts = newList;
+        if (Array.isArray(res)) {
+          this.contacts = res;
+          let newList : any[] = [];
+          this.contacts.forEach(item => {
+            if (item) {
+              (item.name == '' || !item.name) ? item.name="Sem Nome" : item.name;
+              if (item.id) {
+                item.phone = item.id.replace('@s.whatsapp.net','');
+              }
+              newList.push(item)
+            }
+          })
+          this.contacts = newList;
+        } else {
+          this.contacts = [];
+        }
+        this.filter()
         this.cdr.markForCheck()
       },
-      error: error => console.error(error),
+      error: error => {
+        console.error('Error loading contacts:', error);
+        this.contacts = [];
+        this.filter()
+        this.cdr.markForCheck()
+      },
       complete: () => {
         this.filter()
         this.cdr.markForCheck()
@@ -88,10 +105,16 @@ export class WhatsAppComponent implements OnInit {
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
-        this.groups = res
+        this.groups = Array.isArray(res) ? res : [];
+        this.filter()
         this.cdr.markForCheck()
       },
-      error: error => console.error(error),
+      error: error => {
+        console.error('Error loading groups:', error);
+        this.groups = [];
+        this.filter()
+        this.cdr.markForCheck()
+      },
       complete: () => {
         this.filter()
         this.cdr.markForCheck()
@@ -112,15 +135,27 @@ export class WhatsAppComponent implements OnInit {
   public filter() {
     const term = this.searchTerm.toLowerCase();
 
-    this.filteredContacts = this.contacts.filter(contact =>
-      contact.name.toLowerCase().includes(term) ||
-      contact.phone.includes(term)
-    );
+    if (!this.contacts || this.contacts.length === 0) {
+      this.filteredContacts = [];
+    } else {
+      this.filteredContacts = this.contacts.filter(contact =>
+        contact && (
+          (contact.name && contact.name.toLowerCase().includes(term)) ||
+          (contact.phone && contact.phone.includes(term))
+        )
+      );
+    }
 
-    this.filteredGroups = this.groups.filter(group =>
-      group.name.toLowerCase().includes(term) ||
-      group.description.toLowerCase().includes(term)
-    );
+    if (!this.groups || this.groups.length === 0) {
+      this.filteredGroups = [];
+    } else {
+      this.filteredGroups = this.groups.filter(group =>
+        group && (
+          (group.name && group.name.toLowerCase().includes(term)) ||
+          (group.description && group.description.toLowerCase().includes(term))
+        )
+      );
+    }
   }
 
   getFilteredItems() {
@@ -296,6 +331,26 @@ export class WhatsAppComponent implements OnInit {
         disabled: !this.newGroup.name || this.newGroup.selectedMembers.length === 0
       }
     ];
+  }
+
+  getSearchIcon(): SafeHtml {
+    const html = NavigationIcons.search({ size: 20, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getUsersIcon(): SafeHtml {
+    const html = StatusIcons.users({ size: 20, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getPhoneIcon(): SafeHtml {
+    const html = MessageIcons.sms({ size: 24, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getWhatsAppIcon(): SafeHtml {
+    const html = MessageIcons.whatsapp({ size: 24, color: 'currentColor' });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
   getRecipientInfoModalButtons(): ModalButton[] {
