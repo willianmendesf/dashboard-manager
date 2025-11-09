@@ -258,17 +258,21 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
             fotoUrl: member.fotoUrl || null
           }));
           this.filterMembers(); // Isso já chama getTableData() internamente
-          this.cdr.markForCheck();
+          // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+          setTimeout(() => {
+            this.cdr.markForCheck();
+          }, 0);
         },
         error: error => {
           console.error('Error loading members:', error);
           this.members = [];
           this.filterMembers();
-          this.cdr.markForCheck();
+          setTimeout(() => {
+            this.cdr.markForCheck();
+          }, 0);
         },
         complete: () => {
-          this.filterMembers();
-          this.cdr.markForCheck();
+          // Não precisa chamar filterMembers novamente aqui, já foi chamado no next
         }
       });
   }
@@ -361,6 +365,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     if (!this.members || this.members.length === 0) {
       this.filteredMembers = [];
       this.getTableData(); // Atualizar tableData
+      this.cdr.detectChanges();
       return;
     }
 
@@ -402,49 +407,62 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
     // Atualizar tableData após filtrar
     this.getTableData();
+    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   openMemberModal(member?: Member) {
-    this.showMemberModal = true;
-    this.isEditing = !!member;
-    this.currentMember = member ? { ...member } : {
-      nome: '',
-      cpf: '',
-      rg: '',
-      conjugueCPF: '',
-      comungante: false,
-      intercessor: false,
-      tipoCadastro: '',
-      nascimento: null,
-      idade: null,
-      estadoCivil: false,
-      cep: '',
-      logradouro: '',
-      numero: '',
-      complemento: '',
-      bairro: '',
-      cidade: '',
-      estado: '',
-      telefone: '',
-      comercial: '',
-      celular: '',
-      contato: '',
-      email: '',
-      grupos: '',
-      lgpd: '',
-      lgpdAceitoEm: null,
-      rede: '',
-      version: null
-    };
-    this.photoPreview = (member as any)?.fotoUrl || null;
-    this.selectedPhotoFile = null;
+    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.showMemberModal = true;
+      this.isEditing = !!member;
+      this.currentMember = member ? { ...member } : {
+        nome: '',
+        cpf: '',
+        rg: '',
+        conjugueCPF: '',
+        comungante: false,
+        intercessor: false,
+        tipoCadastro: '',
+        nascimento: null,
+        idade: null,
+        estadoCivil: false,
+        cep: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        telefone: '',
+        comercial: '',
+        celular: '',
+        contato: '',
+        email: '',
+        grupos: '',
+        lgpd: '',
+        lgpdAceitoEm: null,
+        rede: '',
+        version: null
+      };
+      this.photoPreview = (member as any)?.fotoUrl || null;
+      this.selectedPhotoFile = null;
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   closeMemberModal() {
-    this.showMemberModal = false;
-    this.currentMember = {};
-    this.photoPreview = null;
-    this.selectedPhotoFile = null;
+    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.showMemberModal = false;
+      this.isEditing = false;
+      this.currentMember = {};
+      this.photoPreview = null;
+      this.selectedPhotoFile = null;
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   onPhotoSelected(event: Event): void {
@@ -456,7 +474,10 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.photoPreview = e.target.result;
-          this.cdr.markForCheck();
+          // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+          setTimeout(() => {
+            this.cdr.markForCheck();
+          }, 0);
         };
         reader.readAsDataURL(file);
       }
@@ -481,27 +502,45 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       const fotoUrl = response?.fotoUrl || response?.member?.fotoUrl;
       
       if (fotoUrl) {
+        // Adicionar timestamp para forçar atualização da imagem (cache busting)
+        const fotoUrlWithTimestamp = fotoUrl + (fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        
         // Update current member in modal
-        (this.currentMember as any).fotoUrl = fotoUrl;
-        this.photoPreview = fotoUrl;
+        (this.currentMember as any).fotoUrl = fotoUrlWithTimestamp;
         
         // Update member in local list immediately
         const memberIndex = this.members.findIndex(m => m.id === memberId);
         if (memberIndex !== -1) {
-          (this.members[memberIndex] as any).fotoUrl = fotoUrl;
-          this.filterMembers(); // Refresh filtered list
+          // Atualizar o objeto completo para garantir que a referência mude
+          this.members[memberIndex] = {
+            ...this.members[memberIndex],
+            fotoUrl: fotoUrlWithTimestamp
+          };
         }
         
         // Update viewing member if it's the same member
         if (this.viewingMember && this.viewingMember.id === memberId) {
-          (this.viewingMember as any).fotoUrl = fotoUrl;
+          (this.viewingMember as any).fotoUrl = fotoUrlWithTimestamp;
         }
         
         this.notificationService.showSuccess('Foto enviada com sucesso!');
-        this.cdr.markForCheck(); // Force change detection
         
-        // Refresh members list from backend to ensure consistency
-        this.getMembers();
+        // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+        // Atualizar photoPreview de forma assíncrona
+        setTimeout(() => {
+          this.photoPreview = fotoUrlWithTimestamp;
+          // Atualizar filteredMembers com a nova fotoUrl
+          const filteredIndex = this.filteredMembers.findIndex(m => m.id === memberId);
+          if (filteredIndex !== -1) {
+            this.filteredMembers[filteredIndex] = {
+              ...this.filteredMembers[filteredIndex],
+              fotoUrl: fotoUrlWithTimestamp
+            };
+          }
+          // Forçar atualização da tabela recriando os dados
+          this.getTableData();
+          this.cdr.markForCheck();
+        }, 0);
       } else {
         this.notificationService.showError('Resposta inválida do servidor.');
       }
@@ -510,9 +549,12 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao fazer upload da foto. Tente novamente.';
       this.notificationService.showError(errorMessage);
     } finally {
-      this.uploadingPhoto = false;
-      this.selectedPhotoFile = null;
-      this.cdr.markForCheck();
+      // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+      setTimeout(() => {
+        this.uploadingPhoto = false;
+        this.selectedPhotoFile = null;
+        this.cdr.markForCheck();
+      }, 0);
     }
   }
 
@@ -553,7 +595,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       return this.tableData;
     }
     
-    this.tableData = this.filteredMembers.map(member => {
+    // Criar uma nova referência do array para evitar problemas de detecção de mudanças
+    const newTableData = this.filteredMembers.map(member => {
       // Prioriza celular, se não tiver usa telefone
       const phoneNumber = (member.celular && member.celular.trim() !== '') 
         ? member.celular 
@@ -575,9 +618,10 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     
     // Aplicar ordenação se houver
     if (this.currentSort) {
-      this.tableData.sort((a, b) => {
-        const aValue = a[this.currentSort!.column];
-        const bValue = b[this.currentSort!.column];
+      newTableData.sort((a, b) => {
+        const column = this.currentSort!.column;
+        const aValue = (a as any)[column];
+        const bValue = (b as any)[column];
         
         // Tratar valores nulos ou indefinidos
         if (aValue === null || aValue === undefined || aValue === '-') return 1;
@@ -602,6 +646,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       });
     }
     
+    // Atribuir a nova referência
+    this.tableData = newTableData;
     return this.tableData;
   }
   
