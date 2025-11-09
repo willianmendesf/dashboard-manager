@@ -13,6 +13,8 @@ interface User {
   profileId?: number;
   cpf?: string;
   telefone?: string;
+  novaSenha?: string;
+  confirmarSenha?: string;
   //created: string;
   //avatar?: string;
   //lastLogin?: string;

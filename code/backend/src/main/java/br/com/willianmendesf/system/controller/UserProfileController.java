@@ -57,10 +57,10 @@ public class UserProfileController {
     }
 
     /**
-     * POST /api/v1/users/perfil/upload-foto
+     * POST /api/v1/users/me/upload-foto
      * Uploads profile photo for the logged-in user
      */
-    @PostMapping("/perfil/upload-foto")
+    @PostMapping("/me/upload-foto")
     public ResponseEntity<UserDTO> uploadProfilePhoto(
             @RequestParam("file") MultipartFile file,
             Authentication authentication) {
@@ -104,10 +104,10 @@ public class UserProfileController {
     }
 
     /**
-     * DELETE /api/v1/users/perfil/remove-foto
+     * DELETE /api/v1/users/me/remove-foto
      * Removes profile photo from logged-in user
      */
-    @DeleteMapping("/perfil/remove-foto")
+    @DeleteMapping("/me/remove-foto")
     public ResponseEntity<UserDTO> removeProfilePhoto(Authentication authentication) {
         User loggedUser = (User) authentication.getPrincipal();
         

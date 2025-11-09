@@ -97,7 +97,10 @@ public class MemberEntity {
     @Column(name = "rede")
     private String rede;
 
-    @Version // 29 campos
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
+    @Version // 30 campos
     @Column(name = "version")
     private Long version;
 
@@ -132,6 +135,7 @@ public class MemberEntity {
         this.lgpd = member.getLgpd();
         this.lgpdAceitoEm = member.getLgpdAceitoEm();
         this.rede = member.getRede();
+        this.fotoUrl = member.getFotoUrl();
         this.version = member.getVersion();
     }
 
@@ -164,6 +168,7 @@ public class MemberEntity {
         this.lgpd = (actual.getLgpd() != null) ? actual.getLgpd() : newValue.getLgpd();
         this.lgpdAceitoEm = (actual.getLgpdAceitoEm() != null) ? actual.getLgpdAceitoEm() : newValue.getLgpdAceitoEm();
         this.rede = (isNotEmpty(actual.getRede())) ? actual.getRede() : newValue.getRede();
+        this.fotoUrl = (isNotEmpty(actual.getFotoUrl())) ? actual.getFotoUrl() : newValue.getFotoUrl();
         this.version = (actual.getVersion() != null) ? actual.getVersion() : newValue.getVersion();
     }
 

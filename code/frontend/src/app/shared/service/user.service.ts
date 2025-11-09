@@ -33,13 +33,25 @@ export class UserService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post<UserDTO>(`${this.apiUrl}users/perfil/upload-foto`, formData).pipe(
+    return this.http.post<UserDTO>(
+      `${this.apiUrl}users/me/upload-foto`, 
+      formData,
+      { withCredentials: true } // CRITICAL: Send/receive session cookies
+    ).pipe(
       tap(user => {
         // Update current user in AuthService
         const currentUser = this.authService.getCurrentUser();
         if (currentUser) {
-          currentUser.fotoUrl = user.fotoUrl;
-          this.authService.saveUser(currentUser);
+          const updatedUserData: any = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            name: user.name,
+            profileName: user.profileName,
+            fotoUrl: user.fotoUrl,
+            permissions: currentUser.permissions || []
+          };
+          this.authService.updateUserCache(updatedUserData);
         }
       })
     );

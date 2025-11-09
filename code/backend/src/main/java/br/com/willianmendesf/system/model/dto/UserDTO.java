@@ -17,6 +17,7 @@ public class UserDTO {
     private String cpf;
     private String telefone;
     private String password; // Only used for creation/update
+    private String novaSenha; // Only used for update (optional)
     private Boolean enabled;
     private Long profileId;
     private String profileName;

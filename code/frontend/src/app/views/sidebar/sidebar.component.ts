@@ -4,15 +4,13 @@ import { RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NavigationIcons } from '../../shared/lib/utils/icons';
 import { AuthService } from '../../shared/service/auth.service';
-import { IfHasPermissionDirective } from '../../shared/directives/if-has-permission.directive';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
-    IfHasPermissionDirective
+    RouterModule
   ],
   templateUrl:"./sidebar.html",
   styleUrl: "./sidebar.scss"

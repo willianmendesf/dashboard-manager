@@ -33,6 +33,17 @@ public class UserService {
      */
     @Transactional
     public UserDTO createUser(UserDTO userDTO, User loggedUser) {
+        // Validate required fields
+        if (userDTO.getUsername() == null || userDTO.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        if (userDTO.getEmail() == null || userDTO.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (userDTO.getProfileId() == null) {
+            throw new IllegalArgumentException("Profile ID is required");
+        }
+
         // Validate if username or email already exists
         if (userRepository.existsByUsername(userDTO.getUsername())) {
             throw new IllegalArgumentException("Username already exists: " + userDTO.getUsername());
@@ -68,11 +79,15 @@ public class UserService {
     /**
      * Updates an existing user
      * Business rule: Only ROOT users can update other users to ROOT
+     * Security: Users cannot change their own profile/status
      */
     @Transactional
     public UserDTO updateUser(Long id, UserDTO userDTO, User loggedUser) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new UsernameNotFoundException("User not found: " + id));
+
+        // SECURITY CHECK: Prevent users from editing their own profile/status
+        boolean isEditingSelf = loggedUser.getId().equals(id);
 
         // Update basic fields
         if (userDTO.getName() != null) {
@@ -84,28 +99,51 @@ public class UserService {
             }
             user.setEmail(userDTO.getEmail());
         }
-        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+
+        // Update password (use novaSenha if provided, otherwise password for backward compatibility)
+        String newPassword = userDTO.getNovaSenha() != null && !userDTO.getNovaSenha().isEmpty() 
+            ? userDTO.getNovaSenha() 
+            : (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty() ? userDTO.getPassword() : null);
+        
+        if (newPassword != null) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            log.info("Password updated for user: {}", user.getUsername());
         }
-        if (userDTO.getEnabled() != null) {
+
+        // SECURITY: Only update enabled status if NOT editing self
+        if (userDTO.getEnabled() != null && !isEditingSelf) {
             user.setEnabled(userDTO.getEnabled());
+        } else if (isEditingSelf && userDTO.getEnabled() != null) {
+            log.warn("User {} attempted to change their own enabled status. Ignored.", loggedUser.getUsername());
         }
 
-        // Update profile if provided
-        if (userDTO.getProfileId() != null && !userDTO.getProfileId().equals(user.getProfile().getId())) {
-            Profile newProfile = profileRepository.findById(userDTO.getProfileId())
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found: " + userDTO.getProfileId()));
+        // SECURITY: Only update profile if NOT editing self
+        if (userDTO.getProfileId() != null && !isEditingSelf) {
+            if (!userDTO.getProfileId().equals(user.getProfile().getId())) {
+                Profile newProfile = profileRepository.findById(userDTO.getProfileId())
+                    .orElseThrow(() -> new IllegalArgumentException("Profile not found: " + userDTO.getProfileId()));
 
-            // Business rule: Only ROOT can assign ROOT profile
-            if (isRootProfile(newProfile) && !isRootUser(loggedUser)) {
-                throw new AccessDeniedException("Only ROOT users can designate other users as ROOT.");
+                // Business rule: Only ROOT can assign ROOT profile
+                if (isRootProfile(newProfile) && !isRootUser(loggedUser)) {
+                    throw new AccessDeniedException("Only ROOT users can designate other users as ROOT.");
+                }
+
+                user.setProfile(newProfile);
             }
+        } else if (isEditingSelf && userDTO.getProfileId() != null) {
+            log.warn("User {} attempted to change their own profile. Ignored.", loggedUser.getUsername());
+        }
 
-            user.setProfile(newProfile);
+        // Update CPF and telefone if provided
+        if (userDTO.getCpf() != null) {
+            user.setCpf(userDTO.getCpf());
+        }
+        if (userDTO.getTelefone() != null) {
+            user.setTelefone(userDTO.getTelefone());
         }
 
         User savedUser = userRepository.save(user);
-        log.info("User updated: {}", savedUser.getUsername());
+        log.info("User updated: {} (self-edit: {})", savedUser.getUsername(), isEditingSelf);
 
         return toDTO(savedUser);
     }

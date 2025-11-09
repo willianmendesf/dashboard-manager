@@ -208,6 +208,40 @@ export class AuthService {
   }
 
   /**
+   * Update user cache with new data
+   * Used when user data is updated (e.g., by admin or in profile page)
+   * Merges new data with existing cache to preserve permissions and other fields
+   */
+  updateUserCache(updatedUser: any): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      console.warn('Cannot update cache: no current user found');
+      return;
+    }
+
+    // Merge current user data with updated data
+    // Preserve permissions and other fields that may not come in the update DTO
+    const mergedUser: LoginResponse = {
+      ...currentUser,
+      ...updatedUser,
+      // Preserve permissions if not provided in update
+      permissions: updatedUser.permissions || currentUser.permissions || []
+    };
+
+    // Update localStorage
+    localStorage.setItem(this.userKey, JSON.stringify(mergedUser));
+    
+    // Update current user in memory
+    this.currentUser = mergedUser;
+    
+    // Notify other parts of the application about the change
+    // Note: authStatus$ is for authentication status, not user data changes
+    // If needed, we could add a separate BehaviorSubject for user data changes
+    
+    console.log('User cache updated:', mergedUser);
+  }
+
+  /**
    * REMOVIDO: decodeToken() - Não precisamos mais decodificar tokens JWT
    * A autenticação é gerenciada via cookie de sessão pelo Spring Security
    */

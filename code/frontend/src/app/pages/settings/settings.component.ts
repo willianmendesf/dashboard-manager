@@ -8,6 +8,7 @@ import { PageTitleComponent } from '../../shared/modules/pagetitle/pagetitle.com
 import { IfHasPermissionDirective } from '../../shared/directives/if-has-permission.directive';
 import { environment } from '../../../environments/environment';
 import { timeout, catchError, of, Observable } from 'rxjs';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'app-settings',

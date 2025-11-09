@@ -263,13 +263,38 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         { withCredentials: true }
       ).toPromise();
       
-      if (response && response.fotoUrl) {
-        (this.currentMember as any).fotoUrl = response.fotoUrl;
-        this.photoPreview = response.fotoUrl;
+      // Get fotoUrl from response
+      const fotoUrl = response?.fotoUrl || response?.member?.fotoUrl;
+      
+      if (fotoUrl) {
+        // Update current member in modal
+        (this.currentMember as any).fotoUrl = fotoUrl;
+        this.photoPreview = fotoUrl;
+        
+        // Update member in local list immediately
+        const memberIndex = this.members.findIndex(m => m.id === memberId);
+        if (memberIndex !== -1) {
+          (this.members[memberIndex] as any).fotoUrl = fotoUrl;
+          this.filterMembers(); // Refresh filtered list
+        }
+        
+        // Update viewing member if it's the same member
+        if (this.viewingMember && this.viewingMember.id === memberId) {
+          (this.viewingMember as any).fotoUrl = fotoUrl;
+        }
+        
+        this.notificationService.showSuccess('Foto enviada com sucesso!');
+        this.cdr.markForCheck(); // Force change detection
+        
+        // Refresh members list from backend to ensure consistency
+        this.getMembers();
+      } else {
+        this.notificationService.showError('Resposta inválida do servidor.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading photo:', error);
-      this.notificationService.showError('Erro ao fazer upload da foto. Tente novamente.');
+      const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao fazer upload da foto. Tente novamente.';
+      this.notificationService.showError(errorMessage);
     } finally {
       this.uploadingPhoto = false;
       this.selectedPhotoFile = null;

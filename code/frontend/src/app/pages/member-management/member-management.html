@@ -89,10 +89,10 @@
           <div class="photo-upload-container">
             <div class="photo-preview">
               <img 
-                [src]="photoPreview || 'assets/img/avatar-default.png'"
+                [src]="photoPreview || 'img/avatar-default.png'"
                 alt="Foto do perfil"
                 class="avatar-preview"
-                onerror="this.src='assets/img/avatar-default.png'"
+                onerror="this.src='img/avatar-default.png'"
               />
             </div>
             <div class="photo-upload-controls">
@@ -417,6 +417,16 @@
     (close)="closeViewModal()">
     
     @if (viewingMember) {
+      <div class="visualizar-header">
+        <img 
+          [src]="viewingMember.fotoUrl || 'img/avatar-default.png'"
+          alt="Foto do membro"
+          class="visualizar-avatar"
+          onerror="this.src='img/avatar-default.png'"
+        />
+        <h2>{{ viewingMember.nome || 'Membro' }}</h2>
+      </div>
+      
       <div class="detail-section">
         <h4 class="section-title">Informações Básicas</h4>
         <div class="details-grid">

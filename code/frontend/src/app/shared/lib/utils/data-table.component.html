@@ -45,10 +45,10 @@
                     <ng-container *ngTemplateOutlet="rowTemplate; context: { $implicit: row, column: column }"></ng-container>
                   } @else if (column.key === 'foto') {
                     <img 
-                      [src]="row[column.key] || 'assets/img/avatar-default.png'"
+                      [src]="row[column.key] || 'img/avatar-default.png'"
                       alt="Foto do perfil"
                       class="table-avatar"
-                      onerror="this.src='assets/img/avatar-default.png'"
+                      onerror="this.src='img/avatar-default.png'"
                     />
                   } @else {
                     {{ row[column.key] || '-' }}

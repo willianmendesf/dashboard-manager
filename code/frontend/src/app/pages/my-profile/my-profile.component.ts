@@ -111,11 +111,20 @@ export class MyProfileComponent implements OnInit {
     this.http.put<UserProfile>(`${environment.apiUrl}users/me`, request).subscribe({
       next: (updated) => {
         this.currentUser = updated;
-        // Update auth service with new user data
+        // Update auth service cache with new user data
         const currentAuth = this.authService.getCurrentUser();
         if (currentAuth) {
-          currentAuth.name = updated.name;
-          this.authService.saveUser(currentAuth);
+          const updatedUserData: any = {
+            id: updated.id,
+            username: updated.username,
+            email: updated.email,
+            name: updated.name,
+            profileName: updated.profileName,
+            fotoUrl: updated.fotoUrl,
+            telefone: updated.telefone,
+            permissions: currentAuth.permissions || []
+          };
+          this.authService.updateUserCache(updatedUserData);
         }
         this.successMessage = 'Perfil atualizado com sucesso!';
         this.saving = false;
@@ -146,11 +155,19 @@ export class MyProfileComponent implements OnInit {
     this.userService.uploadProfilePhoto(file).subscribe({
       next: (updated) => {
         this.currentUser = updated;
-        // Update auth service with new photo
+        // Update auth service cache with new photo
         const currentAuth = this.authService.getCurrentUser();
         if (currentAuth) {
-          currentAuth.fotoUrl = updated.fotoUrl;
-          this.authService.saveUser(currentAuth);
+          const updatedUserData: any = {
+            id: updated.id,
+            username: updated.username,
+            email: updated.email,
+            name: updated.name,
+            profileName: updated.profileName,
+            fotoUrl: updated.fotoUrl,
+            permissions: currentAuth.permissions || []
+          };
+          this.authService.updateUserCache(updatedUserData);
         }
         this.successMessage = 'Foto atualizada com sucesso!';
         this.uploadingPhoto = false;
@@ -171,14 +188,22 @@ export class MyProfileComponent implements OnInit {
       return;
     }
 
-    this.http.delete<UserProfile>(`${environment.apiUrl}users/perfil/remove-foto`).subscribe({
+    this.http.delete<UserProfile>(`${environment.apiUrl}users/me/remove-foto`).subscribe({
       next: (updated) => {
         this.currentUser = updated;
-        // Update auth service
+        // Update auth service cache
         const currentAuth = this.authService.getCurrentUser();
         if (currentAuth) {
-          currentAuth.fotoUrl = undefined;
-          this.authService.saveUser(currentAuth);
+          const updatedUserData: any = {
+            id: updated.id,
+            username: updated.username,
+            email: updated.email,
+            name: updated.name,
+            profileName: updated.profileName,
+            fotoUrl: undefined,
+            permissions: currentAuth.permissions || []
+          };
+          this.authService.updateUserCache(updatedUserData);
         }
         this.successMessage = 'Foto removida com sucesso!';
         setTimeout(() => this.successMessage = '', 3000);
