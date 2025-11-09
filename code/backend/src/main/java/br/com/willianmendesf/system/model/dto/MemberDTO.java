@@ -21,6 +21,7 @@ public class MemberDTO {
     private String rg;
     private String conjugueCPF;
     private String fotoUrl;
+    private Boolean intercessor;
 
     public MemberDTO(MemberEntity member) {
         this.id = member.getId();
@@ -35,5 +36,6 @@ public class MemberDTO {
         this.rg = member.getRg();
         this.conjugueCPF = member.getConjugueCPF();
         this.fotoUrl = member.getFotoUrl();
+        this.intercessor = member.getIntercessor();
     }
 }

@@ -36,6 +36,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   searchTerm = '';
   tipoCadastroFilter = '';
   estadoCivilFilter = '';
+  intercessorFilter = '';
 
   // Configuração da tabela
   tableColumns: TableColumn[] = [
@@ -386,7 +387,17 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         }
       }
 
-      return matchesSearch && matchesEstadoCivil && matchesTipoCadastro;
+      // Filtro por Intercessor
+      let matchesIntercessor = true;
+      if (this.intercessorFilter !== '') {
+        if (this.intercessorFilter === 'Sim') {
+          matchesIntercessor = member.intercessor === true;
+        } else if (this.intercessorFilter === 'Não') {
+          matchesIntercessor = member.intercessor === false;
+        }
+      }
+
+      return matchesSearch && matchesEstadoCivil && matchesTipoCadastro && matchesIntercessor;
     });
 
     // Atualizar tableData após filtrar

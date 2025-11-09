@@ -31,6 +31,11 @@
         <option value="Solteiro">Solteiro</option>
         <option value="Casado">Casado</option>
       </select>
+      <select [(ngModel)]="intercessorFilter" (change)="filterMembers()" class="filter-select">
+        <option value="">Todos os Intercessores</option>
+        <option value="Sim">Sim</option>
+        <option value="Não">Não</option>
+      </select>
     </div>
     <div class="action-buttons">
       <button class="btn-secondary" (click)="getMembers()" type="button">Atualizar</button>
