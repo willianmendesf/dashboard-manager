@@ -90,6 +90,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   isTargetRoot = false; // Indica se o usuário sendo editado é Root
   loggedInUser: any = null;
   
+  // Write-once logic: Track if CPF/Telefone should be disabled
+  get isCpfDisabled(): boolean {
+    return this.isEditingSelf && this.currentUser?.cpf && this.currentUser.cpf.trim() !== '';
+  }
+  
+  get isTelefoneDisabled(): boolean {
+    return this.isEditingSelf && this.currentUser?.telefone && this.currentUser.telefone.trim() !== '';
+  }
+  
   // Profile mapping: role name -> profileId (will be loaded from backend)
   profiles: any[] = [];
 
@@ -262,6 +271,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       // Map status to enabled
       if (user.status !== undefined) {
         newUser.enabled = user.status === 'active';
+      }
+    }
+    
+    // WRITE-ONCE: Don't send CPF/Telefone if user is editing themselves and fields already have values
+    if (this.isEditingSelf) {
+      if (this.isCpfDisabled) {
+        delete newUser.cpf;
+      }
+      if (this.isTelefoneDisabled) {
+        delete newUser.telefone;
       }
     }
 
@@ -661,6 +680,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             // Don't send role and status changes when editing self
             delete userToUpdate.role;
             delete userToUpdate.status;
+            
+            // WRITE-ONCE: Don't send CPF/Telefone if they already have values (user cannot change them)
+            if (this.isCpfDisabled) {
+              delete userToUpdate.cpf;
+            }
+            if (this.isTelefoneDisabled) {
+              delete userToUpdate.telefone;
+            }
           }
           
           // CRITICAL: Don't send role if target user is Root (Root function cannot be changed)
@@ -688,6 +715,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         if (this.isEditingSelf) {
           delete userToUpdate.role;
           delete userToUpdate.status;
+          
+          // WRITE-ONCE: Don't send CPF/Telefone if they already have values (user cannot change them)
+          if (this.isCpfDisabled) {
+            delete userToUpdate.cpf;
+          }
+          if (this.isTelefoneDisabled) {
+            delete userToUpdate.telefone;
+          }
         }
         
         // CRITICAL: Don't send role if target user is Root (Root function cannot be changed)

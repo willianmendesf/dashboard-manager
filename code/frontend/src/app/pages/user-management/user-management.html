@@ -219,8 +219,14 @@
               class="form-control"
               placeholder="000.000.000-00"
               mask="000.000.000-00"
+              [disabled]="isCpfDisabled"
               required
             />
+            @if (isCpfDisabled) {
+              <small class="form-text text-muted">
+                Seu CPF não pode ser alterado após preenchido.
+              </small>
+            }
           </div>
 
           <div class="form-group">
@@ -232,8 +238,14 @@
               class="form-control"
               placeholder="(00) 00000-0000"
               mask="(00) 00000-0000"
+              [disabled]="isTelefoneDisabled"
               required
             />
+            @if (isTelefoneDisabled) {
+              <small class="form-text text-muted">
+                Seu Telefone não pode ser alterado após preenchido.
+              </small>
+            }
           </div>
 
           <div class="form-group" *ngIf="!isEditing">
