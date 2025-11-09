@@ -1,4 +1,4 @@
-interface Member {
+export interface Member {
   id: number;
   nome: string;
   cpf?: string;
@@ -28,4 +28,5 @@ interface Member {
   lgpdAceitoEm?: string | Date;
   rede?: string;
   version?: number;
+  fotoUrl?: string;
 }

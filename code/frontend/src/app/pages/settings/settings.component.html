@@ -8,7 +8,7 @@
     <p>Carregando configurações...</p>
   </div>
 
-  <form [formGroup]="settingsForm" *ngIf="!loading">
+  <form [formGroup]="settingsForm" *ngIf="!loading && (configurations$ | async) as configurations">
     <div class="settings-grid">
       <!-- Seção Aparência -->
       <div class="settings-section">

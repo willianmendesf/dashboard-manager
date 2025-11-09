@@ -89,6 +89,37 @@
     <form (ngSubmit)="saveUser()">
       <div class="form-section">
         <h4 class="section-title">Informações Básicas</h4>
+        
+        <!-- Foto de Perfil -->
+        <div class="form-group photo-upload-group">
+          <label>Foto de Perfil</label>
+          <div class="photo-upload-container">
+            <div class="photo-preview">
+              <img 
+                [src]="photoPreview || 'assets/img/avatar-default.png'"
+                alt="Foto do perfil"
+                class="avatar-preview"
+                onerror="this.src='assets/img/avatar-default.png'"
+              />
+            </div>
+            <div class="photo-upload-controls">
+              <input
+                type="file"
+                id="userPhotoInput"
+                accept="image/*"
+                (change)="onPhotoSelected($event)"
+                class="photo-input"
+              />
+              <label for="userPhotoInput" class="btn-photo-upload">
+                {{ photoPreview ? 'Alterar Foto' : 'Selecionar Foto' }}
+              </label>
+              @if (selectedPhotoFile) {
+                <span class="photo-file-name">{{ selectedPhotoFile.name }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        
         <div class="form-grid">
           <div class="form-group">
             <label>Nome Completo *</label>
@@ -151,6 +182,30 @@
               [(ngModel)]="currentUser.email"
               name="email"
               class="form-control"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>CPF *</label>
+            <input
+              type="text"
+              [(ngModel)]="currentUser.cpf"
+              name="cpf"
+              class="form-control"
+              placeholder="000.000.000-00"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Telefone *</label>
+            <input
+              type="tel"
+              [(ngModel)]="currentUser.telefone"
+              name="telefone"
+              class="form-control"
+              placeholder="(00) 00000-0000"
               required
             />
           </div>

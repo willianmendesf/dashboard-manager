@@ -11,8 +11,9 @@ interface User {
   fotoUrl?: string;
   enabled?: boolean;
   profileId?: number;
+  cpf?: string;
+  telefone?: string;
   //created: string;
   //avatar?: string;
   //lastLogin?: string;
-  //phone: string;
 }

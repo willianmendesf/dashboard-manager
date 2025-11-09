@@ -82,6 +82,37 @@
     <form (ngSubmit)="saveMember()">
       <div class="form-section">
         <h4 class="section-title">Informações Básicas</h4>
+        
+        <!-- Foto de Perfil -->
+        <div class="form-group photo-upload-group">
+          <label>Foto de Perfil</label>
+          <div class="photo-upload-container">
+            <div class="photo-preview">
+              <img 
+                [src]="photoPreview || 'assets/img/avatar-default.png'"
+                alt="Foto do perfil"
+                class="avatar-preview"
+                onerror="this.src='assets/img/avatar-default.png'"
+              />
+            </div>
+            <div class="photo-upload-controls">
+              <input
+                type="file"
+                id="memberPhotoInput"
+                accept="image/*"
+                (change)="onPhotoSelected($event)"
+                class="photo-input"
+              />
+              <label for="memberPhotoInput" class="btn-photo-upload">
+                {{ photoPreview ? 'Alterar Foto' : 'Selecionar Foto' }}
+              </label>
+              @if (selectedPhotoFile) {
+                <span class="photo-file-name">{{ selectedPhotoFile.name }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        
         <div class="form-grid">
 
           <div class="form-group">

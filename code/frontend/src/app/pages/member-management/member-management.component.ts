@@ -2,12 +2,16 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angula
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { NavigationIcons, ActionIcons } from '../../shared/lib/utils/icons';
 import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/utils/data-table.component';
+import { environment } from '../../../environments/environment';
+import { Member } from './model/member.model';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'member-management',
@@ -28,6 +32,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   // Configuração da tabela
   tableColumns: TableColumn[] = [
+    { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
     { key: 'cpf', label: 'CPF', sortable: true },
     { key: 'rg', label: 'RG' },
@@ -73,9 +78,15 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   itemsPerPage = 10;
   totalPages = Math.ceil(this.members.length / this.itemsPerPage);
 
+  selectedPhotoFile: File | null = null;
+  photoPreview: string | null = null;
+  uploadingPhoto = false;
+
   constructor(
     private api: ApiService,
-    private cdr: ChangeDetectorRef
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService
   ) {}
 
   ngOnDestroy(): void {
@@ -92,7 +103,11 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: res => {
-          this.members = res || [];
+          // Garantir que fotoUrl seja mapeado corretamente
+          this.members = (res || []).map((member: any) => ({
+            ...member,
+            fotoUrl: member.fotoUrl || null
+          }));
           this.filterMembers();
           this.totalPages = Math.ceil(this.filteredMembers.length / this.itemsPerPage);
           this.cdr.markForCheck();
@@ -116,7 +131,13 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     this.api.post("members", member)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
-        next: () => this.getMembers(),
+        next: async (res: any) => {
+          // Upload photo if selected after member is created
+          if (this.selectedPhotoFile && res && res.id) {
+            await this.uploadMemberPhoto(res.id);
+          }
+          this.getMembers();
+        },
         error: error => console.error(error),
         complete: () => this.getMembers()
       });
@@ -201,11 +222,59 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       rede: '',
       version: null
     };
+    this.photoPreview = (member as any)?.fotoUrl || null;
+    this.selectedPhotoFile = null;
   }
 
   closeMemberModal() {
     this.showMemberModal = false;
     this.currentMember = {};
+    this.photoPreview = null;
+    this.selectedPhotoFile = null;
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.type.startsWith('image/')) {
+        this.selectedPhotoFile = file;
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.photoPreview = e.target.result;
+          this.cdr.markForCheck();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
+  async uploadMemberPhoto(memberId: number): Promise<void> {
+    if (!this.selectedPhotoFile) return;
+
+    this.uploadingPhoto = true;
+    const formData = new FormData();
+    formData.append('file', this.selectedPhotoFile);
+
+    try {
+      const response: any = await this.http.post(
+        `${environment.apiUrl}members/${memberId}/upload-foto`,
+        formData,
+        { withCredentials: true }
+      ).toPromise();
+      
+      if (response && response.fotoUrl) {
+        (this.currentMember as any).fotoUrl = response.fotoUrl;
+        this.photoPreview = response.fotoUrl;
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      this.notificationService.showError('Erro ao fazer upload da foto. Tente novamente.');
+    } finally {
+      this.uploadingPhoto = false;
+      this.selectedPhotoFile = null;
+      this.cdr.markForCheck();
+    }
   }
 
   viewMember(member: Member) {
@@ -242,6 +311,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     return this.filteredMembers.map(member => ({
       ...member,
       _original: member, // Manter referência ao objeto original
+      foto: member.fotoUrl || null,
       estadoCivil: member.estadoCivil ? 'Casado' : 'Solteiro',
       telefone: member.telefone || member.celular || member.comercial || '-',
       nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
@@ -296,16 +366,24 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     ];
   }
 
-  saveMember() {
+  async saveMember() {
     if (this.isEditing) {
       const index = this.members.findIndex(m => m.id === this.currentMember.id);
       if (index !== -1) this.members[index] = { ...this.currentMember };
       this.updateMember(this.members[index]);
+      
+      // Upload photo if selected
+      if (this.selectedPhotoFile && this.currentMember.id) {
+        await this.uploadMemberPhoto(this.currentMember.id);
+      }
     } else {
       const newMember = {
         ...this.currentMember
       };
       this.createMember(newMember);
+      
+      // Upload photo after member is created (need to get the new member ID from response)
+      // This will be handled in the createMember response
     }
     this.closeMemberModal();
   }

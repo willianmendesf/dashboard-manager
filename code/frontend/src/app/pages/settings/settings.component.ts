@@ -7,7 +7,7 @@ import { LogoUploadComponent } from '../../shared/modules/logo-upload/logo-uploa
 import { PageTitleComponent } from '../../shared/modules/pagetitle/pagetitle.component';
 import { IfHasPermissionDirective } from '../../shared/directives/if-has-permission.directive';
 import { environment } from '../../../environments/environment';
-import { timeout, catchError, of } from 'rxjs';
+import { timeout, catchError, of, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-settings',
@@ -18,7 +18,7 @@ import { timeout, catchError, of } from 'rxjs';
 })
 export class SettingsComponent implements OnInit {
   settingsForm!: FormGroup;
-  configurations: Configuration[] = [];
+  configurations$!: Observable<Configuration[]>;
   loading = true; // Inicia como true para mostrar loading inicial
   saving = false;
   logoUrl: string | null = null;
@@ -33,7 +33,8 @@ export class SettingsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private notificationService: NotificationService
   ) {
     // Form será inicializado no ngOnInit
   }
@@ -80,7 +81,7 @@ export class SettingsComponent implements OnInit {
    */
   loadConfigurations(): void {
     this.loading = true;
-    this.configService.getAll()
+    this.configurations$ = this.configService.getAll()
       .pipe(
         timeout(10000), // Timeout de 10 segundos
         catchError((error) => {
@@ -88,21 +89,21 @@ export class SettingsComponent implements OnInit {
           // Retorna array vazio em caso de erro
           return of([]);
         })
-      )
-      .subscribe({
-        next: (configs) => {
-          console.log('Configurações carregadas:', configs);
-          this.configurations = configs || [];
-          this.populateFormFromConfigurations(this.configurations);
-          this.loadCSSVariables(); // Load CSS variables on init
-          this.loading = false;
-          
-          // Se não houver configurações, mostra aviso mas continua
-          if (this.configurations.length === 0) {
-            console.warn('Nenhuma configuração encontrada. Usando valores padrão.');
-          }
+      );
+    
+    this.configurations$.subscribe({
+      next: (configs) => {
+        console.log('Configurações carregadas:', configs);
+        this.populateFormFromConfigurations(configs || []);
+        this.loadCSSVariables(configs || []); // Load CSS variables on init
+        this.loading = false;
+        
+        // Se não houver configurações, mostra aviso mas continua
+        if (configs.length === 0) {
+          console.warn('Nenhuma configuração encontrada. Usando valores padrão.');
         }
-      });
+      }
+    });
   }
 
   /**
@@ -233,13 +234,13 @@ export class SettingsComponent implements OnInit {
       next: () => {
         // Inject CSS variables for white-label
         this.injectCSSVariables(configurationsToSave);
-        alert('Configurações salvas com sucesso!');
+        this.notificationService.showSuccess('Configurações salvas com sucesso!');
         this.saving = false;
         this.loadConfigurations(); // Recarregar para garantir sincronização
       },
       error: (error) => {
         console.error('Erro ao salvar configurações:', error);
-        alert('Erro ao salvar configurações. Tente novamente.');
+        this.notificationService.showError('Erro ao salvar configurações. Tente novamente.');
         this.saving = false;
       }
     });
@@ -291,8 +292,8 @@ export class SettingsComponent implements OnInit {
   /**
    * Loads CSS variables from configurations on init
    */
-  private loadCSSVariables(): void {
-    const configMap = new Map(this.configurations.map(c => [c.key, c.value]));
+  private loadCSSVariables(configs: Configuration[]): void {
+    const configMap = new Map(configs.map(c => [c.key, c.value]));
     
     const root = document.documentElement;
     const primaryColor = configMap.get('PRIMARY_COLOR') || '#3B82F6';

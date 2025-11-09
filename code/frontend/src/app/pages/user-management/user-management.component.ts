@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../shared/service/api.service';
 import { Subject, takeUntil } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
@@ -9,6 +10,8 @@ import { PageTitleComponent } from "../../shared/modules/pagetitle/pagetitle.com
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { NavigationIcons, ActionIcons } from '../../shared/lib/utils/icons';
 import { DataTableComponent, TableColumn, TableAction } from '../../shared/lib/utils/data-table.component';
+import { environment } from '../../../environments/environment';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'app-user-management',
@@ -29,6 +32,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   // Configuração da tabela
   tableColumns: TableColumn[] = [
+    { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'username', label: 'Usuário', sortable: true },
     { key: 'name', label: 'Nome', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
@@ -74,9 +78,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   itemsPerPage = 10;
   totalPages = Math.ceil(this.users.length / this.itemsPerPage);
 
+  selectedPhotoFile: File | null = null;
+  photoPreview: string | null = null;
+  uploadingPhoto = false;
+
   constructor(
     private api : ApiService,
-    private cdr: ChangeDetectorRef
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService
   ) {
 
   }
@@ -133,13 +143,24 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       password: user.password,
       roles: user.role,
       status: user.status == 'active' ? 1 : 0,
+      cpf: user.cpf,
+      telefone: user.telefone,
     };
 
     this.api.post("users", newUser)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: res => this.getUsers(),
-      error: error => console.error(error),
+      next: async (res: any) => {
+        // Upload photo if selected after user is created
+        if (this.selectedPhotoFile && res && res.id) {
+          await this.uploadUserPhoto(res.id);
+        }
+        this.getUsers();
+      },
+      error: error => {
+        console.error('Erro ao criar usuário:', error);
+        this.notificationService.showError('Erro ao criar usuário. Verifique os dados e tente novamente.');
+      },
       complete: () => this.getUsers()
     })
   }
@@ -152,13 +173,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       password: user.password,
       roles: user.role,
       status: user.status == 'active' ? 1 : 0,
+      cpf: user.cpf,
+      telefone: user.telefone,
     };
 
     this.api.update(`users/${user.id}` , newUser)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => this.getUsers(),
-      error: error => console.error(error),
+      error: error => {
+        console.error('Erro ao atualizar usuário:', error);
+        this.notificationService.showError('Erro ao atualizar usuário. Verifique os dados e tente novamente.');
+      },
       complete: () => this.getUsers()
     })
   }
@@ -216,11 +242,59 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       status: 'active',
       password: ''
     };
+    this.photoPreview = user?.fotoUrl || null;
+    this.selectedPhotoFile = null;
   }
 
   closeUserModal() {
     this.showUserModal = false;
     this.currentUser = {};
+    this.photoPreview = null;
+    this.selectedPhotoFile = null;
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.type.startsWith('image/')) {
+        this.selectedPhotoFile = file;
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.photoPreview = e.target.result;
+          this.cdr.markForCheck();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
+  async uploadUserPhoto(userId: number): Promise<void> {
+    if (!this.selectedPhotoFile) return;
+
+    this.uploadingPhoto = true;
+    const formData = new FormData();
+    formData.append('file', this.selectedPhotoFile);
+
+    try {
+      const response: any = await this.http.post(
+        `${environment.apiUrl}users/${userId}/upload-foto`,
+        formData,
+        { withCredentials: true }
+      ).toPromise();
+      
+      if (response && response.fotoUrl) {
+        this.currentUser.fotoUrl = response.fotoUrl;
+        this.photoPreview = response.fotoUrl;
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      this.notificationService.showError('Erro ao fazer upload da foto. Tente novamente.');
+    } finally {
+      this.uploadingPhoto = false;
+      this.selectedPhotoFile = null;
+      this.cdr.markForCheck();
+    }
   }
 
   viewUser(user: User) {
@@ -257,6 +331,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     return this.filteredUsers.map(user => ({
       ...user,
       _original: user, // Manter referência ao objeto original
+      foto: user.fotoUrl || null,
       status: user.status === 'active' ? 'Ativo' : 'Inativo',
       role: user.role || user.profileName || 'USER'
     }));
@@ -318,20 +393,37 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     ];
   }
 
-  saveUser() {
+  async saveUser() {
+    // Marcar campos como tocados para exibir erros
+    if (!this.currentUser.name || !this.currentUser.email || !this.currentUser.username || 
+        !this.currentUser.role || !this.currentUser.cpf || !this.currentUser.telefone) {
+      this.notificationService.showWarning('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
     if (this.isEditing) {
       const index = this.users.findIndex(u => u.id === this.currentUser.id);
       if (index !== -1) this.users[index] = { ...this.currentUser };
-      this.updateUser(this.users[index])
+      this.updateUser(this.users[index]);
+      
+      // Upload photo if selected
+      if (this.selectedPhotoFile && this.currentUser.id) {
+        await this.uploadUserPhoto(this.currentUser.id);
+      }
+      this.closeUserModal();
     } else {
-      const newUser: User = {
-        ...this.currentUser,
-        id: Math.max(...this.users.map(u => u.id)) + 1,
-        createdAt: new Date().toLocaleDateString('pt-BR')
-      };
-      this.createUser(newUser);
+      // Validar senha para novo usuário
+      if (!this.currentUser.password) {
+        this.notificationService.showWarning('Por favor, informe uma senha para o novo usuário.');
+        return;
+      }
+      
+      this.createUser(this.currentUser);
+      
+      // Upload photo after user is created (need to get the new user ID from response)
+      // This will be handled in the createUser response
+      this.closeUserModal();
     }
-    this.closeUserModal();
   }
 
   deleteUser(user: User) {

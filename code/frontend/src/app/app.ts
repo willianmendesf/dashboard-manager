@@ -2,6 +2,7 @@ import { Component, signal, HostListener, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SidebarComponent } from "./views/sidebar/sidebar.component";
+import { NotificationComponent } from './shared/components/notification/notification.component';
 import { NavigationIcons } from './shared/lib/utils/icons';
 import { AuthService } from './shared/service/auth.service';
 import { filter } from 'rxjs/operators';
@@ -11,7 +12,8 @@ import { filter } from 'rxjs/operators';
   imports: [
     RouterOutlet,
     RouterLink,
-    SidebarComponent
+    SidebarComponent,
+    NotificationComponent
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']

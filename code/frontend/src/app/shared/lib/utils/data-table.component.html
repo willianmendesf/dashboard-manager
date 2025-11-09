@@ -39,9 +39,17 @@
               @for (column of columns; track column.key) {
                 <td 
                   [style.text-align]="column.align || 'left'"
+                  [class.avatar-cell]="column.key === 'foto'"
                 >
                   @if (rowTemplate) {
                     <ng-container *ngTemplateOutlet="rowTemplate; context: { $implicit: row, column: column }"></ng-container>
+                  } @else if (column.key === 'foto') {
+                    <img 
+                      [src]="row[column.key] || 'assets/img/avatar-default.png'"
+                      alt="Foto do perfil"
+                      class="table-avatar"
+                      onerror="this.src='assets/img/avatar-default.png'"
+                    />
                   } @else {
                     {{ row[column.key] || '-' }}
                   }

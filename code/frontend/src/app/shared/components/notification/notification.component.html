@@ -1,0 +1,22 @@
+<div class="notification-container">
+  <div 
+    *ngFor="let notification of notifications" 
+    class="toast-notification" 
+    [ngClass]="'toast-' + notification.type"
+  >
+    <div class="toast-content">
+      <span class="toast-icon" *ngIf="notification.type === 'success'">✓</span>
+      <span class="toast-icon" *ngIf="notification.type === 'error'">✕</span>
+      <span class="toast-icon" *ngIf="notification.type === 'info'">ℹ</span>
+      <span class="toast-icon" *ngIf="notification.type === 'warning'">⚠</span>
+      <span class="toast-message">{{ notification.message }}</span>
+    </div>
+    <button 
+      (click)="removeNotification(notification)" 
+      class="close-btn"
+      aria-label="Fechar notificação"
+    >
+      &times;
+    </button>
+  </div>
+</div>
