@@ -74,6 +74,8 @@ public class MemberService {
             MemberSpouseDTO spouse = new MemberSpouseDTO();
             spouse.setNomeCompleto(entity.getNome());
             spouse.setFotoUrl(entity.getFotoUrl());
+            spouse.setCpf(entity.getCpf());
+            spouse.setCelular(entity.getCelular());
             
             return spouse;
         } catch (Exception e) {
