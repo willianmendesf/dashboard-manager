@@ -168,20 +168,53 @@ public class UserService {
             log.warn("User {} attempted to change profile of Root user {}. Ignored.", loggedUser.getUsername(), user.getUsername());
         }
 
-        // Update CPF if provided and validate uniqueness
-        if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
-            if (!userDTO.getCpf().equals(user.getCpf()) && userRepository.existsByCpfAndIdNot(userDTO.getCpf(), id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
+        // WRITE-ONCE LOGIC: If user is editing themselves, don't allow changing CPF/Telefone if they already exist
+        // Only allow setting them if they're currently null/empty
+        if (isEditingSelf) {
+            // CPF: Only update if current value is null/empty (write-once)
+            if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
+                if (user.getCpf() != null && !user.getCpf().trim().isEmpty()) {
+                    // CPF already exists, ignore the update (write-once protection)
+                    log.debug("User {} attempted to change their CPF. Ignored (write-once protection).", loggedUser.getUsername());
+                } else {
+                    // CPF is empty, allow setting it (first time)
+                    if (userRepository.existsByCpf(userDTO.getCpf())) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
+                    }
+                    user.setCpf(userDTO.getCpf());
+                }
             }
-            user.setCpf(userDTO.getCpf());
-        }
-        
-        // Update telefone if provided and validate uniqueness
-        if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
-            if (!userDTO.getTelefone().equals(user.getTelefone()) && userRepository.existsByTelefoneAndIdNot(userDTO.getTelefone(), id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefone já cadastrado.");
+            
+            // Telefone: Only update if current value is null/empty (write-once)
+            if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
+                if (user.getTelefone() != null && !user.getTelefone().trim().isEmpty()) {
+                    // Telefone already exists, ignore the update (write-once protection)
+                    log.debug("User {} attempted to change their telefone. Ignored (write-once protection).", loggedUser.getUsername());
+                } else {
+                    // Telefone is empty, allow setting it (first time)
+                    if (userRepository.existsByTelefone(userDTO.getTelefone())) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefone já cadastrado.");
+                    }
+                    user.setTelefone(userDTO.getTelefone());
+                }
             }
-            user.setTelefone(userDTO.getTelefone());
+        } else {
+            // Admin editing another user: Allow changes with validation
+            // Update CPF if provided and validate uniqueness
+            if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
+                if (!userDTO.getCpf().equals(user.getCpf()) && userRepository.existsByCpfAndIdNot(userDTO.getCpf(), id)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
+                }
+                user.setCpf(userDTO.getCpf());
+            }
+            
+            // Update telefone if provided and validate uniqueness
+            if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
+                if (!userDTO.getTelefone().equals(user.getTelefone()) && userRepository.existsByTelefoneAndIdNot(userDTO.getTelefone(), id)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefone já cadastrado.");
+                }
+                user.setTelefone(userDTO.getTelefone());
+            }
         }
 
         User savedUser = userRepository.save(user);
