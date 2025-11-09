@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, TemplateRef, OnChanges, SimpleChanges, ChangeDetectorRef, OnInit, ContentChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, TemplateRef, OnChanges, SimpleChanges, ChangeDetectorRef, OnInit, AfterContentInit, ContentChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActionIcons } from './icons';
@@ -28,7 +28,7 @@ export interface TableAction {
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
 })
-export class DataTableComponent implements OnChanges, OnInit {
+export class DataTableComponent implements OnChanges, OnInit, AfterContentInit {
   @Input() columns: TableColumn[] = [];
   @Input() data: any[] = [];
   @Input() actions: TableAction[] = [];
@@ -89,6 +89,13 @@ export class DataTableComponent implements OnChanges, OnInit {
 
   getRowTemplate(): TemplateRef<any> | undefined {
     return this.rowTemplate || this.contentRowTemplate;
+  }
+
+  ngAfterContentInit(): void {
+    // Forçar detecção de mudanças após o conteúdo ser inicializado
+    if (this.contentRowTemplate) {
+      this.cdr.markForCheck();
+    }
   }
 
   onRowClick(row: any, event: MouseEvent): void {

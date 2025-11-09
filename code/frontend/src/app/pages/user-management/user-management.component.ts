@@ -169,21 +169,43 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: res => {
           // Map backend DTO to frontend User model
-          this.users = res.map((user: any) => ({
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            email: user.email,
-            role: user.profileName || 'USER',
-            status: user.enabled ? 'active' : 'inactive',
-            profileName: user.profileName,
-            profileId: user.profileId,
-            permissions: user.permissions || [],
-            fotoUrl: user.fotoUrl,
-            cpf: user.cpf,
-            telefone: user.telefone
-          }));
+          this.users = res.map((user: any) => {
+            // Debug: verificar se profileName está vindo do backend
+            if (!user.profileName) {
+              console.warn('UserDTO sem profileName:', user);
+            }
+            
+            // Garantir que sempre tenha um profileName/role válido
+            // O backend deve retornar profileName, mas se não retornar, usamos 'USER' como fallback
+            const profileName = (user.profileName && user.profileName.trim() !== '') 
+              ? user.profileName 
+              : 'USER';
+            
+            // Debug: log para verificar o que está vindo do backend
+            console.log('User recebido do backend:', {
+              id: user.id,
+              username: user.username,
+              profileName: user.profileName,
+              profileId: user.profileId
+            });
+            
+            return {
+              id: user.id,
+              username: user.username,
+              name: user.name,
+              email: user.email,
+              role: profileName, // Usar profileName como role
+              status: user.enabled ? 'active' : 'inactive',
+              profileName: profileName, // Sempre ter um valor
+              profileId: user.profileId || null,
+              permissions: user.permissions || [],
+              fotoUrl: user.fotoUrl || null,
+              cpf: user.cpf || null,
+              telefone: user.telefone || null
+            };
+          });
           this.filterUsers();
+          this.getTableData(); // Garantir que tableData seja atualizado
           this.cdr.markForCheck()
         },
         error: error => {
@@ -359,13 +381,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   getRoleText(role: string): string {
-    const roleMap = {
+    if (!role || role.trim() === '') {
+      return 'Usuário';
+    }
+    const roleMap: { [key: string]: string } = {
       'root': 'Super Admin',
       'admin': 'Administrador',
       'manager': 'Gerente',
-      'user': 'Usuário'
+      'user': 'Usuário',
+      'ROOT': 'Super Admin',
+      'ADMIN': 'Administrador',
+      'MANAGER': 'Gerente',
+      'USER': 'Usuário'
     };
-    return roleMap[role as keyof typeof roleMap] || role;
+    return roleMap[role] || roleMap[role.toUpperCase()] || role;
   }
 
   openUserModal(user?: User) {
@@ -567,19 +596,46 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       return this.tableData;
     }
     
-    this.tableData = this.filteredUsers.map(user => ({
-      ...user,
-      _original: user, // Manter referência ao objeto original
-      foto: user.fotoUrl || null,
-      telefone: user.telefone || '-',
-      status: user.status === 'active' ? 'Ativo' : 'Inativo',
-      role: user.role || user.profileName || 'USER'
-    }));
+    this.tableData = this.filteredUsers.map(user => {
+      // Garantir que sempre tenha um profileName/role válido
+      const roleValue = (user.profileName && user.profileName.trim() !== '') 
+        ? user.profileName 
+        : ((user.role && user.role.trim() !== '') ? user.role : 'USER');
+      
+      // Debug: log para verificar os dados
+      console.log('getTableData - mapeando user:', {
+        id: user.id,
+        username: user.username,
+        profileName: user.profileName,
+        role: user.role,
+        roleValue: roleValue
+      });
+      
+      return {
+        ...user,
+        _original: user, // Manter referência ao objeto original
+        foto: user.fotoUrl || null,
+        telefone: user.telefone || '-',
+        status: user.status === 'active' ? 'Ativo' : 'Inativo',
+        role: roleValue, // Sempre ter um valor
+        profileName: roleValue // Garantir que profileName sempre tenha um valor
+      };
+    });
     return this.tableData;
   }
 
-  getRoleLabel(role: string): string {
+  getRoleLabel(role: string | null | undefined): string {
+    if (!role) {
+      return 'Usuário';
+    }
     return this.getRoleText(role);
+  }
+
+  getRoleForDisplay(row: any): string {
+    // Método helper para garantir que sempre retorne um valor válido
+    const value = row?.profileName || row?.role || 'USER';
+    console.log('getRoleForDisplay chamado para row:', row, 'retornando:', value);
+    return value;
   }
 
   getStatusLabel(status: string): string {

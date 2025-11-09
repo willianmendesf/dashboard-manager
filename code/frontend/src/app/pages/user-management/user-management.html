@@ -43,7 +43,7 @@
   >
     <ng-template #rowTemplate let-row let-column="column">
       @if (column.key === 'role') {
-        <span class="badge" [class]="'role-' + row.role">{{ getRoleLabel(row.role) }}</span>
+        <span class="badge" [class]="'role-' + (getRoleForDisplay(row) || 'user').toLowerCase()">{{ getRoleLabel(getRoleForDisplay(row) || 'USER') }}</span>
       } @else if (column.key === 'status') {
         <span class="badge" [class]="row.status === 'Ativo' ? 'active' : 'inactive'">{{ getStatusLabel(row.status === 'Ativo' ? 'active' : 'inactive') }}</span>
       } @else if (column.key === 'telefone') {
@@ -61,7 +61,7 @@
           }
         </div>
       } @else {
-        {{ row[column.key] }}
+        {{ row[column.key] || '-' }}
       }
     </ng-template>
   </app-data-table>

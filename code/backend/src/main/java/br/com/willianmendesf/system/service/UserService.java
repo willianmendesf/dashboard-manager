@@ -267,8 +267,17 @@ public class UserService {
         dto.setCpf(user.getCpf());
         dto.setTelefone(user.getTelefone());
         dto.setEnabled(user.getEnabled());
-        dto.setProfileId(user.getProfile().getId());
-        dto.setProfileName(user.getProfile().getName());
+        
+        // Garantir que profile e profileName sempre tenham valores
+        if (user.getProfile() != null) {
+            dto.setProfileId(user.getProfile().getId());
+            dto.setProfileName(user.getProfile().getName() != null ? user.getProfile().getName() : "USER");
+        } else {
+            log.warn("User {} has no profile assigned", user.getUsername());
+            dto.setProfileId(null);
+            dto.setProfileName("USER");
+        }
+        
         dto.setFotoUrl(user.getFotoUrl());
         dto.setPermissions(user.getAuthorities().stream()
             .map(auth -> auth.getAuthority())
