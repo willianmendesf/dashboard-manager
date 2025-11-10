@@ -1,15 +1,5 @@
 version: '2.4'
 services:
-  angular-frontend:
-    build: 
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    restart: always
-    networks:
-      - app-network
-
   backend-app:
     build:
       context: ./backend
@@ -21,13 +11,23 @@ services:
     ports:
       - "8080:8080"
     restart: always
-    depends_on:
-      - angular-frontend
     networks:
       - app-network
     volumes:
       - images_volume:/opt/app/images
       - files_volume:/opt/app/files
+
+  angular-frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - backend-app
+    networks:
+      - app-network
 
 networks:
   app-network:
