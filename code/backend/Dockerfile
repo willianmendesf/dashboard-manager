@@ -1,5 +1,10 @@
 FROM openjdk:21-jdk-slim
 
+# Instalar wget para healthcheck do Docker
+RUN apt-get update && \
+    apt-get install -y wget && \
+    rm -rf /var/lib/apt/lists/*
+
 # Criar diretórios para imagens e arquivos temporários
 # Nota: Quando volumes são montados, eles sobrescrevem o conteúdo do diretório,
 # mas as permissões do diretório base são mantidas
