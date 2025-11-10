@@ -104,8 +104,15 @@ public class UserService {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new UsernameNotFoundException("User not found: " + id));
 
-        // SECURITY CHECK: Prevent users from editing their own profile/status
+        // CRITICAL SECURITY RULE: ROOT users can only be edited by themselves
+        boolean isTargetRoot = isRootUser(user);
         boolean isEditingSelf = loggedUser.getId().equals(id);
+        
+        if (isTargetRoot && !isEditingSelf) {
+            throw new AccessDeniedException("Usuários ROOT só podem ser editados por si mesmos.");
+        }
+
+        // SECURITY CHECK: Prevent users from editing their own profile/status
 
         // Update basic fields
         if (userDTO.getName() != null) {
@@ -118,12 +125,18 @@ public class UserService {
             user.setEmail(userDTO.getEmail());
         }
         
-        // Validate username if changed
+        // SECURITY: Username cannot be changed if user is editing themselves
         if (userDTO.getUsername() != null && !userDTO.getUsername().equals(user.getUsername())) {
-            if (userRepository.existsByUsernameAndIdNot(userDTO.getUsername(), id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Nome de usuário já existe.");
+            if (isEditingSelf) {
+                log.warn("User {} attempted to change their own username. Ignored.", loggedUser.getUsername());
+                // Don't update username - ignore the change
+            } else {
+                // Admin editing another user: Validate and update username
+                if (userRepository.existsByUsernameAndIdNot(userDTO.getUsername(), id)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Nome de usuário já existe.");
+                }
+                user.setUsername(userDTO.getUsername());
             }
-            user.setUsername(userDTO.getUsername());
         }
 
         // Update password (use novaSenha if provided, otherwise password for backward compatibility)
@@ -144,7 +157,7 @@ public class UserService {
         }
 
         // CRITICAL BUSINESS RULE: Root users cannot have their function changed by anyone
-        boolean isTargetRoot = isRootUser(user);
+        // Note: isTargetRoot already defined above
         if (isTargetRoot && userDTO.getProfileId() != null && !userDTO.getProfileId().equals(user.getProfile().getId())) {
             throw new AccessDeniedException("A função de um usuário Root não pode ser alterada.");
         }
