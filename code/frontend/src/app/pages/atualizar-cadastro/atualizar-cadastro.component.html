@@ -5,7 +5,6 @@
       <p class="subtitle">Atualize seus dados cadastrais informando seu CPF</p>
     </div>
 
-    <!-- Formulário de Busca -->
     @if (!showEditForm) {
       <div class="search-section">
         <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
@@ -17,11 +16,18 @@
               formControlName="cpf"
               class="form-control"
               placeholder="000.000.000-00"
-              mask="000.000.000-00"
+              [mask]="'000.000.000-00'"
+              [dropSpecialCharacters]="false"
               [disabled]="isLoading"
             />
             @if (searchForm.get('cpf')?.invalid && searchForm.get('cpf')?.touched) {
-              <small class="error-text">CPF é obrigatório e deve estar no formato 000.000.000-00</small>
+              <small class="error-text">
+                @if (searchForm.get('cpf')?.hasError('required')) {
+                  CPF é obrigatório
+                } @else if (searchForm.get('cpf')?.hasError('invalidCpf')) {
+                  CPF inválido. Deve conter 11 dígitos no formato 000.000.000-00
+                }
+              </small>
             }
           </div>
 
@@ -40,7 +46,6 @@
       </div>
     }
 
-    <!-- Formulário de Edição -->
     @if (showEditForm && foundMember) {
       <div class="edit-section">
         <div class="edit-header">
@@ -66,7 +71,6 @@
             </small>
           </div>
 
-          <!-- Nome -->
           <div class="form-group">
             <label for="nome">Nome Completo *</label>
             <input
@@ -81,7 +85,6 @@
             }
           </div>
 
-          <!-- Email -->
           <div class="form-group">
             <label for="email">Email *</label>
             <input
@@ -96,7 +99,6 @@
             }
           </div>
 
-          <!-- Telefones -->
           <div class="form-row">
             <div class="form-group">
               <label for="telefone">Telefone</label>
@@ -105,7 +107,7 @@
                 type="text"
                 formControlName="telefone"
                 class="form-control"
-                mask="(00) 0000-0000"
+                mask="(00) 90000-0000"
               />
             </div>
 
@@ -116,7 +118,7 @@
                 type="text"
                 formControlName="comercial"
                 class="form-control"
-                mask="(00) 0000-0000"
+                mask="(00) 90000-0000"
               />
             </div>
 
@@ -132,7 +134,6 @@
             </div>
           </div>
 
-          <!-- Endereço -->
           <div class="form-row">
             <div class="form-group">
               <label for="cep">CEP</label>
@@ -153,7 +154,7 @@
                 formControlName="estado"
                 class="form-control"
                 maxlength="2"
-                placeholder="SP"
+                placeholder="UF"
               />
             </div>
 
@@ -210,7 +211,6 @@
             />
           </div>
 
-          <!-- Outros Campos -->
           <div class="form-row">
             <div class="form-group">
               <label for="nascimento">Data de Nascimento</label>
@@ -228,10 +228,16 @@
                 id="estadoCivil"
                 formControlName="estadoCivil"
                 class="form-control"
+                [disabled]="hasConjugueCPF"
               >
                 <option [value]="false">Solteiro</option>
                 <option [value]="true">Casado</option>
               </select>
+              @if (hasConjugueCPF) {
+                <small class="form-text text-muted">
+                  O estado civil não pode ser alterado após informar o CPF do cônjuge.
+                </small>
+              }
             </div>
 
             <div class="form-group">
@@ -245,60 +251,34 @@
             </div>
           </div>
 
-          <div class="form-row">
+          @if (editForm.get('estadoCivil')?.value || hasConjugueCPF) {
             <div class="form-group">
-              <label for="tipoCadastro">Tipo de Cadastro</label>
+              <label for="conjugueCPF">CPF do Cônjuge</label>
               <input
-                id="tipoCadastro"
+                id="conjugueCPF"
                 type="text"
-                formControlName="tipoCadastro"
+                formControlName="conjugueCPF"
                 class="form-control"
+                placeholder="000.000.000-00"
+                [mask]="'000.000.000-00'"
+                [dropSpecialCharacters]="false"
+                [disabled]="hasConjugueCPF"
               />
+              @if (hasConjugueCPF) {
+                <small class="form-text text-muted">
+                  O CPF do cônjuge não pode ser alterado após ser informado.
+                </small>
+              }
+              @if (editForm.get('conjugueCPF')?.invalid && editForm.get('conjugueCPF')?.touched && !hasConjugueCPF) {
+                <small class="error-text">
+                  @if (editForm.get('conjugueCPF')?.hasError('invalidCpf')) {
+                    CPF inválido. Deve conter 11 dígitos no formato 000.000.000-00
+                  }
+                </small>
+              }
             </div>
+          }
 
-            <div class="form-group">
-              <label for="operadora">Operadora</label>
-              <input
-                id="operadora"
-                type="text"
-                formControlName="operadora"
-                class="form-control"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="contato">Contato</label>
-              <input
-                id="contato"
-                type="text"
-                formControlName="contato"
-                class="form-control"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="grupos">Grupos</label>
-            <input
-              id="grupos"
-              type="text"
-              formControlName="grupos"
-              class="form-control"
-              placeholder="Ex: Grupo de Jovens, Célula, etc."
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="rede">Rede</label>
-            <input
-              id="rede"
-              type="text"
-              formControlName="rede"
-              class="form-control"
-            />
-          </div>
-
-          <!-- Botões de Ação -->
           <div class="form-actions">
             <button
               type="button"
@@ -316,7 +296,7 @@
               @if (isLoading) {
                 Salvando...
               } @else {
-                Salvar Alterações
+                Atualizar Cadastro
               }
             </button>
           </div>

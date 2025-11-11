@@ -1,9 +1,54 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PublicMemberService, MemberDTO, UpdateMemberDTO } from '../../shared/service/public-member.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+
+function cpfValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) {
+    return null;
+  }
+
+  const value = control.value.toString().trim();
+  
+  const cpfNumbers = value.replace(/\D/g, '');
+  
+  if (cpfNumbers.length !== 11) {
+    return { invalidCpf: true };
+  }
+
+  const formattedPattern = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+  const numbersOnlyPattern = /^\d{11}$/;
+  
+  if (formattedPattern.test(value) || numbersOnlyPattern.test(cpfNumbers)) {
+    return null;
+  }
+
+  return { invalidCpf: true };
+}
+
+function conjugueCpfValidator(control: AbstractControl): ValidationErrors | null {
+  const parent = control.parent;
+  if (!parent) {
+    return null;
+  }
+
+  const estadoCivil = parent.get('estadoCivil')?.value;
+  
+  // Se não está casado, não valida
+  if (!estadoCivil) {
+    return null;
+  }
+
+  // Se está casado mas o campo está vazio, não valida (opcional)
+  if (!control.value) {
+    return null;
+  }
+
+  // Se está casado e tem valor, valida o CPF
+  return cpfValidator(control);
+}
 
 @Component({
   selector: 'app-atualizar-cadastro',
@@ -19,20 +64,21 @@ export class AtualizarCadastroComponent implements OnInit {
   foundMember: MemberDTO | null = null;
   isLoading = false;
   showEditForm = false;
+  hasConjugueCPF = false; // Flag para controlar write-once
 
   constructor(
     private fb: FormBuilder,
     private memberService: PublicMemberService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {
-    // Formulário de Busca
+
     this.searchForm = this.fb.group({
-      cpf: ['', [Validators.required, Validators.pattern(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)]]
+      cpf: ['', [Validators.required, cpfValidator]]
     });
 
-    // Formulário de Edição (inicia vazio)
     this.editForm = this.fb.group({
-      cpf: [{ value: '', disabled: true }], // Sempre desabilitado (write-once)
+      cpf: [{ value: '', disabled: true }],
       nome: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       telefone: [''],
@@ -48,7 +94,7 @@ export class AtualizarCadastroComponent implements OnInit {
       nascimento: [''],
       estadoCivil: [false],
       rg: [''],
-      tipoCadastro: [''],
+      conjugueCPF: ['', conjugueCpfValidator],
       grupos: [''],
       rede: [''],
       operadora: [''],
@@ -57,12 +103,24 @@ export class AtualizarCadastroComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Componente inicializado
+    this.editForm.get('estadoCivil')?.valueChanges.subscribe((estadoCivil) => {
+      const conjugueCPFControl = this.editForm.get('conjugueCPF');
+      if (!estadoCivil && !this.hasConjugueCPF) {
+        conjugueCPFControl?.setValue('');
+      }
+      conjugueCPFControl?.updateValueAndValidity();
+    });
+
+    this.editForm.get('conjugueCPF')?.valueChanges.subscribe((conjugueCPF) => {
+      if (conjugueCPF && conjugueCPF.trim().length > 0 && !this.hasConjugueCPF) {
+        const estadoCivilControl = this.editForm.get('estadoCivil');
+        if (estadoCivilControl && !estadoCivilControl.disabled) {
+          estadoCivilControl.setValue(true);
+        }
+      }
+    });
   }
 
-  /**
-   * Busca membro por CPF
-   */
   onSearch(): void {
     if (this.searchForm.invalid) {
       this.notificationService.showError('Por favor, informe um CPF válido.');
@@ -75,9 +133,11 @@ export class AtualizarCadastroComponent implements OnInit {
     this.memberService.getMemberByCpf(cpf).subscribe({
       next: (member) => {
         this.foundMember = member;
-        this.populateEditForm(member);
-        this.showEditForm = true;
         this.isLoading = false;
+        this.showEditForm = true;
+        this.cdr.detectChanges();
+        this.populateEditForm(member);
+        this.cdr.detectChanges();
         this.notificationService.showSuccess('Cadastro encontrado! Você pode atualizar seus dados abaixo.');
       },
       error: (err) => {
@@ -90,40 +150,52 @@ export class AtualizarCadastroComponent implements OnInit {
     });
   }
 
-  /**
-   * Preenche o formulário de edição com os dados do membro encontrado
-   */
   private populateEditForm(member: MemberDTO): void {
-    // Converter estadoCivil de string para boolean
     let estadoCivil = false;
     if (member.estadoCivil === 'Casado' || member.estadoCivil === 'true') {
       estadoCivil = true;
     }
 
-    // Formatar data de nascimento se existir
     let nascimentoStr = '';
     if (member.nascimento) {
       const date = new Date(member.nascimento);
       if (!isNaN(date.getTime())) {
-        nascimentoStr = date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        nascimentoStr = date.toISOString().split('T')[0];
       }
     }
+
+    this.hasConjugueCPF = !!(member.conjugueCPF && member.conjugueCPF.trim().length > 0);
 
     this.editForm.patchValue({
       cpf: member.cpf || '',
       nome: member.nome || '',
       email: member.email || '',
       telefone: member.telefone || '',
+      comercial: member.comercial || '',
       celular: member.celular || '',
       nascimento: nascimentoStr,
       estadoCivil: estadoCivil,
-      rg: member.rg || ''
+      rg: member.rg || '',
+      conjugueCPF: member.conjugueCPF || '',
+      cep: member.cep || '',
+      logradouro: member.logradouro || '',
+      numero: member.numero || '',
+      complemento: member.complemento || '',
+      bairro: member.bairro || '',
+      cidade: member.cidade || '',
+      estado: member.estado || ''
     });
+
+    // Bloqueia os campos se já existe CPF do cônjuge
+    if (this.hasConjugueCPF) {
+      this.editForm.get('estadoCivil')?.disable();
+      this.editForm.get('conjugueCPF')?.disable();
+    } else {
+      this.editForm.get('estadoCivil')?.enable();
+      this.editForm.get('conjugueCPF')?.enable();
+    }
   }
 
-  /**
-   * Salva as alterações
-   */
   onSave(): void {
     if (this.editForm.invalid) {
       this.notificationService.showError('Por favor, preencha todos os campos obrigatórios.');
@@ -139,7 +211,22 @@ export class AtualizarCadastroComponent implements OnInit {
     const cpf = this.foundMember.cpf;
     const formData = this.editForm.getRawValue();
 
-    // Preparar dados para envio (remover CPF do payload - write-once protection)
+    // Se tem CPF do cônjuge, força estado civil como casado
+    const conjugueCPF = formData.conjugueCPF?.trim() || '';
+    const estadoCivil = conjugueCPF.length > 0 ? true : formData.estadoCivil;
+
+    // Calcula a idade baseado na data de nascimento
+    let idadeCalculada: number | undefined = undefined;
+    if (formData.nascimento) {
+      const nascimento = new Date(formData.nascimento);
+      const hoje = new Date();
+      idadeCalculada = hoje.getFullYear() - nascimento.getFullYear();
+      const mesAniversario = hoje.getMonth() - nascimento.getMonth();
+      if (mesAniversario < 0 || (mesAniversario === 0 && hoje.getDate() < nascimento.getDate())) {
+        idadeCalculada--;
+      }
+    }
+
     const updateData: UpdateMemberDTO = {
       nome: formData.nome,
       email: formData.email,
@@ -154,8 +241,10 @@ export class AtualizarCadastroComponent implements OnInit {
       cidade: formData.cidade,
       estado: formData.estado,
       nascimento: formData.nascimento || undefined,
-      estadoCivil: formData.estadoCivil,
+      idade: idadeCalculada,
+      estadoCivil: estadoCivil,
       rg: formData.rg,
+      conjugueCPF: conjugueCPF.length > 0 ? conjugueCPF : undefined,
       tipoCadastro: formData.tipoCadastro,
       grupos: formData.grupos,
       rede: formData.rede,
@@ -166,9 +255,11 @@ export class AtualizarCadastroComponent implements OnInit {
     this.memberService.updateMemberByCpf(cpf, updateData).subscribe({
       next: (updatedMember) => {
         this.notificationService.showSuccess('Dados atualizados com sucesso!');
-        this.foundMember = updatedMember;
-        this.populateEditForm(updatedMember);
         this.isLoading = false;
+        
+        setTimeout(() => {
+          this.backToSearch();
+        }, 1500);
       },
       error: (err) => {
         console.error('Error updating member:', err);
@@ -179,14 +270,14 @@ export class AtualizarCadastroComponent implements OnInit {
     });
   }
 
-  /**
-   * Volta para a tela de busca
-   */
   backToSearch(): void {
     this.showEditForm = false;
     this.foundMember = null;
+    this.hasConjugueCPF = false;
     this.searchForm.reset();
     this.editForm.reset();
+    this.editForm.get('estadoCivil')?.enable();
+    this.editForm.get('conjugueCPF')?.enable();
   }
 }
 

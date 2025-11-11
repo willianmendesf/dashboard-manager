@@ -8,13 +8,22 @@ export interface MemberDTO {
   nome?: string;
   email?: string;
   telefone?: string;
+  comercial?: string;
   celular?: string;
   nascimento?: string;
   idade?: number;
   estadoCivil?: string;
   cpf?: string;
   rg?: string;
+  conjugueCPF?: string;
   fotoUrl?: string;
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
 }
 
 export interface UpdateMemberDTO {
@@ -31,8 +40,10 @@ export interface UpdateMemberDTO {
   cidade?: string;
   estado?: string;
   nascimento?: string;
+  idade?: number;
   estadoCivil?: boolean;
   rg?: string;
+  conjugueCPF?: string;
   tipoCadastro?: string;
   grupos?: string;
   rede?: string;
@@ -47,28 +58,20 @@ export class PublicMemberService {
   private apiUrl = environment.apiUrl;
   private http = inject(HttpClient);
 
-  /**
-   * Busca um membro por CPF (endpoint público, sem autenticação)
-   */
   getMemberByCpf(cpf: string): Observable<MemberDTO> {
-    // Remove formatação do CPF para enviar na URL
     const cleanCpf = cpf.replace(/\D/g, '');
     return this.http.get<MemberDTO>(
       `${this.apiUrl}public/members/cpf/${cleanCpf}`,
-      { withCredentials: false } // Endpoint público, não precisa de cookies
+      { withCredentials: false }
     );
   }
 
-  /**
-   * Atualiza um membro por CPF (endpoint público, sem autenticação)
-   */
   updateMemberByCpf(cpf: string, memberData: UpdateMemberDTO): Observable<MemberDTO> {
-    // Remove formatação do CPF para enviar na URL
     const cleanCpf = cpf.replace(/\D/g, '');
     return this.http.put<MemberDTO>(
       `${this.apiUrl}public/members/cpf/${cleanCpf}`,
       memberData,
-      { withCredentials: false } // Endpoint público, não precisa de cookies
+      { withCredentials: false }
     );
   }
 }

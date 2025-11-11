@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static java.util.Objects.isNull;
@@ -252,6 +253,17 @@ public class MemberService {
                 existingMember.setNascimento(dto.getNascimento());
             }
             
+            if (dto.getIdade() != null) {
+                existingMember.setIdade(dto.getIdade());
+            } else if (dto.getNascimento() != null) {
+                LocalDate hoje = LocalDate.now();
+                int idade = hoje.getYear() - dto.getNascimento().getYear();
+                if (dto.getNascimento().plusYears(idade).isAfter(hoje)) {
+                    idade--;
+                }
+                existingMember.setIdade(idade);
+            }
+            
             if (dto.getEstadoCivil() != null) {
                 existingMember.setEstadoCivil(dto.getEstadoCivil());
             }
@@ -261,6 +273,14 @@ public class MemberService {
                     existingMember.setRg(RGUtil.validateAndFormatRG(dto.getRg()));
                 } catch (Exception e) {
                     log.warn("Invalid RG format, ignoring: {}", dto.getRg());
+                }
+            }
+            
+            if (dto.getConjugueCPF() != null && !dto.getConjugueCPF().trim().isEmpty()) {
+                try {
+                    existingMember.setConjugueCPF(CPFUtil.validateAndFormatCPF(dto.getConjugueCPF()));
+                } catch (Exception e) {
+                    log.warn("Invalid conjugueCPF format, ignoring: {}", dto.getConjugueCPF());
                 }
             }
             

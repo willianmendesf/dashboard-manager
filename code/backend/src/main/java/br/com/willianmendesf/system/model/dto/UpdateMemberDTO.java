@@ -27,8 +27,10 @@ public class UpdateMemberDTO {
     private String cidade;
     private String estado;
     private LocalDate nascimento;
+    private Integer idade;
     private Boolean estadoCivil;
     private String rg;
+    private String conjugueCPF;
     private String tipoCadastro;
     private String grupos;
     private String rede;
