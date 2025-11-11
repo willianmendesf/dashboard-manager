@@ -110,12 +110,43 @@ public class MemberService {
             MemberEntity originalMember = repository.findById(id)
                     .orElseThrow(() -> new MembersException("User not found for id " + id));
 
-            member.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
-            member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
+            if (member.getCpf() != null && !member.getCpf().trim().isEmpty()) {
+                originalMember.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
+            }
 
-            MemberEntity updatedUser = new MemberEntity(member, originalMember);
+            if (member.getRg() != null && !member.getRg().trim().isEmpty()) {
+                originalMember.setRg(RGUtil.validateAndFormatRG(member.getRg()));
+            }
 
-            return repository.save(updatedUser);
+            if (member.getNome() != null && !member.getNome().trim().isEmpty()) originalMember.setNome(member.getNome());
+            if (member.getConjugueCPF() != null && !member.getConjugueCPF().trim().isEmpty()) originalMember.setConjugueCPF(member.getConjugueCPF());
+            if (member.getComungante() != null) originalMember.setComungante(member.getComungante());
+            if (member.getIntercessor() != null) originalMember.setIntercessor(member.getIntercessor());
+            if (member.getTipoCadastro() != null && !member.getTipoCadastro().trim().isEmpty()) originalMember.setTipoCadastro(member.getTipoCadastro());
+            if (member.getNascimento() != null) originalMember.setNascimento(member.getNascimento());
+            if (member.getIdade() != null) originalMember.setIdade(member.getIdade());
+            if (member.getEstadoCivil() != null) originalMember.setEstadoCivil(member.getEstadoCivil());
+            if (member.getCep() != null && !member.getCep().trim().isEmpty()) originalMember.setCep(member.getCep());
+            if (member.getLogradouro() != null && !member.getLogradouro().trim().isEmpty()) originalMember.setLogradouro(member.getLogradouro());
+            if (member.getNumero() != null && !member.getNumero().trim().isEmpty()) originalMember.setNumero(member.getNumero());
+            if (member.getComplemento() != null && !member.getComplemento().trim().isEmpty()) originalMember.setComplemento(member.getComplemento());
+            if (member.getBairro() != null && !member.getBairro().trim().isEmpty()) originalMember.setBairro(member.getBairro());
+            if (member.getCidade() != null && !member.getCidade().trim().isEmpty()) originalMember.setCidade(member.getCidade());
+            if (member.getEstado() != null && !member.getEstado().trim().isEmpty()) originalMember.setEstado(member.getEstado());
+            if (member.getTelefone() != null && !member.getTelefone().trim().isEmpty()) originalMember.setTelefone(member.getTelefone());
+            if (member.getComercial() != null && !member.getComercial().trim().isEmpty()) originalMember.setComercial(member.getComercial());
+            if (member.getCelular() != null && !member.getCelular().trim().isEmpty()) originalMember.setCelular(member.getCelular());
+            if (member.getContato() != null && !member.getContato().trim().isEmpty()) originalMember.setContato(member.getContato());
+            if (member.getEmail() != null && !member.getEmail().trim().isEmpty()) originalMember.setEmail(member.getEmail());
+            if (member.getGrupos() != null && !member.getGrupos().trim().isEmpty()) originalMember.setGrupos(member.getGrupos());
+            if (member.getLgpd() != null) originalMember.setLgpd(member.getLgpd());
+            if (member.getLgpdAceitoEm() != null) originalMember.setLgpdAceitoEm(member.getLgpdAceitoEm());
+            if (member.getRede() != null && !member.getRede().trim().isEmpty()) originalMember.setRede(member.getRede());
+            if (member.getFotoUrl() != null && !member.getFotoUrl().trim().isEmpty()) originalMember.setFotoUrl(member.getFotoUrl());
+
+            return repository.save(originalMember);
+        } catch (org.hibernate.StaleObjectStateException | jakarta.persistence.OptimisticLockException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Resource was updated by another transaction", e);
         } catch (Exception e) {
             throw new UserException("Error updating user", e);
         }
