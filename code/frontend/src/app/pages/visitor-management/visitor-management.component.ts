@@ -287,9 +287,14 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.unsubscribe$))
         .subscribe({
           next: () => {
-            this.notificationService.showSuccess('Visitante atualizado com sucesso!');
-            this.loadVisitors();
-            this.closeVisitorModal();
+            // Upload photo if selected
+            if (this.selectedPhotoFile && this.currentVisitor.id) {
+              this.uploadPhoto(this.currentVisitor.id);
+            } else {
+              this.notificationService.showSuccess('Visitante atualizado com sucesso!');
+              this.loadVisitors();
+              this.closeVisitorModal();
+            }
           },
           error: (err) => {
             console.error('Error updating visitor:', err);
@@ -362,11 +367,55 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
     this.visitorService.uploadPhoto(visitorId, this.selectedPhotoFile)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
-        next: (result) => {
+        next: (result: any) => {
+          // Extrair fotoUrl da resposta (backend retorna { "fotoUrl": "...", "visitor": {...} })
+          const fotoUrl = result?.fotoUrl || result?.visitor?.fotoUrl;
+          
+          if (!fotoUrl) {
+            this.uploadingPhoto = false;
+            this.notificationService.showError('Resposta inválida do servidor.');
+            return;
+          }
+          
+          // Adicionar timestamp para forçar atualização da imagem (cache busting)
+          const fotoUrlWithTimestamp = fotoUrl + (fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+          
+          // Atualizar currentVisitor no modal
+          this.currentVisitor.fotoUrl = fotoUrlWithTimestamp;
+          
+          // Atualizar visitor na lista local imediatamente
+          const visitorIndex = this.visitors.findIndex(v => v.id === visitorId);
+          if (visitorIndex !== -1) {
+            this.visitors[visitorIndex] = {
+              ...this.visitors[visitorIndex],
+              fotoUrl: fotoUrlWithTimestamp
+            };
+          }
+          
+          // Atualizar filteredVisitors
+          const filteredIndex = this.filteredVisitors.findIndex(v => v.id === visitorId);
+          if (filteredIndex !== -1) {
+            this.filteredVisitors[filteredIndex] = {
+              ...this.filteredVisitors[filteredIndex],
+              fotoUrl: fotoUrlWithTimestamp
+            };
+          }
+          
           this.uploadingPhoto = false;
           this.notificationService.showSuccess('Foto enviada com sucesso!');
-          this.loadVisitors();
-          this.closeVisitorModal();
+          
+          // Se estava criando (não editando), fechar modal após upload
+          if (!this.isEditing) {
+            this.loadVisitors();
+            this.closeVisitorModal();
+          }
+          
+          // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+          setTimeout(() => {
+            this.photoPreview = fotoUrlWithTimestamp;
+            this.updateTableData();
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: (err) => {
           console.error('Error uploading photo:', err);
