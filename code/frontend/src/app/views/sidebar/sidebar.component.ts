@@ -1,9 +1,11 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NavigationIcons } from '../../shared/lib/utils/icons';
 import { AuthService } from '../../shared/service/auth.service';
+import { ConfigService } from '../../shared/service/config.service';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
@@ -15,10 +17,25 @@ import { AuthService } from '../../shared/service/auth.service';
   templateUrl:"./sidebar.html",
   styleUrl: "./sidebar.scss"
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   public isOpen = signal(false);
+  public logoUrl = signal<string>('./img/logo.png');
   private sanitizer = inject(DomSanitizer);
   private authService = inject(AuthService);
+  private configService = inject(ConfigService);
+
+  ngOnInit(): void {
+    // Load logo URL from configuration
+    this.configService.getLogoUrl().pipe(
+      catchError(() => of(null))
+    ).subscribe(url => {
+      if (url && url.trim() !== '') {
+        this.logoUrl.set(url);
+      } else {
+        this.logoUrl.set('./img/logo.png');
+      }
+    });
+  }
 
   menuItems = [
     { 
@@ -113,6 +130,11 @@ export class SidebarComponent {
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = './img/avatar-default.png';
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = './img/logo.png';
   }
 
   logout() {

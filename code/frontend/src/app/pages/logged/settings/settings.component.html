@@ -144,6 +144,16 @@
             ></app-logo-upload>
           </div>
 
+          <!-- Upload de Favicon -->
+          <div class="setting-item">
+            <label>Favicon do Site</label>
+            <app-favicon-upload
+              [currentFaviconUrl]="faviconUrl"
+              (faviconUploaded)="onFaviconUploaded($event)"
+              (faviconRemoved)="onFaviconRemoved()"
+            ></app-favicon-upload>
+          </div>
+
           <!-- Cor Primária -->
           <div class="setting-item">
             <label>Cor Primária</label>

@@ -1,0 +1,55 @@
+<div class="favicon-upload">
+  <div *ngIf="currentFaviconUrl" class="favicon-preview-container">
+    <img 
+      [src]="displayFaviconUrl" 
+      alt="Favicon atual"
+      class="favicon-preview"
+      (error)="onImageError($event)"
+    />
+    <div class="favicon-actions">
+      <label for="favicon-upload-input" class="btn-change-favicon">
+        <input 
+          type="file" 
+          id="favicon-upload-input"
+          accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,.png,.ico,.svg"
+          (change)="onFileSelected($event)"
+          [disabled]="uploading"
+          style="display: none;"
+        />
+        {{ uploading ? 'Enviando...' : 'Alterar Favicon' }}
+      </label>
+      <button 
+        type="button" 
+        class="btn-remove-favicon"
+        (click)="removeFavicon()"
+        [disabled]="uploading"
+      >
+        Remover
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!currentFaviconUrl" class="favicon-upload-placeholder">
+    <label for="favicon-upload-input-empty" class="upload-area">
+      <input 
+        type="file" 
+        id="favicon-upload-input-empty"
+        accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,.png,.ico,.svg"
+        (change)="onFileSelected($event)"
+        [disabled]="uploading"
+        style="display: none;"
+      />
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <span>{{ uploading ? 'Enviando...' : 'Selecione um favicon (PNG, ICO ou SVG)' }}</span>
+    </label>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+</div>
+

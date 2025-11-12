@@ -2,7 +2,7 @@
   <div class="sidebar-header">
     <h2 class="logo">
       <a href="#">
-        <img src="./img/logo.png" width="200px"/>
+        <img [src]="logoUrl()" width="200px" (error)="onLogoError($event)"/>
       </a>
     </h2>
     <button class="close-btn" (click)="close()" *ngIf="isOpen()">×</button>

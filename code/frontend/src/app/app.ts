@@ -5,7 +5,8 @@ import { SidebarComponent } from "./views/sidebar/sidebar.component";
 import { NotificationComponent } from './shared/components/notification/notification.component';
 import { NavigationIcons } from './shared/lib/utils/icons';
 import { AuthService } from './shared/service/auth.service';
-import { filter } from 'rxjs/operators';
+import { ConfigService } from './shared/service/config.service';
+import { filter, catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -22,9 +23,11 @@ export class App implements OnInit {
   protected readonly title = signal('frontend');
   public readonly isMobile = signal(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
   public showSidebar = signal(true);
+  public logoUrl = signal<string>('./img/logo.png');
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private configService = inject(ConfigService);
   
   public readonly menuIcon: SafeHtml = this.sanitizer.bypassSecurityTrustHtml(
     NavigationIcons.menu({ size: 24, color: 'white' })
@@ -45,6 +48,55 @@ export class App implements OnInit {
     const isPublicPage = this.isPublicRoute(currentUrl);
     const isAuthenticated = this.authService.isAuthenticated();
     this.showSidebar.set(!isPublicPage && isAuthenticated);
+
+    // Load logo URL from configuration
+    this.configService.getLogoUrl().pipe(
+      catchError(() => of(null))
+    ).subscribe(url => {
+      if (url && url.trim() !== '') {
+        this.logoUrl.set(url);
+      } else {
+        this.logoUrl.set('./img/logo.png');
+      }
+    });
+
+    // Load and set favicon from configuration
+    this.configService.getByKey('FAVICON_URL').pipe(
+      catchError(() => of(null))
+    ).subscribe(config => {
+      const faviconUrl = config?.value || null;
+      this.updateFaviconInDOM(faviconUrl);
+    });
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = './img/logo.png';
+  }
+
+  /**
+   * Atualiza o favicon no DOM
+   */
+  private updateFaviconInDOM(faviconUrl: string | null): void {
+    // Remove existing favicon links
+    const existingLinks = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+    existingLinks.forEach(link => link.remove());
+
+    if (faviconUrl && faviconUrl.trim() !== '') {
+      // Create new favicon link
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = faviconUrl;
+      document.head.appendChild(link);
+    } else {
+      // Restore default favicon
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = './favicon.ico';
+      document.head.appendChild(link);
+    }
   }
 
   private isPublicRoute(url: string): boolean {

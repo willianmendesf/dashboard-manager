@@ -6,7 +6,7 @@
   @if (isMobile()) {
     <nav class="mobile-navbar">
       <a routerLink="/home" class="navbar-logo">
-        <img src="./img/logo.png" alt="Logo" />
+        <img [src]="logoUrl()" alt="Logo" (error)="onLogoError($event)" />
       </a>
       <button class="navbar-menu-btn" (click)="sidebar.toggle()" [attr.aria-label]="'Menu'">
         <span class="menu-icon" [innerHTML]="menuIcon" [attr.aria-hidden]="true"></span>

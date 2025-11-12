@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { ConfigService, Configuration } from '../../../shared/service/config.service';
 import { ApiService } from '../../../shared/service/api.service';
 import { LogoUploadComponent } from '../../../shared/modules/logo-upload/logo-upload.component';
+import { FaviconUploadComponent } from '../../../shared/modules/favicon-upload/favicon-upload.component';
 import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.component';
 import { IfHasPermissionDirective } from '../../../shared/directives/if-has-permission.directive';
 import { CronSelectorComponent } from '../../../shared/modules/cron-selector/cron-selector.component';
@@ -14,7 +15,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LogoUploadComponent, PageTitleComponent, CronSelectorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LogoUploadComponent, FaviconUploadComponent, PageTitleComponent, CronSelectorComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })
@@ -23,6 +24,7 @@ export class SettingsComponent implements OnInit {
   configurations$!: Observable<Configuration[]>;
   saving = false;
   logoUrl: string | null = null;
+  faviconUrl: string | null = null;
   apiUrl = environment.apiUrl;
 
   // Objetos para os cron selectors (similar ao currentAppointment)
@@ -59,6 +61,7 @@ export class SettingsComponent implements OnInit {
     this.settingsForm = this.fb.group({
       // Appearance
       logoUrl: [''],
+      faviconUrl: [''],
       primaryColor: ['#3B82F6', Validators.pattern(/^#[0-9A-Fa-f]{6}$/)],
       secondaryColor: ['#10B981', Validators.pattern(/^#[0-9A-Fa-f]{6}$/)],
       menuBackgroundColor: ['#1F2937', Validators.pattern(/^#[0-9A-Fa-f]{6}$/)],
@@ -116,6 +119,7 @@ export class SettingsComponent implements OnInit {
     
     // Appearance
     this.logoUrl = configMap.get('LOGO_URL') || null;
+    this.faviconUrl = configMap.get('FAVICON_URL') || null;
     const primaryColor = configMap.get('PRIMARY_COLOR') || '#3B82F6';
     const secondaryColor = configMap.get('SECONDARY_COLOR') || '#10B981';
     const menuBackgroundColor = configMap.get('COR_FUNDO_MENU') || '#1F2937';
@@ -128,6 +132,7 @@ export class SettingsComponent implements OnInit {
 
     this.settingsForm.patchValue({
       logoUrl: this.logoUrl || '',
+      faviconUrl: this.faviconUrl || '',
       primaryColor: primaryColor,
       secondaryColor: secondaryColor,
       menuBackgroundColor: menuBackgroundColor,
@@ -184,6 +189,70 @@ export class SettingsComponent implements OnInit {
   }
 
   /**
+   * Handler para upload de favicon
+   * Salva automaticamente a URL do favicon no backend
+   */
+  onFaviconUploaded(faviconUrl: string): void {
+    this.faviconUrl = faviconUrl;
+    this.settingsForm.patchValue({ faviconUrl: faviconUrl });
+    
+    // Salvar automaticamente a URL do favicon no backend
+    this.configService.updateConfiguration('FAVICON_URL', faviconUrl).subscribe({
+      next: () => {
+        // Atualizar favicon no DOM imediatamente
+        this.updateFaviconInDOM(faviconUrl);
+      },
+      error: (error) => {
+        console.error('Erro ao salvar URL do favicon:', error);
+      }
+    });
+  }
+
+  /**
+   * Handler para remoção de favicon
+   */
+  onFaviconRemoved(): void {
+    this.faviconUrl = null;
+    this.settingsForm.patchValue({ faviconUrl: '' });
+    
+    // Remover favicon do backend
+    this.configService.updateConfiguration('FAVICON_URL', '').subscribe({
+      next: () => {
+        // Restaurar favicon default
+        this.updateFaviconInDOM(null);
+      },
+      error: (error) => {
+        console.error('Erro ao remover favicon:', error);
+      }
+    });
+  }
+
+  /**
+   * Atualiza o favicon no DOM
+   */
+  private updateFaviconInDOM(faviconUrl: string | null): void {
+    // Remove existing favicon links
+    const existingLinks = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+    existingLinks.forEach(link => link.remove());
+
+    if (faviconUrl) {
+      // Create new favicon link
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = faviconUrl;
+      document.head.appendChild(link);
+    } else {
+      // Restore default favicon
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = './favicon.ico';
+      document.head.appendChild(link);
+    }
+  }
+
+  /**
    * Salva todas as configurações
    */
   saveSettings(): void {
@@ -198,6 +267,7 @@ export class SettingsComponent implements OnInit {
     const configurationsToSave: { [key: string]: string } = {
       // Appearance
       LOGO_URL: formValue.logoUrl || '',
+      FAVICON_URL: formValue.faviconUrl || '',
       PRIMARY_COLOR: formValue.primaryColor,
       SECONDARY_COLOR: formValue.secondaryColor,
       COR_FUNDO_MENU: formValue.menuBackgroundColor,
@@ -237,6 +307,12 @@ export class SettingsComponent implements OnInit {
       next: () => {
         // Inject CSS variables for white-label
         this.injectCSSVariables(configurationsToSave);
+        // Update favicon if changed
+        if (configurationsToSave['FAVICON_URL']) {
+          this.updateFaviconInDOM(configurationsToSave['FAVICON_URL']);
+        } else if (formValue.faviconUrl === '') {
+          this.updateFaviconInDOM(null);
+        }
         this.notificationService.showSuccess('Configurações salvas com sucesso!');
         this.saving = false;
         this.loadConfigurations(); // Recarregar para garantir sincronização
