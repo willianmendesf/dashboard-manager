@@ -253,6 +253,9 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (groups) => {
           this.availableGroups = groups;
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: (err) => {
           console.error('Error loading groups:', err);
