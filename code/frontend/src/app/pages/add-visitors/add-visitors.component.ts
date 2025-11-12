@@ -37,14 +37,20 @@ export class AddVisitorsComponent implements OnInit {
       jaFrequentaIgreja: [''],
       procuraIgreja: [''],
       eDeSP: [true],
-      estado: ['']
+      estado: ['SP']
     });
   }
 
   ngOnInit(): void {
+    if (this.visitorForm.get('eDeSP')?.value === true) {
+      this.visitorForm.get('estado')?.setValue('SP');
+    }
+
     this.visitorForm.get('eDeSP')?.valueChanges.subscribe(value => {
       const estadoControl = this.visitorForm.get('estado');
-      if (value === false) {
+      const boolValue = value === true || value === 'true' || value === 1;
+      
+      if (boolValue === false) {
         estadoControl?.setValidators([Validators.required]);
         estadoControl?.setValue('');
       } else {
@@ -93,7 +99,8 @@ export class AddVisitorsComponent implements OnInit {
         const today = new Date().toISOString().split('T')[0];
         this.visitorForm.patchValue({
           dataVisita: today,
-          eDeSP: true
+          eDeSP: true,
+          estado: 'SP'
         });
         this.isLoading = false;
       },

@@ -528,13 +528,16 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
     return this.currentVisitor.eDeSP === true;
   }
 
-  onEDeSPChange(value: boolean): void {
-    this.currentVisitor.eDeSP = value;
-    if (value === true) {
+  onEDeSPChange(value: any): void {
+    const boolValue = value === true || value === 'true' || value === 1;
+    this.currentVisitor.eDeSP = boolValue;
+    
+    if (boolValue === true) {
       this.currentVisitor.estado = 'SP';
     } else {
       this.currentVisitor.estado = '';
     }
+    this.cdr.detectChanges();
   }
 }
 
