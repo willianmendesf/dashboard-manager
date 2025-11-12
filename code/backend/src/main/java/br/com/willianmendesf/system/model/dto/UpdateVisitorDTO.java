@@ -1,5 +1,6 @@
 package br.com.willianmendesf.system.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ public class UpdateVisitorDTO {
     private String telefone;
     private String jaFrequentaIgreja;
     private String procuraIgreja;
+    @JsonProperty("eDeSP")
     private Boolean eDeSP;
     private String estado;
 }

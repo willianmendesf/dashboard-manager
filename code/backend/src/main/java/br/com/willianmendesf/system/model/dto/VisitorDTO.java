@@ -3,6 +3,7 @@ package br.com.willianmendesf.system.model.dto;
 import br.com.willianmendesf.system.model.entity.VisitorEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class VisitorDTO {
     private String telefone;
     private String jaFrequentaIgreja;
     private String procuraIgreja;
+    @JsonProperty("eDeSP")
     private Boolean eDeSP;
     private String estado;
     private String fotoUrl;

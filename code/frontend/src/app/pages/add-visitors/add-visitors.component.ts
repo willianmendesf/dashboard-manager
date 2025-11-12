@@ -42,14 +42,14 @@ export class AddVisitorsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Watch eDeSP changes to show/hide estado field
     this.visitorForm.get('eDeSP')?.valueChanges.subscribe(value => {
       const estadoControl = this.visitorForm.get('estado');
       if (value === false) {
         estadoControl?.setValidators([Validators.required]);
+        estadoControl?.setValue('');
       } else {
         estadoControl?.clearValidators();
-        estadoControl?.setValue('');
+        estadoControl?.setValue('SP');
       }
       estadoControl?.updateValueAndValidity();
     });
@@ -69,16 +69,19 @@ export class AddVisitorsComponent implements OnInit {
     this.isLoading = true;
     const formValue = this.visitorForm.value;
 
+    const eDeSPValue = formValue.eDeSP !== undefined ? formValue.eDeSP : true;
+    const estadoValue = eDeSPValue === true 
+      ? 'SP' 
+      : (formValue.estado && formValue.estado.trim() !== '' ? formValue.estado.trim().toUpperCase() : undefined);
+
     const visitorData: CreateVisitorDTO = {
       nomeCompleto: formValue.nomeCompleto.trim(),
       dataVisita: formValue.dataVisita,
       telefone: formValue.telefone || undefined,
       jaFrequentaIgreja: formValue.jaFrequentaIgreja || undefined,
       procuraIgreja: formValue.procuraIgreja || undefined,
-      eDeSP: formValue.eDeSP !== undefined ? formValue.eDeSP : true, // Garantir que sempre tenha valor
-      estado: (formValue.eDeSP === false && formValue.estado && formValue.estado.trim() !== '') 
-        ? formValue.estado.trim().toUpperCase() 
-        : undefined
+      eDeSP: eDeSPValue,
+      estado: estadoValue
     };
     
     console.log('Sending visitor data:', JSON.stringify(visitorData, null, 2));

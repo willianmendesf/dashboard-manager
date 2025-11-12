@@ -43,10 +43,14 @@ public class VisitorService {
             entity.setTelefone(dto.getTelefone());
             entity.setJaFrequentaIgreja(dto.getJaFrequentaIgreja());
             entity.setProcuraIgreja(dto.getProcuraIgreja());
-            entity.setEDeSP(dto.getEDeSP());
+            
+            // SEMPRE salvar eDeSP (mesmo se null, usar default true)
+            Boolean eDeSPValue = dto.getEDeSP() != null ? dto.getEDeSP() : true;
+            entity.setEDeSP(eDeSPValue);
+            log.info("Setting eDeSP to: {}", eDeSPValue);
             
             // Se não é de SP, validar e salvar estado
-            if (Boolean.FALSE.equals(dto.getEDeSP())) {
+            if (Boolean.FALSE.equals(eDeSPValue)) {
                 if (dto.getEstado() != null && !dto.getEstado().trim().isEmpty()) {
                     entity.setEstado(dto.getEstado().trim().toUpperCase());
                     log.info("Setting estado to: {}", entity.getEstado());
@@ -129,34 +133,25 @@ public class VisitorService {
                 entity.setProcuraIgreja(dto.getProcuraIgreja());
             }
             
-            // Sempre atualizar eDeSP e estado se fornecidos
-            if (dto.getEDeSP() != null) {
-                entity.setEDeSP(dto.getEDeSP());
-                // Se não é de SP, validar e salvar estado
-                if (Boolean.FALSE.equals(dto.getEDeSP())) {
-                    if (dto.getEstado() != null && !dto.getEstado().trim().isEmpty()) {
-                        entity.setEstado(dto.getEstado().trim().toUpperCase());
-                        log.info("Setting estado to: {}", entity.getEstado());
-                    } else {
-                        entity.setEstado(null);
-                        log.info("Estado is null or empty, setting to null");
-                    }
+            // SEMPRE atualizar eDeSP e estado (mesmo se null, usar default true)
+            // Isso permite limpar os campos se necessário
+            Boolean eDeSPValue = dto.getEDeSP() != null ? dto.getEDeSP() : true;
+            entity.setEDeSP(eDeSPValue);
+            log.info("Setting eDeSP to: {}", eDeSPValue);
+            
+            // Se não é de SP, validar e salvar estado
+            if (Boolean.FALSE.equals(eDeSPValue)) {
+                if (dto.getEstado() != null && !dto.getEstado().trim().isEmpty()) {
+                    entity.setEstado(dto.getEstado().trim().toUpperCase());
+                    log.info("Setting estado to: {}", entity.getEstado());
                 } else {
-                    // Se for SP, sempre limpar estado
                     entity.setEstado(null);
-                    log.info("eDeSP is true, clearing estado");
+                    log.info("Estado is null or empty, setting to null");
                 }
-            } else if (dto.getEstado() != null) {
-                // Se eDeSP não foi alterado mas estado foi, atualizar apenas se não for SP
-                if (Boolean.FALSE.equals(entity.getEDeSP())) {
-                    if (!dto.getEstado().trim().isEmpty()) {
-                        entity.setEstado(dto.getEstado().trim().toUpperCase());
-                        log.info("Updating estado to: {}", entity.getEstado());
-                    } else {
-                        entity.setEstado(null);
-                        log.info("Estado is empty, setting to null");
-                    }
-                }
+            } else {
+                // Se for SP, sempre limpar estado
+                entity.setEstado(null);
+                log.info("eDeSP is true, clearing estado");
             }
             
             VisitorEntity saved = repository.save(entity);

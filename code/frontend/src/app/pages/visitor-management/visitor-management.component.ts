@@ -219,7 +219,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       jaFrequentaIgreja: '',
       procuraIgreja: '',
       eDeSP: true,
-      estado: ''
+      estado: 'SP'
     };
     this.selectedPhotoFile = null;
     this.photoPreview = null;
@@ -233,6 +233,9 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (fullVisitor) => {
           this.currentVisitor = { ...fullVisitor };
+          if (this.currentVisitor.eDeSP === true) {
+            this.currentVisitor.estado = 'SP';
+          }
           this.photoPreview = fullVisitor.fotoUrl || null;
           this.selectedPhotoFile = null;
           this.showVisitorModal = true;
@@ -258,17 +261,26 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Garantir que eDeSP sempre tenha valor (default true se undefined)
+    const eDeSPValue = this.currentVisitor.eDeSP !== undefined ? this.currentVisitor.eDeSP : true;
+    
+    const estadoValue = eDeSPValue === true 
+      ? 'SP' 
+      : (this.currentVisitor.estado && this.currentVisitor.estado.trim() !== '' 
+          ? this.currentVisitor.estado.trim().toUpperCase() 
+          : undefined);
+    
     const visitorData: Partial<Visitor> = {
       nomeCompleto: this.currentVisitor.nomeCompleto.trim(),
       dataVisita: this.currentVisitor.dataVisita,
       telefone: this.currentVisitor.telefone || undefined,
       jaFrequentaIgreja: this.currentVisitor.jaFrequentaIgreja || undefined,
       procuraIgreja: this.currentVisitor.procuraIgreja || undefined,
-      eDeSP: this.currentVisitor.eDeSP,
-      estado: (this.currentVisitor.eDeSP === false && this.currentVisitor.estado && this.currentVisitor.estado.trim() !== '') 
-        ? this.currentVisitor.estado.trim().toUpperCase() 
-        : undefined
+      eDeSP: eDeSPValue,
+      estado: estadoValue
     };
+    
+    console.log('Sending update data:', JSON.stringify(visitorData, null, 2));
 
     if (this.isEditing && this.currentVisitor.id) {
       this.visitorService.update(this.currentVisitor.id, visitorData)
@@ -514,6 +526,15 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
 
   get eDeSP(): boolean {
     return this.currentVisitor.eDeSP === true;
+  }
+
+  onEDeSPChange(value: boolean): void {
+    this.currentVisitor.eDeSP = value;
+    if (value === true) {
+      this.currentVisitor.estado = 'SP';
+    } else {
+      this.currentVisitor.estado = '';
+    }
   }
 }
 
