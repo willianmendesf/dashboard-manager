@@ -59,7 +59,7 @@ Write-Host ""
 $overrideContent = @"
 version: '2.4'
 services:
-  backend-app:
+  app:
     volumes:
       # Bind mounts: mapeia diretórios do host Windows para dentro do container
       # OS: Windows
@@ -89,7 +89,7 @@ Write-Host ""
 Write-Host "=== Containers iniciados ===" -ForegroundColor Green
 Write-Host ""
 Write-Host "Para ver os logs:"
-Write-Host "  docker-compose logs -f backend-app"
+Write-Host "  docker-compose logs -f app"
 Write-Host ""
 Write-Host "Para verificar o status:"
 Write-Host "  docker-compose ps"

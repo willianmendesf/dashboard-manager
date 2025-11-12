@@ -1,6 +1,6 @@
 version: '2.4'
 services:
-  backend-app:
+  app:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -15,17 +15,8 @@ services:
       - app-network
     # Volumes são configurados dinamicamente via docker-compose.override.yml
     # O script docker-compose-up.sh detecta o OS (Windows/Linux) e cria o override.yml
-    healthcheck:
-      # Verifica se a porta 8080 está aberta e respondendo
-      # Usa um endpoint público que sempre retorna resposta (mesmo que erro 400/401)
-      # wget retorna 0 se conseguir conectar (mesmo com erro HTTP)
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/api/v1/auth/login || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 90s
 
-  angular-frontend:
+  web:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
@@ -33,16 +24,9 @@ services:
       - "80:80"
     restart: always
     depends_on:
-      backend-app:
-        condition: service_healthy
+      - app
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep -q '[n]ginx' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
 networks:
   app-network:

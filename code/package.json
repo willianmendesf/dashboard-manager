@@ -4,8 +4,8 @@
   "description": "",
   "main": "",
   "scripts": {
+    "install": "npm run docker:start -- --build",
     "start": "./docker-compose-up.sh",
-    "install": "npm run docker:start -- --build", 
     "docker:start": "./docker-compose-up.sh",
     "docker:stop": "./docker-compose-down.sh",
     "docker:build": "docker-compose build",
