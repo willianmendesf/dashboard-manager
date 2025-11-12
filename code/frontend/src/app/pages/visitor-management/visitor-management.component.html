@@ -7,13 +7,75 @@
   <!-- Graph Section -->
   <div class="graph-section">
     <div class="graph-card">
-      <h3>Visitantes por Domingo</h3>
+      <div class="graph-header">
+        <h3>Visitantes por Período</h3>
+        <div class="graph-controls">
+          <div class="controls-row">
+            <div class="control-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="useCustomRange"
+                  (change)="onChartDateRangeChange()"
+                />
+                <span>Intervalo customizado</span>
+              </label>
+            </div>
+            @if (useCustomRange) {
+              <div class="control-separator"></div>
+              <div class="date-range-controls">
+                <div class="date-input-group">
+                  <label for="chartStartDate">Data Início</label>
+                  <div class="date-input-wrapper">
+                    <input
+                      id="chartStartDate"
+                      type="date"
+                      [(ngModel)]="chartStartDate"
+                      (change)="onChartDateRangeChange()"
+                      class="date-input"
+                    />
+                  </div>
+                </div>
+                <div class="date-input-group">
+                  <label for="chartEndDate">Data Fim</label>
+                  <div class="date-input-wrapper">
+                    <input
+                      id="chartEndDate"
+                      type="date"
+                      [(ngModel)]="chartEndDate"
+                      (change)="onChartDateRangeChange()"
+                      class="date-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+            <div class="control-separator"></div>
+            <div class="control-buttons">
+              <button
+                type="button"
+                class="btn-reset"
+                (click)="resetChartToDefault()"
+                [disabled]="!useCustomRange"
+              >
+                <span class="btn-icon">↺</span>
+                <span>Resetar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="chart-placeholder">
         @if (chartData.length > 0) {
-          <div class="chart-bars">
-            @for (value of chartData; track $index) {
-              <div class="bar" [style.height.%]="maxChartValue > 0 ? (value / maxChartValue) * 100 : 0"></div>
-            }
+          <div class="chart-bars-container">
+            <div class="chart-bars">
+              @for (value of chartData; track $index) {
+                <div class="bar-wrapper">
+                  <div class="bar-value">{{ value }}</div>
+                  <div class="bar" [style.height.%]="maxChartValue > 0 ? (value / maxChartValue) * 100 : 0"></div>
+                </div>
+              }
+            </div>
           </div>
           <div class="chart-labels">
             @for (label of chartLabels; track $index) {
@@ -23,7 +85,7 @@
         } @else {
           <div class="no-data-message">
             <p>Nenhum dado disponível</p>
-            <small>Cadastre visitantes com data de visita em domingos para visualizar o gráfico</small>
+            <small>Cadastre visitantes para visualizar o gráfico</small>
           </div>
         }
       </div>

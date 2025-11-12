@@ -93,6 +93,21 @@ public class VisitorController {
         }
     }
 
+    @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('READ_VISITORS')")
+    public ResponseEntity<List<VisitorStatsDTO>> getVisitorStats(
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate) {
+        try {
+            log.info("Getting visitor statistics - startDate: {}, endDate: {}", startDate, endDate);
+            List<VisitorStatsDTO> stats = visitorService.getVisitorStatsByDateRange(startDate, endDate);
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            log.error("Error getting visitor statistics", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/stats/sundays")
     @PreAuthorize("hasAuthority('READ_VISITORS')")
     public ResponseEntity<List<VisitorStatsDTO>> getSundayStats() {
