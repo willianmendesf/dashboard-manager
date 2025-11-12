@@ -2,27 +2,57 @@ import { environment } from '../../../environments/environment';
 
 /**
  * Builds image URLs like appointments component
- * Backend returns only filename, frontend constructs the full URL
+ * Backend returns relative path (URI), frontend constructs the full URL
+ * Handles both new format (relative path) and old format (full URLs with localhost)
  */
-export function buildFileImageUrl(filename: string | null | undefined, folder: string = 'profiles'): string {
-  if (!filename || filename.trim() === '') {
+export function buildFileImageUrl(pathOrFilename: string | null | undefined, folder: string = 'profiles'): string {
+  if (!pathOrFilename || pathOrFilename.trim() === '') {
     return './img/avatar-default.png';
   }
 
-  // If already a full URL or relative path, return as is (for backward compatibility)
-  if (filename.startsWith('/') || filename.startsWith('http')) {
-    // Extract just the filename if it's a URL
-    const urlParts = filename.split('/');
-    const extractedFilename = urlParts[urlParts.length - 1];
-    if (extractedFilename && !extractedFilename.includes('?')) {
-      return `${environment.apiUrl}files/${folder}/${extractedFilename}`;
-    }
-    // If we can't extract, use normalize approach
-    return filename.startsWith('/') ? `${window.location.origin}${filename}` : filename;
+  const trimmed = pathOrFilename.trim();
+
+  // If it's already a relative path starting with /api/v1/files/, use it directly
+  if (trimmed.startsWith('/api/v1/files/')) {
+    return `${window.location.origin}${trimmed}`;
   }
 
-  // Construct URL like appointments: env + 'files/folder/filename'
-  return `${environment.apiUrl}files/${folder}/${filename}`;
+  // If it's a full URL (old format with localhost), extract the path
+  if (trimmed.startsWith('http')) {
+    try {
+      // Remove query strings first
+      const withoutQuery = trimmed.split('?')[0];
+      const url = new URL(withoutQuery);
+      const path = url.pathname;
+      
+      // If it contains /api/v1/files/, use that path
+      if (path.startsWith('/api/v1/files/')) {
+        return `${window.location.origin}${path}`;
+      }
+      
+      // Try to extract folder and filename from URL
+      const pathMatch = path.match(/\/api\/v1\/files\/([^\/]+)\/([^\/]+)$/);
+      if (pathMatch) {
+        return `${environment.apiUrl}files/${pathMatch[1]}/${pathMatch[2]}`;
+      }
+    } catch (e) {
+      console.warn('Failed to parse URL:', trimmed);
+    }
+  }
+
+  // If it's just a filename (fallback for old data), construct path
+  // This should not happen with new uploads, but handles legacy data
+  if (!trimmed.includes('/')) {
+    return `${environment.apiUrl}files/${folder}/${trimmed}`;
+  }
+
+  // If it's a relative path starting with /, use window.location.origin
+  if (trimmed.startsWith('/')) {
+    return `${window.location.origin}${trimmed}`;
+  }
+
+  // Final fallback
+  return `${environment.apiUrl}files/${folder}/${trimmed}`;
 }
 
 /**

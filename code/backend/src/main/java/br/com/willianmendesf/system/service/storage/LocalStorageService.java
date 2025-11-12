@@ -66,9 +66,10 @@ public class LocalStorageService implements StorageService {
             // Save processed image
             Files.write(filePath, processedImage);
 
-            // Return only filename (frontend will construct URL like appointments)
-            log.info("File uploaded, processed and saved successfully: {}", filename);
-            return filename;
+            // Return relative path (URI) to save in database: /api/v1/files/folder/filename
+            String relativePath = String.format("/api/v1/files/%s/%s", folder, filename);
+            log.info("File uploaded, processed and saved successfully: {}", relativePath);
+            return relativePath;
 
         } catch (IOException e) {
             log.error("Error uploading file", e);
