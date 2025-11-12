@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 import { PageTitleComponent } from '../../shared/modules/pagetitle/pagetitle.component';
 import { ModalComponent, ModalButton } from '../../shared/modules/modal/modal.component';
 import { Observable, catchError, of, tap } from 'rxjs';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 interface UserProfile {
   id: number;
@@ -29,8 +30,10 @@ interface UserProfile {
     ReactiveFormsModule,
     RouterModule,
     PageTitleComponent,
-    ModalComponent
+    ModalComponent,
+    NgxMaskDirective
   ],
+  providers: [provideNgxMask()],
   templateUrl: './my-profile.component.html',
   styleUrl: './my-profile.component.scss'
 })
