@@ -284,7 +284,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
                 ...member,
                 fotoUrl: member.fotoUrl || null,
                 groupIds: member.groupIds || [],
-                estadoCivil: estadoCivilBoolean
+                estadoCivil: estadoCivilBoolean,
+                child: member.child !== undefined ? member.child : false
               };
             });
             this.filterMembers();
@@ -359,6 +360,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       nascimento: member.nascimento || null,
       idade: member.idade || null,
       estadoCivil: estadoCivilBoolean,
+      child: member.child !== undefined ? member.child : false,
       cep: member.cep || null,
       logradouro: member.logradouro || null,
       numero: member.numero || null,
@@ -538,6 +540,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         conjugueCPF: '',
         comungante: null,
         intercessor: false,
+        child: false,
         tipoCadastro: null,
         nascimento: null,
         idade: null,

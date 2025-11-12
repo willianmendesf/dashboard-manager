@@ -32,6 +32,7 @@ public class UpdateMemberDTO {
     private Boolean estadoCivil;
     private String rg;
     private String conjugueCPF;
+    private Boolean child;
     private String tipoCadastro;
     private List<Long> groupIds;
 }

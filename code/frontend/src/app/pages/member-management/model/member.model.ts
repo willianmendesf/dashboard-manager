@@ -6,6 +6,7 @@ export interface Member {
   conjugueCPF?: string;
   comungante?: boolean;
   intercessor: boolean;
+  child?: boolean;
   tipoCadastro?: string;
   nascimento?: string | Date;
   idade?: number;

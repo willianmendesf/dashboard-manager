@@ -146,6 +146,7 @@ public class MemberService {
             if (member.getConjugueCPF() != null && !member.getConjugueCPF().trim().isEmpty()) originalMember.setConjugueCPF(member.getConjugueCPF());
             originalMember.setComungante(member.getComungante());
             originalMember.setIntercessor(member.getIntercessor());
+            if (member.getChild() != null) originalMember.setChild(member.getChild());
             if (member.getTipoCadastro() != null && !member.getTipoCadastro().trim().isEmpty()) {
                 originalMember.setTipoCadastro(member.getTipoCadastro().trim());
             } else {
@@ -323,6 +324,10 @@ public class MemberService {
                 } catch (Exception e) {
                     log.warn("Invalid conjugueCPF format, ignoring: {}", dto.getConjugueCPF());
                 }
+            }
+            
+            if (dto.getChild() != null) {
+                existingMember.setChild(dto.getChild());
             }
             
             if (dto.getTipoCadastro() != null) {
