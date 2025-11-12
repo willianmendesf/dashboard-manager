@@ -31,9 +31,14 @@ export interface VisitorDTO {
   providedIn: 'root'
 })
 export class PublicVisitorService {
-  private apiUrl = `${environment.apiUrl}/public/visitors`;
+  private apiUrl: string;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // Remove barras duplicadas ao construir URL
+    const baseUrl = environment.apiUrl.endsWith('/') ? environment.apiUrl : environment.apiUrl + '/';
+    const path = 'public/visitors';
+    this.apiUrl = baseUrl + path;
+  }
 
   create(visitor: CreateVisitorDTO): Observable<VisitorDTO> {
     return this.http.post<VisitorDTO>(this.apiUrl, visitor);

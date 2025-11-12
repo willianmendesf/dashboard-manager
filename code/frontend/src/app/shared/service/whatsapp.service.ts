@@ -57,64 +57,75 @@ export class WhatsappsService {
 
   private apiUrl = environment.apiUrl;
 
+  /**
+   * Constrói URL completa removendo barras duplicadas
+   * Remove barra inicial do URI se existir e concatena corretamente
+   */
+  private buildUrl(uri: string): string {
+    // Remove barra inicial do URI se existir
+    const cleanUri = uri.startsWith('/') ? uri.substring(1) : uri;
+    // Garante que apiUrl termina com / e remove barras duplicadas
+    const baseUrl = this.apiUrl.endsWith('/') ? this.apiUrl : this.apiUrl + '/';
+    return baseUrl + cleanUri;
+  }
+
   public send(data : any) {
-    const localUrl = `${this.apiUrl}/whatsapp`;
-    return this.http.post<any>(localUrl, data);
+    return this.http.post<any>(this.buildUrl('whatsapp'), data, { withCredentials: true });
   }
 
   /**
    * Obtém o status da conexão WhatsApp
    */
   public getConnectionStatus(): Observable<ConnectionStatus> {
-    return this.http.get<ConnectionStatus>(`${this.apiUrl}/whatsapp/connection/status`, { withCredentials: true });
+    return this.http.get<ConnectionStatus>(this.buildUrl('whatsapp/connection/status'), { withCredentials: true });
   }
 
   /**
    * Reconecta manualmente à API WhatsApp
    */
   public reconnect(): Observable<ReconnectResult> {
-    return this.http.post<ReconnectResult>(`${this.apiUrl}/whatsapp/connection/reconnect`, {}, { withCredentials: true });
+    return this.http.post<ReconnectResult>(this.buildUrl('whatsapp/connection/reconnect'), {}, { withCredentials: true });
   }
 
   /**
    * Obtém o status da reconexão automática
    */
   public getAutoReconnectStatus(): Observable<AutoReconnectStatus> {
-    return this.http.get<AutoReconnectStatus>(`${this.apiUrl}/whatsapp/connection/auto-reconnect/enabled`, { withCredentials: true });
+    return this.http.get<AutoReconnectStatus>(this.buildUrl('whatsapp/connection/auto-reconnect/enabled'), { withCredentials: true });
   }
 
   /**
    * Ativa ou desativa reconexão automática
    */
   public toggleAutoReconnect(enabled: boolean): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/whatsapp/connection/auto-reconnect/toggle`, { enabled }, { withCredentials: true });
+    return this.http.post<any>(this.buildUrl('whatsapp/connection/auto-reconnect/toggle'), { enabled }, { withCredentials: true });
   }
 
   /**
    * Obtém QR code para login
    */
   public getQRCodeLogin(): Observable<QRCodeLoginResponse> {
-    return this.http.get<QRCodeLoginResponse>(`${this.apiUrl}/whatsapp/auth/login/qrcode`, { withCredentials: true });
+    return this.http.get<QRCodeLoginResponse>(this.buildUrl('whatsapp/auth/login/qrcode'), { withCredentials: true });
   }
 
   /**
    * Inicia login com código de pareamento
    */
   public initCodeLogin(phone: string): Observable<CodeLoginResponse> {
-    return this.http.get<CodeLoginResponse>(`${this.apiUrl}/whatsapp/auth/login/with-code?phone=${encodeURIComponent(phone)}`, { withCredentials: true });
+    return this.http.get<CodeLoginResponse>(this.buildUrl(`whatsapp/auth/login/with-code?phone=${encodeURIComponent(phone)}`), { withCredentials: true });
   }
 
   /**
    * Verifica status do login
    */
   public getLoginStatus(): Observable<LoginStatusResponse> {
-    return this.http.get<LoginStatusResponse>(`${this.apiUrl}/whatsapp/auth/login/status`, { withCredentials: true });
+    return this.http.get<LoginStatusResponse>(this.buildUrl('whatsapp/auth/login/status'), { withCredentials: true });
   }
 
   /**
    * Faz logout da API WhatsApp
    */
   public logout(): Observable<LogoutResponse> {
-    return this.http.post<LogoutResponse>(`${this.apiUrl}/whatsapp/auth/logout`, {}, { withCredentials: true });
+    return this.http.post<LogoutResponse>(this.buildUrl('whatsapp/auth/logout'), {}, { withCredentials: true });
   }
 }

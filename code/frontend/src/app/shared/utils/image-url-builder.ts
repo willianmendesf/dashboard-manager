@@ -1,6 +1,15 @@
 import { environment } from '../../../environments/environment';
 
 /**
+ * Constrói URL completa removendo barras duplicadas
+ */
+function buildApiUrl(path: string): string {
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  const baseUrl = environment.apiUrl.endsWith('/') ? environment.apiUrl : environment.apiUrl + '/';
+  return baseUrl + cleanPath;
+}
+
+/**
  * Builds image URLs like appointments component
  * Backend returns relative path (URI), frontend constructs the full URL
  * Handles both new format (relative path) and old format (full URLs with localhost)
@@ -33,7 +42,7 @@ export function buildFileImageUrl(pathOrFilename: string | null | undefined, fol
       // Try to extract folder and filename from URL
       const pathMatch = path.match(/\/api\/v1\/files\/([^\/]+)\/([^\/]+)$/);
       if (pathMatch) {
-        return `${environment.apiUrl}files/${pathMatch[1]}/${pathMatch[2]}`;
+        return buildApiUrl(`files/${pathMatch[1]}/${pathMatch[2]}`);
       }
     } catch (e) {
       console.warn('Failed to parse URL:', trimmed);
@@ -43,7 +52,7 @@ export function buildFileImageUrl(pathOrFilename: string | null | undefined, fol
   // If it's just a filename (fallback for old data), construct path
   // This should not happen with new uploads, but handles legacy data
   if (!trimmed.includes('/')) {
-    return `${environment.apiUrl}files/${folder}/${trimmed}`;
+    return buildApiUrl(`files/${folder}/${trimmed}`);
   }
 
   // If it's a relative path starting with /, use window.location.origin
@@ -52,7 +61,7 @@ export function buildFileImageUrl(pathOrFilename: string | null | undefined, fol
   }
 
   // Final fallback
-  return `${environment.apiUrl}files/${folder}/${trimmed}`;
+  return buildApiUrl(`files/${folder}/${trimmed}`);
 }
 
 /**
