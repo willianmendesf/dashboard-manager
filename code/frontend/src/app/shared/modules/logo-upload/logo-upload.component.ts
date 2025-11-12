@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { normalizeImageUrl } from '../../utils/url-normalizer';
 
 @Component({
   selector: 'app-logo-upload',
@@ -25,13 +26,12 @@ export class LogoUploadComponent implements OnInit {
 
   get displayLogoUrl(): string {
     if (!this.currentLogoUrl) return '';
-    if (this.currentLogoUrl.startsWith('http')) {
-      return this.currentLogoUrl;
+    const normalized = normalizeImageUrl(this.currentLogoUrl);
+    // If normalization returned default, try to construct from apiUrl
+    if (normalized === './img/avatar-default.png' && !this.currentLogoUrl.startsWith('/') && !this.currentLogoUrl.startsWith('http')) {
+      return `${this.apiUrl}files/logos/${this.currentLogoUrl}`;
     }
-    if (this.currentLogoUrl.startsWith('/')) {
-      return `${window.location.origin}${this.currentLogoUrl}`;
-    }
-    return `${this.apiUrl}files/logos/${this.currentLogoUrl}`;
+    return normalized;
   }
 
   onFileSelected(event: Event): void {

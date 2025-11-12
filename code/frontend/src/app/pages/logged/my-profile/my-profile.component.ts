@@ -10,6 +10,7 @@ import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.
 import { ModalComponent, ModalButton } from '../../../shared/modules/modal/modal.component';
 import { Observable, catchError, of, tap } from 'rxjs';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { normalizeImageUrl } from '../../../shared/utils/url-normalizer';
 
 interface UserProfile {
   id: number;
@@ -55,13 +56,7 @@ export class MyProfileComponent implements OnInit {
   profileData$!: Observable<UserProfile | null>;
 
   getProfilePhotoUrl(user: UserProfile | null): string {
-    if (user?.fotoUrl) {
-      if (user.fotoUrl.startsWith('/')) {
-        return `${window.location.origin}${user.fotoUrl}`;
-      }
-      return user.fotoUrl;
-    }
-    return './img/avatar-default.png';
+    return normalizeImageUrl(user?.fotoUrl);
   }
 
   ngOnInit(): void {

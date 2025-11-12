@@ -30,9 +30,6 @@ public class LocalStorageService implements StorageService {
     @Value("${file.images-dir:/opt/app/images}")
     private String imagesDirectory;
 
-    @Value("${app.base-url:http://localhost:8080}")
-    private String baseUrl;
-
     @Value("${image.quality:0.75}")
     private float imageQuality = 0.75f; // 75% quality by default
 
@@ -69,8 +66,8 @@ public class LocalStorageService implements StorageService {
             // Save processed image
             Files.write(filePath, processedImage);
 
-            // Return public URL
-            String publicUrl = String.format("%s/api/v1/files/%s/%s", baseUrl, folder, filename);
+            // Return relative URL (works in all environments)
+            String publicUrl = String.format("/api/v1/files/%s/%s", folder, filename);
             log.info("File uploaded, processed and saved successfully: {}", publicUrl);
             return publicUrl;
 

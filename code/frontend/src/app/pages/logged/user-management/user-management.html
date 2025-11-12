@@ -313,10 +313,10 @@
     @if (viewingUser) {
       <div class="visualizar-header">
         <img 
-          [src]="viewingUser.fotoUrl || 'img/avatar-default.png'"
+          [src]="getNormalizedPhotoUrl(viewingUser?.fotoUrl)"
           alt="Foto do usuário"
           class="visualizar-avatar"
-          onerror="this.src='img/avatar-default.png'"
+          onerror="this.src='./img/avatar-default.png'"
         />
         <h2>{{ viewingUser.name || 'Usuário' }}</h2>
       </div>

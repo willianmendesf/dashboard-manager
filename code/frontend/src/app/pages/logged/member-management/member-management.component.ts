@@ -16,6 +16,7 @@ import { SpousePreviewComponent } from './components/spouse-preview.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { GroupService, GroupDTO } from '../../../shared/service/group.service';
+import { normalizeImageUrl } from '../../../shared/utils/url-normalizer';
 
 @Component({
   selector: 'member-management',
@@ -891,6 +892,13 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
   formatImportProgress(progress: string): string {
     if (!progress) return '';
     return progress.replace(/\n/g, '<br>');
+  }
+
+  /**
+   * Normalize member photo URL for display
+   */
+  getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
+    return normalizeImageUrl(fotoUrl);
   }
 }
 

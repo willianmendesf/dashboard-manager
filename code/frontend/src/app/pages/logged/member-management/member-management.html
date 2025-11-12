@@ -475,7 +475,7 @@
     @if (viewingMember) {
       <div class="visualizar-header">
         <img 
-          [src]="viewingMember.fotoUrl || 'img/avatar-default.png'"
+          [src]="getNormalizedPhotoUrl(viewingMember?.fotoUrl)"
           alt="Foto do membro"
           class="visualizar-avatar"
           onerror="this.src='img/avatar-default.png'"

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, LoginResponse } from '../../shared/service/auth.service';
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
+import { normalizeImageUrl } from '../../shared/utils/url-normalizer';
 
 @Component({
   selector: 'app-user-header',
@@ -22,15 +23,7 @@ export class UserHeaderComponent {
   }
 
   get userPhotoUrl(): string {
-    const user = this.currentUser;
-    if (user?.fotoUrl) {
-      // If fotoUrl is a relative path, prepend API URL
-      if (user.fotoUrl.startsWith('/')) {
-        return `${window.location.origin}${user.fotoUrl}`;
-      }
-      return user.fotoUrl;
-    }
-    return './img/avatar-default.png';
+    return normalizeImageUrl(this.currentUser?.fotoUrl);
   }
 
   get userName(): string {

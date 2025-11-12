@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { normalizeImageUrl } from '../../utils/url-normalizer';
 
 @Component({
   selector: 'app-favicon-upload',
@@ -25,13 +26,12 @@ export class FaviconUploadComponent implements OnInit {
 
   get displayFaviconUrl(): string {
     if (!this.currentFaviconUrl) return '';
-    if (this.currentFaviconUrl.startsWith('http')) {
-      return this.currentFaviconUrl;
+    const normalized = normalizeImageUrl(this.currentFaviconUrl);
+    // If normalization returned default, try to construct from apiUrl
+    if (normalized === './img/avatar-default.png' && !this.currentFaviconUrl.startsWith('/') && !this.currentFaviconUrl.startsWith('http')) {
+      return `${this.apiUrl}files/favicons/${this.currentFaviconUrl}`;
     }
-    if (this.currentFaviconUrl.startsWith('/')) {
-      return `${window.location.origin}${this.currentFaviconUrl}`;
-    }
-    return `${this.apiUrl}files/favicons/${this.currentFaviconUrl}`;
+    return normalized;
   }
 
   onFileSelected(event: Event): void {

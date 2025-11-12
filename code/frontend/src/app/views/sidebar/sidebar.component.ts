@@ -6,6 +6,7 @@ import { NavigationIcons } from '../../shared/lib/utils/icons';
 import { AuthService } from '../../shared/service/auth.service';
 import { ConfigService } from '../../shared/service/config.service';
 import { catchError, of } from 'rxjs';
+import { normalizeImageUrl } from '../../shared/utils/url-normalizer';
 
 @Component({
   selector: 'app-sidebar',
@@ -117,14 +118,7 @@ export class SidebarComponent implements OnInit {
   }
 
   get userPhotoUrl(): string {
-    const user = this.currentUser;
-    if (user?.fotoUrl) {
-      if (user.fotoUrl.startsWith('/')) {
-        return `${window.location.origin}${user.fotoUrl}`;
-      }
-      return user.fotoUrl;
-    }
-    return './img/avatar-default.png';
+    return normalizeImageUrl(this.currentUser?.fotoUrl);
   }
 
   onImageError(event: Event): void {

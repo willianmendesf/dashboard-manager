@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of, Subject, takeUntil } from 'rxjs';
+import { normalizeImageUrl } from '../../../../shared/utils/url-normalizer';
 
 interface MemberSpouseDTO {
   nomeCompleto: string;
@@ -33,10 +34,10 @@ interface MemberSpouseDTO {
       @if (!isLoading && !hasError && conjugue) {
         <div class="spouse-details-box">
           <img 
-            [src]="conjugue.fotoUrl || 'img/avatar-default.png'" 
+            [src]="getNormalizedPhotoUrl(conjugue?.fotoUrl)" 
             alt="Foto do Cônjuge"
             class="spouse-avatar"
-            onerror="this.src='img/avatar-default.png'"
+            onerror="this.src='./img/avatar-default.png'"
           />
           <div class="spouse-text-details">
             <h3>{{ conjugue.nomeCompleto }}</h3>
@@ -227,6 +228,10 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     return celular;
   }
   
+  getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
+    return normalizeImageUrl(fotoUrl);
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
