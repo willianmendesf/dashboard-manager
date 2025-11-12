@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConfigService, Configuration } from '../../../shared/service/config.service';
@@ -9,7 +9,7 @@ import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.
 import { IfHasPermissionDirective } from '../../../shared/directives/if-has-permission.directive';
 import { CronSelectorComponent } from '../../../shared/modules/cron-selector/cron-selector.component';
 import { environment } from '../../../../environments/environment';
-import { timeout, catchError, of, Observable, tap } from 'rxjs';
+import { timeout, catchError, of, Observable, tap, finalize, takeUntil, Subject } from 'rxjs';
 import { NotificationService } from '../../../shared/services/notification.service';
 
 @Component({
@@ -19,13 +19,14 @@ import { NotificationService } from '../../../shared/services/notification.servi
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
   settingsForm!: FormGroup;
   configurations$!: Observable<Configuration[]>;
   saving = false;
   logoUrl: string | null = null;
   faviconUrl: string | null = null;
   apiUrl = environment.apiUrl;
+  private destroy$ = new Subject<void>();
 
   // Objetos para os cron selectors (similar ao currentAppointment)
   jobWeeklyReports = { schedule: '0 9 * * 1' };
@@ -42,7 +43,8 @@ export class SettingsComponent implements OnInit {
     private fb: FormBuilder,
     private configService: ConfigService,
     private apiService: ApiService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {
     // Form será inicializado no ngOnInit
   }
@@ -50,8 +52,34 @@ export class SettingsComponent implements OnInit {
   ngOnInit(): void {
     // Inicializar formulário primeiro
     this.initializeForm();
+    // Configurar reatividade do campo de intervalo baseado no checkbox
+    this.setupAutoReconnectIntervalControl();
     // Depois carregar configurações
     this.loadConfigurations();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Configura a reatividade do campo de intervalo baseado no checkbox de reconexão automática
+   */
+  private setupAutoReconnectIntervalControl(): void {
+    const enabledControl = this.settingsForm.get('whatsappAutoReconnectEnabled');
+    
+    if (!enabledControl) return;
+
+    // Aplicar estado inicial
+    this.updateIntervalControlState();
+
+    // Observar mudanças no checkbox
+    enabledControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.updateIntervalControlState();
+      });
   }
 
   /**
@@ -167,6 +195,25 @@ export class SettingsComponent implements OnInit {
       whatsAppSecurityAlerts: this.parseBoolean(configMap.get('WHATSAPP_SECURITY_ALERTS'), false),
       whatsappApiUrl: configMap.get('API_WTZ_URL') || '',
     });
+    
+    // Atualizar estado do campo de intervalo após popular o formulário
+    this.updateIntervalControlState();
+  }
+
+  /**
+   * Atualiza o estado do campo de intervalo baseado no valor atual do checkbox
+   */
+  private updateIntervalControlState(): void {
+    const intervalControl = this.settingsForm.get('whatsappAutoReconnectIntervalMinutes');
+    const enabledControl = this.settingsForm.get('whatsappAutoReconnectEnabled');
+    
+    if (!intervalControl || !enabledControl) return;
+
+    if (enabledControl.value) {
+      intervalControl.enable();
+    } else {
+      intervalControl.disable();
+    }
   }
 
   /**
@@ -329,26 +376,39 @@ export class SettingsComponent implements OnInit {
       configurationsToSave['WHATSAPP_API_PASSWORD'] = formValue.whatsappApiPassword;
     }
 
-    this.configService.updateConfigurations(configurationsToSave).subscribe({
-      next: () => {
-        // Inject CSS variables for white-label
-        this.injectCSSVariables(configurationsToSave);
-        // Update favicon if changed
-        if (configurationsToSave['FAVICON_URL']) {
-          this.updateFaviconInDOM(configurationsToSave['FAVICON_URL']);
-        } else if (formValue.faviconUrl === '') {
-          this.updateFaviconInDOM(null);
+    this.configService.updateConfigurations(configurationsToSave)
+      .pipe(
+        finalize(() => {
+          // Garantir que saving seja sempre resetado, mesmo em caso de erro não tratado
+          this.saving = false;
+          // Forçar detecção de mudanças para atualizar UI
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          // Inject CSS variables for white-label
+          this.injectCSSVariables(configurationsToSave);
+          // Update favicon if changed
+          if (configurationsToSave['FAVICON_URL']) {
+            this.updateFaviconInDOM(configurationsToSave['FAVICON_URL']);
+          } else if (formValue.faviconUrl === '') {
+            this.updateFaviconInDOM(null);
+          }
+          this.notificationService.showSuccess('Configurações salvas com sucesso!');
+          this.loadConfigurations(); // Recarregar para garantir sincronização
+          // Resetar saving explicitamente no next também
+          this.saving = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Erro ao salvar configurações:', error);
+          this.notificationService.showError('Erro ao salvar configurações. Tente novamente.');
+          // Resetar saving explicitamente no error também
+          this.saving = false;
+          this.cdr.detectChanges();
         }
-        this.notificationService.showSuccess('Configurações salvas com sucesso!');
-        this.saving = false;
-        this.loadConfigurations(); // Recarregar para garantir sincronização
-      },
-      error: (error) => {
-        console.error('Erro ao salvar configurações:', error);
-        this.notificationService.showError('Erro ao salvar configurações. Tente novamente.');
-        this.saving = false;
-      }
-    });
+      });
   }
 
   /**
