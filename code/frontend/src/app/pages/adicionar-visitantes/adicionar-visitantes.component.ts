@@ -6,14 +6,14 @@ import { NotificationService } from '../../shared/services/notification.service'
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
-  selector: 'app-add-visitors',
+  selector: 'app-adicionar-visitantes',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgxMaskDirective],
   providers: [provideNgxMask()],
-  templateUrl: './add-visitors.component.html',
-  styleUrl: './add-visitors.component.scss'
+  templateUrl: './adicionar-visitantes.component.html',
+  styleUrl: './adicionar-visitantes.component.scss'
 })
-export class AddVisitorsComponent implements OnInit {
+export class AdicionarVisitantesComponent implements OnInit {
   visitorForm: FormGroup;
   isLoading = false;
   estadosBR = [

@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
-import { AnalyticsComponent } from './pages/analytics/analytics.component';
-import { ProjectsComponent } from './pages/projects/projects.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { MessagesComponent } from './pages/messages/messages.component';
 import { UserManagementComponent } from './pages/user-management/user-management.component';
@@ -17,7 +15,7 @@ import { PermissionGuard } from './shared/guards/permission.guard';
 
 import { AtualizarCadastroComponent } from './pages/atualizar-cadastro/atualizar-cadastro.component';
 import { GroupManagementComponent } from './pages/group-management/group-management.component';
-import { AddVisitorsComponent } from './pages/add-visitors/add-visitors.component';
+import { AdicionarVisitantesComponent } from './pages/adicionar-visitantes/adicionar-visitantes.component';
 import { VisitorManagementComponent } from './pages/visitor-management/visitor-management.component';
 
 export const routes: Routes = [
@@ -26,7 +24,7 @@ export const routes: Routes = [
   { path: 'esqueci-senha', component: SolicitarResetComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'atualizar-cadastro', component: AtualizarCadastroComponent },
-  { path: 'add-visitors', component: AddVisitorsComponent },
+  { path: 'adicionar-visitantes', component: AdicionarVisitantesComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,
@@ -48,11 +46,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   { 
-    path: 'projects', 
-    component: ProjectsComponent,
-    canActivate: [AuthGuard]
-  },
-  { 
     path: 'messages', 
     component: MessagesComponent,
     canActivate: [AuthGuard]
@@ -60,11 +53,6 @@ export const routes: Routes = [
   { 
     path: 'whatsapp', 
     component: WhatsAppComponent,
-    canActivate: [AuthGuard]
-  },
-  { 
-    path: 'analytics', 
-    component: AnalyticsComponent,
     canActivate: [AuthGuard]
   },
   { 
