@@ -196,14 +196,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
               ? user.profileName 
               : 'USER';
             
-            // Debug: log para verificar o que está vindo do backend
-            console.log('User recebido do backend:', {
-              id: user.id,
-              username: user.username,
-              profileName: user.profileName,
-              profileId: user.profileId
-            });
-            
           // Adicionar timestamp à fotoUrl para cache busting se existir
           let fotoUrl = user.fotoUrl || null;
           if (fotoUrl && fotoUrl.trim() !== '') {
@@ -732,7 +724,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   getRoleForDisplay(row: any): string {
     // Método helper para garantir que sempre retorne um valor válido
     const value = row?.profileName || row?.role || 'USER';
-    console.log('getRoleForDisplay chamado para row:', row, 'retornando:', value);
     return value;
   }
 

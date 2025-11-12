@@ -193,7 +193,6 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: (stats) => {
-          console.log('Visitor stats received:', stats);
           
           if (!stats || stats.length === 0) {
             this.lineChartData = {
@@ -249,9 +248,6 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
               data: data
             }]
           };
-          
-          console.log('Chart data:', data);
-          console.log('Chart labels:', labels);
           
           this.cdr.detectChanges();
         },
@@ -439,8 +435,6 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       estado: estadoValue
     };
     
-    console.log('Sending update data:', JSON.stringify(visitorData, null, 2));
-
     if (this.isEditing && this.currentVisitor.id) {
       this.visitorService.update(this.currentVisitor.id, visitorData)
         .pipe(takeUntil(this.unsubscribe$))

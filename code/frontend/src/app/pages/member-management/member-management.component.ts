@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -25,7 +25,7 @@ import { GroupService, GroupDTO } from '../../shared/service/group.service';
   imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe, DataTableComponent, NgxMaskDirective, SpousePreviewComponent],
   providers: [provideNgxMask()]
 })
-export class MemberManagementComponent implements OnInit, OnDestroy {
+export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
@@ -244,6 +244,9 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.getMembers();
+  }
+
+  ngAfterViewInit() {
     this.loadGroups();
   }
 
@@ -252,13 +255,12 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: (groups) => {
-          this.availableGroups = groups;
-          setTimeout(() => {
-            this.cdr.detectChanges();
-          }, 0);
+          this.availableGroups = groups || [];
+          this.cdr.markForCheck();
         },
         error: (err) => {
           console.error('Error loading groups:', err);
+          this.availableGroups = [];
         }
       });
   }

@@ -92,7 +92,6 @@ export class SettingsComponent implements OnInit {
       .pipe(
         timeout(10000), // Timeout de 10 segundos
         tap((configs) => {
-          console.log('Configurações carregadas:', configs);
           this.populateFormFromConfigurations(configs || []);
           this.loadCSSVariables(configs || []); // Load CSS variables on init
           
@@ -163,9 +162,6 @@ export class SettingsComponent implements OnInit {
     
     // Salvar automaticamente a URL do logo no backend
     this.configService.updateConfiguration('LOGO_URL', logoUrl).subscribe({
-      next: () => {
-        console.log('Logo URL salva com sucesso');
-      },
       error: (error) => {
         console.error('Erro ao salvar URL do logo:', error);
       }
@@ -181,9 +177,6 @@ export class SettingsComponent implements OnInit {
     
     // Remover logo do backend
     this.configService.updateConfiguration('LOGO_URL', '').subscribe({
-      next: () => {
-        console.log('Logo removido com sucesso');
-      },
       error: (error) => {
         console.error('Erro ao remover logo:', error);
       }

@@ -202,7 +202,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck()
       },
       error: error => console.error(error),
-      complete: () => console.log("Get all suscess!")
   });
   }
 
