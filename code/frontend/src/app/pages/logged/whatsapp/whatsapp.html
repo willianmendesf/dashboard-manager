@@ -4,6 +4,47 @@
     subtitle="Envio de mensagens para grupos e pessoas via whatsapp"
   ></pagetitle>
 
+  <!-- Status de Conexão -->
+  <div class="connection-status-card" *ngIf="connectionStatus">
+    <div class="status-content">
+      <div class="status-indicator">
+        <span class="status-badge" [class.connected]="connectionStatus.is_connected" [class.disconnected]="!connectionStatus.is_connected">
+          <span class="status-dot"></span>
+          {{ connectionStatus.is_connected ? 'Conectado' : 'Desconectado' }}
+        </span>
+        <span class="status-details" *ngIf="connectionStatus.is_logged_in">
+          • Logado
+        </span>
+        <span class="status-details" *ngIf="connectionStatus.device_id">
+          • {{ connectionStatus.device_id }}
+        </span>
+      </div>
+      <div class="status-actions">
+        <button 
+          class="btn-reconnect" 
+          (click)="manualReconnect()" 
+          [disabled]="isReconnecting"
+          [class.loading]="isReconnecting"
+        >
+          {{ isReconnecting ? 'Reconectando...' : 'Reconectar Agora' }}
+        </button>
+        <label class="toggle-auto-reconnect">
+          <input 
+            type="checkbox" 
+            [checked]="isAutoReconnectEnabled" 
+            (change)="toggleAutoReconnect()"
+          />
+          <span>Reconexão Automática</span>
+          <small *ngIf="isAutoReconnectEnabled">(a cada {{ autoReconnectIntervalMinutes }} min)</small>
+        </label>
+      </div>
+    </div>
+    <div class="status-footer">
+      <small>Última verificação: {{ formatLastCheck() }}</small>
+      <small *ngIf="connectionStatus.error" class="error-text">Erro: {{ connectionStatus.error }}</small>
+    </div>
+  </div>
+
   <div class="whatsapp-layout">
     <!-- <wtz-sidebar
       [searchTerm]="searchTerm"

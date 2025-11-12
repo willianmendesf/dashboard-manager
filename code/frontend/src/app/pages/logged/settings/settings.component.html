@@ -94,6 +94,68 @@
               </div>
 
               <div class="setting-item section-divider">
+                <h3 class="section-subtitle">Configurações de Conexão WhatsApp</h3>
+              </div>
+
+              <div class="setting-item">
+                <label>Usuário API WhatsApp (Basic Auth)</label>
+                <input 
+                  type="text" 
+                  formControlName="whatsappApiUsername"
+                  placeholder="usuario"
+                  autocomplete="off"
+                />
+                <small class="field-hint">
+                  Usuário para autenticação Basic Auth na API externa do WhatsApp.
+                  Se não configurado, será usado o valor do arquivo .env como fallback.
+                </small>
+              </div>
+
+              <div class="setting-item">
+                <label>Senha API WhatsApp (Basic Auth)</label>
+                <input 
+                  type="password" 
+                  formControlName="whatsappApiPassword"
+                  placeholder="Digite a senha"
+                  autocomplete="off"
+                />
+                <small class="field-hint">
+                  Senha para autenticação Basic Auth na API externa do WhatsApp.
+                  Se não configurado, será usado o valor do arquivo .env como fallback.
+                </small>
+              </div>
+
+              <div class="setting-toggle">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    formControlName="whatsappAutoReconnectEnabled"
+                  />
+                  <span class="toggle-slider"></span>
+                  Reconexão Automática
+                </label>
+                <small class="field-hint">
+                  Ativa reconexão automática quando a conexão WhatsApp for perdida.
+                </small>
+              </div>
+
+              <div class="setting-item">
+                <label>Intervalo de Reconexão (minutos)</label>
+                <input 
+                  type="number" 
+                  formControlName="whatsappAutoReconnectIntervalMinutes"
+                  placeholder="60"
+                  min="1"
+                  max="1440"
+                  autocomplete="off"
+                />
+                <small class="field-hint">
+                  Intervalo em minutos para verificar e reconectar automaticamente (mín: 1, máx: 1440).
+                  Padrão: 60 minutos.
+                </small>
+              </div>
+
+              <div class="setting-item section-divider">
                 <h3 class="section-subtitle">Outras Configurações</h3>
               </div>
               

@@ -83,6 +83,12 @@ export class SettingsComponent implements OnInit {
       whatsAppWeeklyReports: [false],
       whatsAppSecurityAlerts: [false],
       whatsappApiUrl: [''],
+      
+      // WhatsApp - Connection
+      whatsappApiUsername: [''],
+      whatsappApiPassword: [''],
+      whatsappAutoReconnectEnabled: [true],
+      whatsappAutoReconnectIntervalMinutes: [60, [Validators.min(1), Validators.max(1440)]],
     });
   }
 
@@ -146,6 +152,12 @@ export class SettingsComponent implements OnInit {
       // System - API Keys (não carregamos valores reais por segurança)
       apiKeyExternalService1: configMap.get('API_KEY_EXTERNAL_SERVICE_1') ? '******' : '',
       apiKeyExternalService2: configMap.get('API_KEY_EXTERNAL_SERVICE_2') ? '******' : '',
+      
+      // WhatsApp - Connection
+      whatsappApiUsername: configMap.get('WHATSAPP_API_USERNAME') || '',
+      whatsappApiPassword: configMap.get('WHATSAPP_API_PASSWORD') ? '******' : '',
+      whatsappAutoReconnectEnabled: configMap.get('WHATSAPP_AUTO_RECONNECT_ENABLED') === 'true' || configMap.get('WHATSAPP_AUTO_RECONNECT_ENABLED') === null,
+      whatsappAutoReconnectIntervalMinutes: parseInt(configMap.get('WHATSAPP_AUTO_RECONNECT_INTERVAL_MINUTES') || '60', 10),
       
       // Notifications
       notificationsEmail: this.parseBoolean(configMap.get('NOTIFICATIONS_EMAIL'), true),
@@ -288,6 +300,10 @@ export class SettingsComponent implements OnInit {
       WHATSAPP_WEEKLY_REPORTS: String(formValue.whatsAppWeeklyReports),
       WHATSAPP_SECURITY_ALERTS: String(formValue.whatsAppSecurityAlerts),
       API_WTZ_URL: formValue.whatsappApiUrl || '',
+      
+      // WhatsApp - Connection
+      WHATSAPP_AUTO_RECONNECT_ENABLED: String(formValue.whatsappAutoReconnectEnabled),
+      WHATSAPP_AUTO_RECONNECT_INTERVAL_MINUTES: String(formValue.whatsappAutoReconnectIntervalMinutes || 60),
     };
 
     // Atualizar API keys apenas se não forem ****** ou vazias
@@ -301,6 +317,16 @@ export class SettingsComponent implements OnInit {
         formValue.apiKeyExternalService2 !== '******' && 
         formValue.apiKeyExternalService2.trim() !== '') {
       configurationsToSave['API_KEY_EXTERNAL_SERVICE_2'] = formValue.apiKeyExternalService2;
+    }
+    
+    // Atualizar credenciais WhatsApp apenas se não forem ****** ou vazias
+    if (formValue.whatsappApiUsername && formValue.whatsappApiUsername.trim() !== '') {
+      configurationsToSave['WHATSAPP_API_USERNAME'] = formValue.whatsappApiUsername;
+    }
+    if (formValue.whatsappApiPassword && 
+        formValue.whatsappApiPassword !== '******' && 
+        formValue.whatsappApiPassword.trim() !== '') {
+      configurationsToSave['WHATSAPP_API_PASSWORD'] = formValue.whatsappApiPassword;
     }
 
     this.configService.updateConfigurations(configurationsToSave).subscribe({

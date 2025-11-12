@@ -6,6 +6,169 @@
   flex-direction: column;
 }
 
+// Card de Status de Conexão
+.connection-status-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 24px;
+  border-left: 4px solid #E5E7EB;
+  
+  .status-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9CA3AF;
+    }
+    
+    &.connected {
+      background: #D1FAE5;
+      color: #065F46;
+      border-left: 4px solid #10B981;
+      
+      .status-dot {
+        background: #10B981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+      }
+    }
+    
+    &.disconnected {
+      background: #FEE2E2;
+      color: #991B1B;
+      border-left: 4px solid #EF4444;
+      
+      .status-dot {
+        background: #EF4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+      }
+    }
+  }
+  
+  .status-details {
+    color: #6B7280;
+    font-size: 13px;
+  }
+  
+  .status-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .btn-reconnect {
+    padding: 8px 16px;
+    background: #25D366;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover:not(:disabled) {
+      background: #20BA5A;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(37, 211, 102, 0.3);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    &.loading {
+      position: relative;
+      color: transparent;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+    }
+  }
+  
+  .toggle-auto-reconnect {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    small {
+      color: #6B7280;
+      font-size: 12px;
+    }
+  }
+  
+  .status-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #E5E7EB;
+    flex-wrap: wrap;
+    gap: 8px;
+    
+    small {
+      color: #6B7280;
+      font-size: 12px;
+      
+      &.error-text {
+        color: #EF4444;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .page-header {
   margin-bottom: 24px;
 }

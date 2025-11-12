@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,9 @@ public class WhatsappSenderService {
     private String cachedApiNodeUrl = null;
     private boolean cacheValid = false;
     private String cachedSource = null;
+    
+    private String cachedBasicAuth = null;
+    private boolean basicAuthCacheValid = false;
 
     /**
      * Obtém a URL da API do WhatsApp com fallback em 3 níveis:
@@ -103,20 +108,125 @@ public class WhatsappSenderService {
     }
 
     /**
-     * Invalida o cache, forçando a busca da URL novamente na próxima requisição
-     * Útil quando a URL é atualizada no banco de dados
+     * Obtém as credenciais Basic Auth com fallback em 3 níveis:
+     * 1. Banco de dados (ConfigService) - Prioridade máxima (com cache)
+     * 2. Variável de ambiente APP_BASIC_AUTH (formato usuario:senha) - Fallback
+     * 3. Variáveis de ambiente separadas WHATSAPP_API_USERNAME e WHATSAPP_API_PASSWORD - Último recurso
+     * 
+     * @return String Base64 para header Authorization ou null se não configurado
+     */
+    private String getBasicAuthCredentials() {
+        // Se o cache é válido, retorna o valor em cache
+        if (basicAuthCacheValid && cachedBasicAuth != null) {
+            return cachedBasicAuth;
+        }
+
+        String username = null;
+        String password = null;
+
+        // Prioridade 1: Tentar buscar do banco de dados
+        try {
+            username = configService.get("WHATSAPP_API_USERNAME");
+            password = configService.get("WHATSAPP_API_PASSWORD");
+            if (username != null && !username.trim().isEmpty() && 
+                password != null && !password.trim().isEmpty()) {
+                String credentials = username + ":" + password;
+                cachedBasicAuth = Base64.getEncoder().encodeToString(credentials.getBytes());
+                basicAuthCacheValid = true;
+                log.debug("WhatsApp Basic Auth obtido do banco de dados");
+                return cachedBasicAuth;
+            }
+        } catch (Exception e) {
+            log.warn("Erro ao buscar credenciais Basic Auth do banco de dados: {}", e.getMessage());
+        }
+
+        // Prioridade 2: Tentar buscar da variável de ambiente APP_BASIC_AUTH (formato usuario:senha)
+        try {
+            Dotenv dotenv = Dotenv.configure()
+                    .ignoreIfMissing()
+                    .load();
+            String basicAuth = dotenv.get("APP_BASIC_AUTH");
+            if (basicAuth != null && !basicAuth.trim().isEmpty()) {
+                if (basicAuth.contains(":")) {
+                    cachedBasicAuth = Base64.getEncoder().encodeToString(basicAuth.getBytes());
+                    basicAuthCacheValid = false; // Não cachear de env
+                    log.debug("WhatsApp Basic Auth obtido do arquivo .env (APP_BASIC_AUTH)");
+                    return cachedBasicAuth;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Erro ao buscar APP_BASIC_AUTH do arquivo .env: {}", e.getMessage());
+        }
+
+        // Prioridade 3: Tentar variáveis de ambiente do sistema
+        try {
+            String envBasicAuth = System.getenv("APP_BASIC_AUTH");
+            if (envBasicAuth != null && !envBasicAuth.trim().isEmpty() && envBasicAuth.contains(":")) {
+                cachedBasicAuth = Base64.getEncoder().encodeToString(envBasicAuth.getBytes());
+                basicAuthCacheValid = false;
+                log.debug("WhatsApp Basic Auth obtido da variável de ambiente do sistema");
+                return cachedBasicAuth;
+            }
+            
+            // Tentar variáveis separadas
+            username = System.getenv("WHATSAPP_API_USERNAME");
+            password = System.getenv("WHATSAPP_API_PASSWORD");
+            if (username != null && !username.trim().isEmpty() && 
+                password != null && !password.trim().isEmpty()) {
+                String credentials = username + ":" + password;
+                cachedBasicAuth = Base64.getEncoder().encodeToString(credentials.getBytes());
+                basicAuthCacheValid = false;
+                log.debug("WhatsApp Basic Auth obtido das variáveis de ambiente do sistema");
+                return cachedBasicAuth;
+            }
+        } catch (Exception e) {
+            log.warn("Erro ao buscar credenciais Basic Auth das variáveis de ambiente: {}", e.getMessage());
+        }
+
+        // Se não encontrou, retorna null (requisições sem autenticação)
+        log.debug("Basic Auth não configurado - requisições serão feitas sem autenticação");
+        return null;
+    }
+
+    /**
+     * Invalida o cache, forçando a busca da URL e credenciais novamente na próxima requisição
+     * Útil quando a URL ou credenciais são atualizadas no banco de dados
      */
     public void invalidateCache() {
         cacheValid = false;
         cachedApiNodeUrl = null;
         cachedSource = null;
-        log.debug("Cache da URL do WhatsApp invalidado");
+        basicAuthCacheValid = false;
+        cachedBasicAuth = null;
+        log.debug("Cache da URL e Basic Auth do WhatsApp invalidado");
     }
 
     public <T> HttpEntity<T> createRequestEntity(T body) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        // Adicionar Basic Auth se configurado
+        String basicAuth = getBasicAuthCredentials();
+        if (basicAuth != null) {
+            headers.set("Authorization", "Basic " + basicAuth);
+        }
+        
         return new HttpEntity<>(body, headers);
+    }
+    
+    /**
+     * Cria HttpEntity para requisições GET sem body
+     */
+    public HttpEntity<Void> createGetRequestEntity() {
+        HttpHeaders headers = new HttpHeaders();
+        
+        // Adicionar Basic Auth se configurado
+        String basicAuth = getBasicAuthCredentials();
+        if (basicAuth != null) {
+            headers.set("Authorization", "Basic " + basicAuth);
+        }
+        
+        return new HttpEntity<>(headers);
     }
 
     public ResponseEntity<String> sendRequest(String endpoint, HttpEntity<?> requestEntity) {
@@ -125,7 +235,7 @@ public class WhatsappSenderService {
             ResponseEntity<String> response;
 
             if (requestEntity.getBody() == null)
-                response = restTemplate.getForEntity(apiNodeUrl + endpoint, String.class, requestEntity, String.class);
+                response = restTemplate.exchange(apiNodeUrl + endpoint, HttpMethod.GET, requestEntity, String.class);
             else
                 response = restTemplate.postForEntity(apiNodeUrl + endpoint, requestEntity, String.class);
 
@@ -148,5 +258,13 @@ public class WhatsappSenderService {
             invalidateCache();
             throw e;
         }
+    }
+    
+    /**
+     * Envia requisição GET para a API externa
+     */
+    public ResponseEntity<String> sendGetRequest(String endpoint) {
+        HttpEntity<Void> requestEntity = createGetRequestEntity();
+        return sendRequest(endpoint, requestEntity);
     }
 }

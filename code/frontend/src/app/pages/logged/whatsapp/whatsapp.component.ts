@@ -1,11 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../../../shared/service/api.service';
+import { WhatsappsService, ConnectionStatus, AutoReconnectStatus } from '../../../shared/service/whatsapp.service';
 import { PageTitleComponent } from "../../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../../shared/modules/modal/modal.component';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, interval } from 'rxjs';
 import { NavigationIcons, StatusIcons, MessageIcons } from '../../../shared/lib/utils/icons';
 
 @Component({
@@ -15,7 +16,7 @@ import { NavigationIcons, StatusIcons, MessageIcons } from '../../../shared/lib/
   templateUrl:'./whatsapp.html',
   styleUrl: './whatsapp.scss'
 })
-export class WhatsAppComponent implements OnInit {
+export class WhatsAppComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
 
@@ -40,13 +41,33 @@ export class WhatsAppComponent implements OnInit {
   filteredContacts: Contact[] = [];
   filteredGroups: Group[] = [];
 
+  // Status de conexão
+  connectionStatus: ConnectionStatus | null = null;
+  isAutoReconnectEnabled: boolean = false;
+  autoReconnectIntervalMinutes: number = 60;
+  lastStatusCheck: Date | null = null;
+  isReconnecting: boolean = false;
+  statusCheckInterval: any = null;
+
   ngOnInit() {
     this.getContacts();
     this.getGroups();
+    this.loadConnectionStatus();
+    this.loadAutoReconnectStatus();
+    this.startStatusPolling();
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+    if (this.statusCheckInterval) {
+      clearInterval(this.statusCheckInterval);
+    }
   }
 
   constructor(
     private api : ApiService,
+    private whatsappService: WhatsappsService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -361,5 +382,97 @@ export class WhatsAppComponent implements OnInit {
         action: () => this.showRecipientInfo = false
       }
     ];
+  }
+
+  // Métodos de conexão
+  loadConnectionStatus() {
+    this.whatsappService.getConnectionStatus()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (status) => {
+          this.connectionStatus = status;
+          this.lastStatusCheck = new Date();
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Erro ao carregar status da conexão:', error);
+          this.connectionStatus = {
+            is_connected: false,
+            is_logged_in: false,
+            error: 'Erro ao verificar status'
+          };
+          this.lastStatusCheck = new Date();
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  loadAutoReconnectStatus() {
+    this.whatsappService.getAutoReconnectStatus()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (status) => {
+          this.isAutoReconnectEnabled = status.enabled;
+          this.autoReconnectIntervalMinutes = status.intervalMinutes;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Erro ao carregar status de reconexão automática:', error);
+        }
+      });
+  }
+
+  manualReconnect() {
+    if (this.isReconnecting) return;
+    
+    this.isReconnecting = true;
+    this.whatsappService.reconnect()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (result) => {
+          this.isReconnecting = false;
+          if (result.success) {
+            // Recarregar status após reconexão
+            setTimeout(() => this.loadConnectionStatus(), 2000);
+          }
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Erro ao reconectar:', error);
+          this.isReconnecting = false;
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  toggleAutoReconnect() {
+    const newValue = !this.isAutoReconnectEnabled;
+    this.whatsappService.toggleAutoReconnect(newValue)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => {
+          this.isAutoReconnectEnabled = newValue;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Erro ao alterar reconexão automática:', error);
+        }
+      });
+  }
+
+  startStatusPolling() {
+    // Atualizar status a cada 30 segundos
+    this.statusCheckInterval = setInterval(() => {
+      this.loadConnectionStatus();
+    }, 30000);
+  }
+
+  formatLastCheck(): string {
+    if (!this.lastStatusCheck) return 'Nunca';
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - this.lastStatusCheck.getTime()) / 1000);
+    if (diff < 60) return 'Agora';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
+    return this.lastStatusCheck.toLocaleTimeString('pt-BR');
   }
 }
