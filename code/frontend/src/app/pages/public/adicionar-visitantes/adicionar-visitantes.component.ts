@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { PublicVisitorService, CreateVisitorDTO } from '../../../shared/service/public-visitor.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
@@ -8,7 +9,7 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 @Component({
   selector: 'app-adicionar-visitantes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, NgxMaskDirective],
   providers: [provideNgxMask()],
   templateUrl: './adicionar-visitantes.component.html',
   styleUrl: './adicionar-visitantes.component.scss'
@@ -25,7 +26,8 @@ export class AdicionarVisitantesComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private visitorService: PublicVisitorService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private router: Router
   ) {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -121,6 +123,10 @@ export class AdicionarVisitantesComponent implements OnInit {
         this.markFormGroupTouched(control);
       }
     });
+  }
+
+  goToLanding(): void {
+    this.router.navigate(['/landing']);
   }
 }
 

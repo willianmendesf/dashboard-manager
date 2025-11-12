@@ -1,0 +1,30 @@
+<div class="landing-container">
+  <div class="landing-content">
+    <!-- Logo no topo -->
+    <div class="logo-section">
+      <img 
+        [src]="logoUrl()" 
+        alt="Logo" 
+        class="logo-image"
+        (error)="onLogoError($event)"
+      />
+    </div>
+    
+    <!-- Links empilhados verticalmente (estilo Linktree) -->
+    <div class="links-container">
+      <a routerLink="/atualizar-cadastro" class="link-card">
+        <span class="link-text">Atualizar Cadastro</span>
+      </a>
+      
+      <a routerLink="/adicionar-visitantes" class="link-card">
+        <span class="link-text">Adicionar Visitantes</span>
+      </a>
+      
+      <!-- Login é sempre a última opção -->
+      <a routerLink="/login" class="link-card link-card-primary">
+        <span class="link-text">Fazer Login</span>
+      </a>
+    </div>
+  </div>
+</div>
+

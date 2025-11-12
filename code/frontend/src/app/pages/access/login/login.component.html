@@ -3,6 +3,11 @@
     <div class="login-header">
       <h1>Login</h1>
       <p>Entre com suas credenciais para acessar o sistema</p>
+      <div class="header-actions">
+        <button type="button" class="btn-link" (click)="goToLanding()">
+          ← Voltar
+        </button>
+      </div>
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">

@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { PublicMemberService, MemberDTO, UpdateMemberDTO } from '../../../shared/service/public-member.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { GroupService, GroupDTO } from '../../../shared/service/group.service';
@@ -54,7 +55,7 @@ function conjugueCpfValidator(control: AbstractControl): ValidationErrors | null
 @Component({
   selector: 'app-atualizar-cadastro',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, NgxMaskDirective],
   providers: [provideNgxMask()],
   templateUrl: './atualizar-cadastro.component.html',
   styleUrl: './atualizar-cadastro.component.scss'
@@ -74,7 +75,8 @@ export class AtualizarCadastroComponent implements OnInit {
     private memberService: PublicMemberService,
     private notificationService: NotificationService,
     private groupService: GroupService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {
 
     this.searchForm = this.fb.group({
@@ -313,6 +315,10 @@ export class AtualizarCadastroComponent implements OnInit {
 
   isGroupSelected(groupId: number): boolean {
     return this.selectedGroupIds.includes(groupId);
+  }
+
+  goToLanding(): void {
+    this.router.navigate(['/landing']);
   }
 }
 

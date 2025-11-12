@@ -19,6 +19,7 @@
 .login-header {
   text-align: center;
   margin-bottom: 32px;
+  position: relative;
 
   h1 {
     margin: 0 0 8px 0;
@@ -31,6 +32,25 @@
     margin: 0;
     color: #6B7280;
     font-size: 14px;
+  }
+
+  .header-actions {
+    text-align: right;
+    margin-top: 16px;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: #667eea;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    text-decoration: underline;
+
+    &:hover {
+      color: #764ba2;
+    }
   }
 }
 

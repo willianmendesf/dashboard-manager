@@ -3,6 +3,13 @@
     <div class="header">
       <h1>Atualização Cadastral</h1>
       <p class="subtitle">Atualize seus dados cadastrais informando seu CPF</p>
+      @if (!showEditForm) {
+        <div class="header-actions">
+          <button type="button" class="btn-link" (click)="goToLanding()">
+            ← Voltar
+          </button>
+        </div>
+      }
     </div>
 
     @if (!showEditForm) {

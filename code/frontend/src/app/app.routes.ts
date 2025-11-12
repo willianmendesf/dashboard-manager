@@ -18,9 +18,11 @@ import { GroupManagementComponent } from './pages/logged/group-management/group-
 import { AdicionarVisitantesComponent } from './pages/public/adicionar-visitantes/adicionar-visitantes.component';
 import { VisitorManagementComponent } from './pages/logged/visitor-management/visitor-management.component';
 import { NotFoundComponent } from './pages/logged/not-found/not-found.component';
+import { LandingComponent } from './pages/public/landing/landing.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
+  { path: '', redirectTo: '/landing', pathMatch: 'full' },
+  { path: 'landing', component: LandingComponent },
   { path: 'login', component: LoginComponent },
   { path: 'esqueci-senha', component: SolicitarResetComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
