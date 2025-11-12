@@ -37,14 +37,10 @@
         <p>Carregando QR code...</p>
       </div>
 
-      <!-- QR Code carregado - sem overlay de loading quando já está carregado -->
+      <!-- QR Code carregado - sem overlay bloqueando a imagem -->
       <div class="qr-code-wrapper" *ngIf="qrCodeUrl && !isLoading && loginStatus !== 'error'">
         <img [src]="qrCodeUrl" alt="QR Code WhatsApp" class="qr-code-image" />
-        <!-- Overlay só aparece quando QR está carregado E aguardando leitura (sem loading) -->
-        <div class="qr-code-overlay" *ngIf="loginStatus === 'waiting' && qrCodeUrl && !isLoading">
-          <div class="spinner"></div>
-          <p>Aguardando leitura do QR code...</p>
-        </div>
+        <!-- Overlay de sucesso apenas quando login for bem-sucedido -->
         <div class="qr-code-overlay success" *ngIf="loginStatus === 'success'">
           <div class="success-icon">✓</div>
           <p>Login realizado com sucesso!</p>
