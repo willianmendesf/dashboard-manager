@@ -8,43 +8,43 @@
 <div class="cron-selector form-grid">
     <div class="cron-parts">
         <div class="cron-field hms">
-            <label for="segundo">Segundo:</label>
-            <select class="form-control" id="segundo" [(ngModel)]="cronFields.segundos" (change)="updateCronString()">
+            <label [for]="uniqueId + '-segundo'">Segundo:</label>
+            <select class="form-control" [id]="uniqueId + '-segundo'" [(ngModel)]="cronFields.segundos" (change)="updateCronString()">
                 <option *ngFor="let s of segundoOptions" [value]="s">{{ s === '*' ? 'Todos os segundos' : s }}</option>
             </select>
         </div>
 
         <div class="cron-field hms">
-            <label for="minuto">Minuto:</label>
-            <select class="form-control" id="minuto" [(ngModel)]="cronFields.minutos" (change)="updateCronString()">
+            <label [for]="uniqueId + '-minuto'">Minuto:</label>
+            <select class="form-control" [id]="uniqueId + '-minuto'" [(ngModel)]="cronFields.minutos" (change)="updateCronString()">
                 <option *ngFor="let m of minutoOptions" [value]="m">{{ m === '*' ? 'Todos os minutos' : m }}</option>
             </select>
         </div>
 
         <div class="cron-field hms">
-            <label for="hora">Hora:</label>
-            <select class="form-control" id="hora" [(ngModel)]="cronFields.horas" (change)="updateCronString()">
+            <label [for]="uniqueId + '-hora'">Hora:</label>
+            <select class="form-control" [id]="uniqueId + '-hora'" [(ngModel)]="cronFields.horas" (change)="updateCronString()">
                 <option *ngFor="let h of horaOptions" [value]="h">{{ h === '*' ? 'Toda hora' : h }}</option>
             </select>
         </div>
 
         <div class="cron-field dms">
-            <label for="diaDoMes">Dia do Mês:</label>
-            <select class="form-control" id="diaDoMes" [(ngModel)]="cronFields.diaDoMes" (change)="updateCronString()">
+            <label [for]="uniqueId + '-diaDoMes'">Dia do Mês:</label>
+            <select class="form-control" [id]="uniqueId + '-diaDoMes'" [(ngModel)]="cronFields.diaDoMes" (change)="updateCronString()">
                 <option *ngFor="let d of diaDoMesOptions" [value]="d">{{ d === '*' ? 'Todo dia' : d }}</option>
             </select>
         </div>
 
         <div class="cron-field dms">
-            <label for="mes">Mês:</label>
-            <select class="form-control" id="mes" [(ngModel)]="cronFields.mes" (change)="updateCronString()">
+            <label [for]="uniqueId + '-mes'">Mês:</label>
+            <select class="form-control" [id]="uniqueId + '-mes'" [(ngModel)]="cronFields.mes" (change)="updateCronString()">
                 <option *ngFor="let m of mesOptions" [value]="m">{{ m === '*' ? 'O mês todo' : m }}</option>
             </select>
         </div>
 
         <div class="cron-field dms">
-            <label for="diaDaSemana">Dia da Semana:</label>
-            <select class="form-control" id="diaDaSemana" [(ngModel)]="cronFields.diaDaSemana" (change)="updateCronString()">
+            <label [for]="uniqueId + '-diaDaSemana'">Dia da Semana:</label>
+            <select class="form-control" [id]="uniqueId + '-diaDaSemana'" [(ngModel)]="cronFields.diaDaSemana" (change)="updateCronString()">
                 <option *ngFor="let d of diaDaSemanaOptions" [value]="d.value">{{ d.label }}</option>
             </select>
         </div>

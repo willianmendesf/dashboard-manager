@@ -39,17 +39,17 @@
               
               <div class="setting-item">
                 <label>Recorrência - Relatórios Semanais</label>
-                <cron-selector [(currentAppointment)]="jobWeeklyReports"></cron-selector>
+                <cron-selector [(currentAppointment)]="jobWeeklyReports" [uniqueId]="'weekly-reports'"></cron-selector>
               </div>
 
               <div class="setting-item">
                 <label>Recorrência - Sincronização de Dados</label>
-                <cron-selector [(currentAppointment)]="jobDataSync"></cron-selector>
+                <cron-selector [(currentAppointment)]="jobDataSync" [uniqueId]="'data-sync'"></cron-selector>
               </div>
 
               <div class="setting-item">
                 <label>Recorrência - Carregamento de Agendamentos</label>
-                <cron-selector [(currentAppointment)]="jobLoadAppointments"></cron-selector>
+                <cron-selector [(currentAppointment)]="jobLoadAppointments" [uniqueId]="'load-appointments'"></cron-selector>
               </div>
             </div>
 

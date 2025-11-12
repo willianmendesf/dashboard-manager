@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class CronSelectorComponent implements OnInit, OnChanges {
     @Input() currentAppointment: { schedule: string } = { schedule: '0 0 * * *' };
+    @Input() uniqueId: string = 'cron';
     @Output() currentAppointmentChange = new EventEmitter<{ schedule: string }>();
 
     public cronFields = {
