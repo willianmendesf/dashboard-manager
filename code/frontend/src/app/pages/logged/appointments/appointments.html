@@ -219,11 +219,17 @@
                 <h4 class="section-title">Grupos de Destino</h4>
                 <div class="tags-list">
                   @for (groupId of viewingAppointment.sendToGroups; track groupId) {
-                    @for (group of groups; track group.id) {
-                      @if (compareIds(group.id, groupId)) {
-                        <span class="tag">{{ group.name }}</span>
-                      }
-                    }
+                    <span class="tag">{{ getGroupName(groupId) }}</span>
+                  }
+                </div>
+              </div>
+            }
+            @if (viewingAppointment.sendTo && viewingAppointment.sendTo.length > 0) {
+              <div class="detail-section">
+                <h4 class="section-title">Contatos de Destino</h4>
+                <div class="tags-list">
+                  @for (contactId of viewingAppointment.sendTo; track contactId) {
+                    <span class="tag">{{ getContactName(contactId) }}</span>
                   }
                 </div>
               </div>
@@ -251,11 +257,7 @@
             <div class="tags-list">
               <label>Contatos Monitorados:</label>
               @for (contactId of viewingAppointment.monitoringNumbers; track contactId) {
-                @for (contact of contacts; track contact.id) {
-                  @if (compareIds(contact.id, contactId)) {
-                    <span class="tag">{{ contact.name || contactId }}</span>
-                  }
-                }
+                <span class="tag">{{ getContactName(contactId) }}</span>
               }
             </div>
           }
@@ -263,11 +265,7 @@
             <div class="tags-list">
               <label>Grupos Monitorados:</label>
               @for (groupId of viewingAppointment.monitoringGroupsIds; track groupId) {
-                @for (group of groups; track group.id) {
-                  @if (compareIds(group.id, groupId)) {
-                    <span class="tag">{{ group.name }}</span>
-                  }
-                }
+                <span class="tag">{{ getGroupName(groupId) }}</span>
               }
             </div>
           }
@@ -405,15 +403,39 @@
             }
             <div class="form-grid">
               <div class="form-group full-width">
-                <label>Enviar Para o(s) Grupo(s) <span class="required">*</span></label>
-                <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple required>
-                  <option *ngFor="let item of groups" [ngValue]="item.id">
-                    {{ item.name }}
-                  </option>
+                <label>Tipo de Destinatário <span class="required">*</span></label>
+                <select [(ngModel)]="currentAppointment.recipientType" name="recipientType" class="form-control" required (ngModelChange)="onRecipientTypeChange()">
+                  <option value="INDIVIDUAL">Contatos Individuais</option>
+                  <option value="GROUP">Grupos</option>
                 </select>
-                <small class="form-hint">Mantenha Ctrl (ou Cmd no Mac) pressionado para selecionar múltiplos grupos</small>
               </div>
             </div>
+            @if (currentAppointment.recipientType === "INDIVIDUAL") {
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label>Enviar Para Contato(s) <span class="required">*</span></label>
+                  <select [(ngModel)]="currentAppointment.sendTo" name="sendTo" class="form-control" multiple required>
+                    <option *ngFor="let item of contacts" [ngValue]="item.id">
+                      {{ item.name || item.id }}
+                    </option>
+                  </select>
+                  <small class="form-hint">Mantenha Ctrl (ou Cmd no Mac) pressionado para selecionar múltiplos contatos</small>
+                </div>
+              </div>
+            }
+            @if (currentAppointment.recipientType === "GROUP") {
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label>Enviar Para o(s) Grupo(s) <span class="required">*</span></label>
+                  <select [(ngModel)]="currentAppointment.sendToGroups" name="sendToGroups" class="form-control" multiple required>
+                    <option *ngFor="let item of groups" [ngValue]="item.id">
+                      {{ item.name }}
+                    </option>
+                  </select>
+                  <small class="form-hint">Mantenha Ctrl (ou Cmd no Mac) pressionado para selecionar múltiplos grupos</small>
+                </div>
+              </div>
+            }
           </div>
         }
 

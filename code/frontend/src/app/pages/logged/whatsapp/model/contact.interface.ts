@@ -1,5 +1,5 @@
 interface Contact {
-  id: number;
+  id: string | number;  // JID do WhatsApp é string
   name: string;
   phone: string;
   avatar?: string;

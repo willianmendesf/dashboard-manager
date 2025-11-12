@@ -13,6 +13,7 @@ import { DataTableComponent, TableColumn, TableAction } from '../../../shared/li
 import { environment } from '../../../../environments/environment';
 import { ActionIcons, NavigationIcons } from '../../../shared/lib/utils/icons';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { NotificationService } from '../../../shared/services/notification.service';
 export interface ChecklistItem {
   id: number;
   nome: string;
@@ -61,7 +62,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   constructor(
     private api : ApiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService
   ) { }
   
   ngOnDestroy(): void { }
@@ -76,6 +78,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   onImageUploaded(path: string) {
     this.currentAppointment.imageToSend = path;
+  }
+
+  onRecipientTypeChange() {
+    // Limpar campos do tipo não selecionado
+    if (this.currentAppointment.recipientType === "INDIVIDUAL") {
+      this.currentAppointment.sendToGroups = [];
+    } else if (this.currentAppointment.recipientType === "GROUP") {
+      this.currentAppointment.sendTo = [];
+    }
   }
 
   public getStatus(status: boolean): string {
@@ -95,9 +106,16 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     return taskType || 'N/A';
   }
 
-  public getGroupName(groupId: string): string {
+  public getGroupName(groupId: string | number): string {
+    if (!groupId) return String(groupId || '');
     const group = this.groups.find(g => this.compareIds(g.id, groupId));
-    return group ? group.name : groupId;
+    return group ? group.name : String(groupId);
+  }
+
+  public getContactName(contactId: string | number): string {
+    if (!contactId) return String(contactId || '');
+    const contact = this.contacts.find(c => this.compareIds(c.id, contactId));
+    return contact ? (contact.name || String(contactId)) : String(contactId);
   }
 
   public getDestinationText(appointment: Appointment): string {
@@ -107,15 +125,16 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
     const destinations: string[] = [];
 
-    // Adicionar grupos
+    // Adicionar grupos (buscar nomes)
     if (appointment.sendToGroups && appointment.sendToGroups.length > 0) {
       const groupNames = appointment.sendToGroups.map(id => this.getGroupName(id));
       destinations.push(...groupNames);
     }
 
-    // Adicionar contatos individuais
+    // Adicionar contatos individuais (buscar nomes)
     if (appointment.sendTo && appointment.sendTo.length > 0) {
-      destinations.push(...appointment.sendTo);
+      const contactNames = appointment.sendTo.map(id => this.getContactName(id));
+      destinations.push(...contactNames);
     }
 
     if (destinations.length === 0) {
@@ -173,11 +192,22 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
-        this.contacts = res
-        this.contacts.forEach(item => item.selected = false)
-        this.cdr.markForCheck()
+        if (Array.isArray(res)) {
+          this.contacts = res;
+          this.contacts.forEach(item => item.selected = false);
+          console.log(`Loaded ${this.contacts.length} contacts`);
+        } else {
+          console.warn('Contacts response is not an array:', res);
+          this.contacts = [];
+        }
+        this.cdr.markForCheck();
       },
-      error: error => console.error(error),
+      error: error => {
+        console.error('Error loading contacts:', error);
+        this.contacts = [];
+        this.notificationService.showError('Erro ao carregar contatos. Tente novamente.');
+        this.cdr.markForCheck();
+      },
       complete: () => {}
     })
   }
@@ -187,11 +217,22 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
       next: res => {
-        this.groups = res
-        this.groups.forEach(item => item.selected = false)
-        this.cdr.markForCheck()
+        if (Array.isArray(res)) {
+          this.groups = res;
+          this.groups.forEach(item => item.selected = false);
+          console.log(`Loaded ${this.groups.length} groups`);
+        } else {
+          console.warn('Groups response is not an array:', res);
+          this.groups = [];
+        }
+        this.cdr.markForCheck();
       },
-      error: error => console.error(error),
+      error: error => {
+        console.error('Error loading groups:', error);
+        this.groups = [];
+        this.notificationService.showError('Erro ao carregar grupos. Tente novamente.');
+        this.cdr.markForCheck();
+      },
       complete: () => {}
     })
   }
@@ -211,6 +252,15 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
           return a.enabled ? -1 : 1;
         });
         this.filterAppointments(); // Aplicar filtros após carregar
+        
+        // Recarregar grupos e contatos se estiverem vazios para garantir que os nomes sejam exibidos
+        if (this.groups.length === 0) {
+          this.getGroups();
+        }
+        if (this.contacts.length === 0) {
+          this.getContacts();
+        }
+        
         this.cdr.markForCheck()
       },
       error: error => console.error(error),
@@ -227,33 +277,50 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   openAppointmentModal(appointment?: Appointment) {
+    // Recarregar grupos e contatos para garantir que os dados estejam atualizados
+    this.getGroups();
+    this.getContacts();
+    
     this.cdr.markForCheck()
     this.showAppointmentModal = true;
     this.isEditing = !!appointment;
-    this.currentAppointment = appointment ? { ...appointment } : {
-      id: '',
-      name: '',
-      description: '',
-      schedule: '',
-      enabled: false,
-      development: true,
-      monitoring: false,
-      monitoringNumbers: [],
-      monitoringGroups: false,
-      monitoringGroupsIds: [],
-      endpoint: '',
-      retries: 3,
-      timeout: 30000,
-      startDate: '',
-      endDate: '',
-      taskType: '',
-      message: '',
-      sendTo: [],
-      sendToGroups: [],
-      recipientType: "INDIVIDUAL",
-      sendImage: false,
-      imageToSend: ''
-    };
+    
+    if (appointment) {
+      // Garantir que arrays não sejam null/undefined e que recipientType esteja definido
+      this.currentAppointment = {
+        ...appointment,
+        sendTo: appointment.sendTo || [],
+        sendToGroups: appointment.sendToGroups || [],
+        monitoringNumbers: appointment.monitoringNumbers || [],
+        monitoringGroupsIds: appointment.monitoringGroupsIds || [],
+        recipientType: appointment.recipientType || (appointment.sendToGroups && appointment.sendToGroups.length > 0 ? "GROUP" : "INDIVIDUAL")
+      };
+    } else {
+      this.currentAppointment = {
+        id: '',
+        name: '',
+        description: '',
+        schedule: '',
+        enabled: false,
+        development: true,
+        monitoring: false,
+        monitoringNumbers: [],
+        monitoringGroups: false,
+        monitoringGroupsIds: [],
+        endpoint: '',
+        retries: 3,
+        timeout: 30000,
+        startDate: '',
+        endDate: '',
+        taskType: 'WHATSAPP_MESSAGE',
+        message: '',
+        sendTo: [],
+        sendToGroups: [],
+        recipientType: "INDIVIDUAL",
+        sendImage: false,
+        imageToSend: ''
+      };
+    }
   }
 
   closeViewModal() {
@@ -310,6 +377,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   view(appointment: Appointment) {
+    // Recarregar grupos e contatos para garantir que os nomes sejam exibidos corretamente
+    this.getGroups();
+    this.getContacts();
+    
     this.viewingAppointment = { ...appointment };
     this.showViewModal = true;
     this.cdr.markForCheck();
@@ -366,18 +437,40 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       };
       this.create(newAppointment);
     }
-    this.closeModal();
+    // Modal será fechada apenas em caso de sucesso (dentro dos métodos create/update)
   }
 
   private create(appointment : Appointment) {
+    console.log('Creating appointment with data:', JSON.stringify(appointment, null, 2));
+    console.log('recipientType:', appointment.recipientType);
+    console.log('sendTo:', appointment.sendTo);
+    console.log('sendToGroups:', appointment.sendToGroups);
     this.api.post("appointments", appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: res => this.getAll(),
-      error: error => console.error(error),
-      complete: () => {
-        console.log('Created!')
-        this.getAll()
+      next: () => {
+        this.notificationService.showSuccess('Agendamento criado com sucesso!');
+        this.getAll();
+        this.closeModal();
+      },
+      error: (error) => {
+        console.error('Error creating appointment:', error);
+        let errorMessage = 'Erro ao criar agendamento. Tente novamente.';
+        
+        if (error?.error) {
+          if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          } else if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.error.error) {
+            errorMessage = error.error.error;
+          }
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        this.notificationService.showError(errorMessage);
+        // Modal permanece aberta para o usuário corrigir os erros
       }
     })
   }
@@ -386,11 +479,29 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.api.post(`appointments/${appointment.id}` , appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
-      next: () => this.getAll(),
-      complete: () => this.getAll(),
-      error: error => {
-        console.log('Updated')
-        console.error(error)
+      next: () => {
+        this.notificationService.showSuccess('Agendamento atualizado com sucesso!');
+        this.getAll();
+        this.closeModal();
+      },
+      error: (error) => {
+        console.error('Error updating appointment:', error);
+        let errorMessage = 'Erro ao atualizar agendamento. Tente novamente.';
+        
+        if (error?.error) {
+          if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          } else if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.error.error) {
+            errorMessage = error.error.error;
+          }
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        this.notificationService.showError(errorMessage);
+        // Modal permanece aberta para o usuário corrigir os erros
       }
     })
   }
