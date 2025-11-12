@@ -10,10 +10,10 @@
       <div class="status-indicator">
         <span class="status-badge" [class.connected]="connectionStatus.is_connected" [class.disconnected]="!connectionStatus.is_connected">
           <span class="status-dot"></span>
-          {{ connectionStatus.is_connected ? 'Conectado' : 'Desconectado' }}
+          {{ connectionStatus.is_connected ? 'Conectado à API' : 'Desconectado da API' }}
         </span>
         <span class="status-details" *ngIf="connectionStatus.is_logged_in">
-          • Logado
+          • Logado com número
         </span>
         <span class="status-details" *ngIf="connectionStatus.device_id">
           • {{ connectionStatus.device_id }}
@@ -22,13 +22,28 @@
       <div class="status-actions">
         <button 
           class="btn-reconnect" 
+          *ngIf="shouldShowReconnectButton()"
           (click)="manualReconnect()" 
           [disabled]="isReconnecting"
           [class.loading]="isReconnecting"
         >
           {{ isReconnecting ? 'Reconectando...' : 'Reconectar Agora' }}
         </button>
-        <label class="toggle-auto-reconnect">
+        <button 
+          class="btn-login" 
+          *ngIf="shouldShowLoginButton()"
+          (click)="openLoginModal()"
+        >
+          Fazer Login
+        </button>
+        <button 
+          class="btn-logout" 
+          *ngIf="connectionStatus?.is_logged_in"
+          (click)="logout()"
+        >
+          Logout
+        </button>
+        <label class="toggle-auto-reconnect" *ngIf="connectionStatus?.is_logged_in">
           <input 
             type="checkbox" 
             [checked]="isAutoReconnectEnabled" 
@@ -46,16 +61,10 @@
   </div>
 
   <div class="whatsapp-layout">
-    <!-- <wtz-sidebar
-      [searchTerm]="searchTerm"
-      [contacts]="contacts"
-      [groups]="groups"
-      [filteredContacts]="filteredContacts"
-      [filteredGroups]="filteredGroups"
-      [activeTab]="activeTab"
-    ></wtz-sidebar> -->
-    <!-- Sidebar com contatos e grupos -->
-    <div class="contacts-sidebar">
+    <!-- Área de mensagens - Só exibe quando conectado e logado -->
+    <ng-container *ngIf="canSendMessages(); else disconnectedMessage">
+      <!-- Sidebar com contatos e grupos -->
+      <div class="contacts-sidebar">
       <div class="sidebar-header">
         <div class="search-box">
           <input
@@ -240,6 +249,16 @@
         <p>Escolha um destinatário na lista ao lado para começar a enviar mensagens</p>
       </div>
     </div>
+    </ng-container>
+
+    <!-- Mensagem quando desconectado -->
+    <ng-template #disconnectedMessage>
+      <div class="disconnected-message">
+        <div class="disconnected-icon" [innerHTML]="getWhatsAppIcon()" [attr.aria-hidden]="true"></div>
+        <h3>Conecte-se à API WhatsApp</h3>
+        <p>Para enviar mensagens, você precisa estar conectado à API externa do WhatsApp e logado com um número.</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- Modal Adicionar Contato -->
@@ -392,5 +411,18 @@
         </div>
       }
     }
+  </app-modal>
+
+  <!-- Modal de Login WhatsApp -->
+  <app-modal
+    [title]="'Login WhatsApp'"
+    [isOpen]="showLoginModal"
+    [size]="'medium'"
+    [closeOnOverlayClick]="false"
+    (close)="closeLoginModal()">
+    <app-whatsapp-login-modal
+      (close)="closeLoginModal()"
+      (loginSuccess)="handleLoginSuccess()"
+    ></app-whatsapp-login-modal>
   </app-modal>
 </div>

@@ -1,0 +1,148 @@
+<div class="login-modal-content">
+  <!-- Tabs -->
+  <div class="login-tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'code'"
+      (click)="switchTab('code')"
+    >
+      Código de Pareamento
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'qrcode'"
+      (click)="switchTab('qrcode')"
+    >
+      QR Code
+    </button>
+  </div>
+
+  <!-- Tab Content: QR Code -->
+  <div class="tab-content" *ngIf="activeTab === 'qrcode'">
+    <div class="login-instructions">
+      <h4>Como fazer login:</h4>
+      <ol>
+        <li>Abra o WhatsApp no seu celular</li>
+        <li>Toque em <strong>Menu</strong> ou <strong>Configurações</strong></li>
+        <li>Selecione <strong>Aparelhos conectados</strong></li>
+        <li>Toque em <strong>Conectar um aparelho</strong></li>
+        <li>Escaneie o QR code abaixo</li>
+      </ol>
+    </div>
+
+    <div class="qr-code-container">
+      <!-- Placeholder durante carregamento inicial -->
+      <div class="qr-code-placeholder" *ngIf="isLoading && !qrCodeUrl">
+        <div class="spinner"></div>
+        <p>Carregando QR code...</p>
+      </div>
+
+      <!-- QR Code carregado - sem overlay de loading quando já está carregado -->
+      <div class="qr-code-wrapper" *ngIf="qrCodeUrl && !isLoading && loginStatus !== 'error'">
+        <img [src]="qrCodeUrl" alt="QR Code WhatsApp" class="qr-code-image" />
+        <!-- Overlay só aparece quando QR está carregado E aguardando leitura (sem loading) -->
+        <div class="qr-code-overlay" *ngIf="loginStatus === 'waiting' && qrCodeUrl && !isLoading">
+          <div class="spinner"></div>
+          <p>Aguardando leitura do QR code...</p>
+        </div>
+        <div class="qr-code-overlay success" *ngIf="loginStatus === 'success'">
+          <div class="success-icon">✓</div>
+          <p>Login realizado com sucesso!</p>
+        </div>
+      </div>
+
+      <!-- Erro -->
+      <div class="qr-code-error" *ngIf="loginStatus === 'error' && !isLoading && !qrCodeUrl">
+        <div class="error-icon">⚠</div>
+        <p>{{ errorMessage || 'Erro ao carregar QR code' }}</p>
+        <button class="btn-retry" (click)="refreshQRCode()">Tentar Novamente</button>
+      </div>
+    </div>
+
+    <div class="qr-code-actions">
+      <button 
+        class="btn-refresh" 
+        (click)="refreshQRCode()" 
+        [disabled]="isLoading"
+      >
+        {{ isLoading ? 'Carregando...' : 'Atualizar QR Code' }}
+      </button>
+      <small class="qr-code-hint">
+        O QR code expira em {{ qrDuration }} segundos e será atualizado automaticamente
+      </small>
+    </div>
+  </div>
+
+  <!-- Tab Content: Code -->
+  <div class="tab-content" *ngIf="activeTab === 'code'">
+    <div class="login-instructions">
+      <h4>Como fazer login com código:</h4>
+      <ol>
+        <li>Abra o WhatsApp no seu celular</li>
+        <li>Toque em <strong>Menu</strong> ou <strong>Configurações</strong></li>
+        <li>Selecione <strong>Aparelhos conectados</strong></li>
+        <li>Toque em <strong>Conectar um aparelho</strong></li>
+        <li>Selecione <strong>Conectar com número de telefone</strong></li>
+        <li>Digite o código abaixo no seu celular</li>
+      </ol>
+    </div>
+
+    <div class="code-input-section">
+      <div class="form-group">
+        <label>Número de Telefone (formato internacional)</label>
+        <input
+          type="text"
+          [(ngModel)]="phoneNumber"
+          (input)="formatPhoneNumber($event)"
+          placeholder="5511999999999"
+          class="phone-input"
+          [disabled]="isLoading || loginStatus === 'waiting'"
+        />
+        <small class="field-hint">
+          Digite o número no formato internacional (ex: 5511999999999)
+        </small>
+      </div>
+
+      <button 
+        class="btn-generate-code" 
+        (click)="initCodeLogin()"
+        [disabled]="!phoneNumber || phoneNumber.length < 10 || isLoading || loginStatus === 'waiting'"
+      >
+        {{ isLoading ? 'Gerando...' : 'Gerar Código' }}
+      </button>
+    </div>
+
+    <div class="code-display-section" *ngIf="pairCode">
+      <div class="code-container">
+        <div class="code-label">Código de Pareamento:</div>
+        <div class="code-value">{{ pairCode }}</div>
+        <button class="btn-copy" (click)="copyToClipboard(pairCode)">
+          Copiar Código
+        </button>
+      </div>
+
+      <div class="code-status" *ngIf="loginStatus === 'waiting'">
+        <div class="spinner small"></div>
+        <p>Aguardando confirmação no celular...</p>
+      </div>
+
+      <div class="code-status success" *ngIf="loginStatus === 'success'">
+        <div class="success-icon">✓</div>
+        <p>Login realizado com sucesso!</p>
+      </div>
+    </div>
+
+    <div class="code-error" *ngIf="loginStatus === 'error' && !pairCode">
+      <div class="error-icon">⚠</div>
+      <p>{{ errorMessage || 'Erro ao gerar código' }}</p>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="modal-footer-actions">
+    <button class="btn-close" (click)="closeModal()">
+      Fechar
+    </button>
+  </div>
+</div>
+

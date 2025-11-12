@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     // URL será carregada dinamicamente via app-config.json
     // Por padrão, usa a URL de produção
-    url: process.env['CAPACITOR_SERVER_URL'] || 'http://prod002.ison-duck.ts.net/home',
+    url: process.env['CAPACITOR_SERVER_URL'] || 'http://prod002.ison-duck.ts.net/landing',
     cleartext: true, // Permite HTTP (não apenas HTTPS)
     allowNavigation: [
       'http://prod002.ison-duck.ts.net',

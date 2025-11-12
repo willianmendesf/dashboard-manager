@@ -82,7 +82,9 @@
     flex-wrap: wrap;
   }
   
-  .btn-reconnect {
+  .btn-reconnect,
+  .btn-login,
+  .btn-logout {
     padding: 8px 16px;
     background: #25D366;
     color: white;
@@ -103,7 +105,9 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
-    
+  }
+
+  .btn-reconnect {
     &.loading {
       position: relative;
       color: transparent;
@@ -122,6 +126,15 @@
         border-radius: 50%;
         animation: spin 0.6s linear infinite;
       }
+    }
+  }
+
+  .btn-logout {
+    background: #EF4444;
+    
+    &:hover:not(:disabled) {
+      background: #DC2626;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
     }
   }
   
@@ -167,6 +180,56 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+// Mensagem quando desconectado
+.disconnected-message {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-height: 400px;
+
+  .disconnected-icon {
+    margin-bottom: 24px;
+    opacity: 0.3;
+    
+    svg,
+    [innerHTML] svg {
+      width: 80px;
+      height: 80px;
+      display: block;
+      margin: 0 auto;
+    }
+  }
+
+  h3 {
+    margin: 0 0 12px 0;
+    color: #1F2937;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0 0 32px 0;
+    color: #6B7280;
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 500px;
+  }
+
+  .disconnected-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 }
 
 .page-header {

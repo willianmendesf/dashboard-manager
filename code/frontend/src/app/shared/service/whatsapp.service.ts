@@ -23,6 +23,32 @@ export interface ReconnectResult {
   timestamp?: string;
 }
 
+export interface QRCodeLoginResponse {
+  success: boolean;
+  qrLink?: string;
+  qrDuration?: number;
+  error?: string;
+}
+
+export interface CodeLoginResponse {
+  success: boolean;
+  pairCode?: string;
+  error?: string;
+}
+
+export interface LoginStatusResponse {
+  success: boolean;
+  isLoggedIn?: boolean;
+  isConnected?: boolean;
+  deviceId?: string;
+  error?: string;
+}
+
+export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -62,5 +88,33 @@ export class WhatsappsService {
    */
   public toggleAutoReconnect(enabled: boolean): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/whatsapp/connection/auto-reconnect/toggle`, { enabled }, { withCredentials: true });
+  }
+
+  /**
+   * Obtém QR code para login
+   */
+  public getQRCodeLogin(): Observable<QRCodeLoginResponse> {
+    return this.http.get<QRCodeLoginResponse>(`${this.apiUrl}/whatsapp/auth/login/qrcode`, { withCredentials: true });
+  }
+
+  /**
+   * Inicia login com código de pareamento
+   */
+  public initCodeLogin(phone: string): Observable<CodeLoginResponse> {
+    return this.http.get<CodeLoginResponse>(`${this.apiUrl}/whatsapp/auth/login/with-code?phone=${encodeURIComponent(phone)}`, { withCredentials: true });
+  }
+
+  /**
+   * Verifica status do login
+   */
+  public getLoginStatus(): Observable<LoginStatusResponse> {
+    return this.http.get<LoginStatusResponse>(`${this.apiUrl}/whatsapp/auth/login/status`, { withCredentials: true });
+  }
+
+  /**
+   * Faz logout da API WhatsApp
+   */
+  public logout(): Observable<LogoutResponse> {
+    return this.http.post<LogoutResponse>(`${this.apiUrl}/whatsapp/auth/logout`, {}, { withCredentials: true });
   }
 }

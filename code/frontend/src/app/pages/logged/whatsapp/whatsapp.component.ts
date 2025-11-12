@@ -6,13 +6,14 @@ import { ApiService } from '../../../shared/service/api.service';
 import { WhatsappsService, ConnectionStatus, AutoReconnectStatus } from '../../../shared/service/whatsapp.service';
 import { PageTitleComponent } from "../../../shared/modules/pagetitle/pagetitle.component";
 import { ModalComponent, ModalButton } from '../../../shared/modules/modal/modal.component';
+import { WhatsappLoginModalComponent } from './whatsapp-login-modal/whatsapp-login-modal.component';
 import { Subject, takeUntil, interval } from 'rxjs';
 import { NavigationIcons, StatusIcons, MessageIcons } from '../../../shared/lib/utils/icons';
 
 @Component({
   selector: 'app-whatsapp',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, WhatsappLoginModalComponent],
   templateUrl:'./whatsapp.html',
   styleUrl: './whatsapp.scss'
 })
@@ -48,6 +49,7 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
   lastStatusCheck: Date | null = null;
   isReconnecting: boolean = false;
   statusCheckInterval: any = null;
+  showLoginModal: boolean = false;
 
   ngOnInit() {
     this.getContacts();
@@ -392,7 +394,8 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
         next: (status) => {
           this.connectionStatus = status;
           this.lastStatusCheck = new Date();
-          this.cdr.markForCheck();
+          // Forçar detecção de mudanças para atualizar botões
+          this.cdr.detectChanges();
         },
         error: (error) => {
           console.error('Erro ao carregar status da conexão:', error);
@@ -402,7 +405,7 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
             error: 'Erro ao verificar status'
           };
           this.lastStatusCheck = new Date();
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         }
       });
   }
@@ -474,5 +477,70 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
     if (diff < 60) return 'Agora';
     if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
     return this.lastStatusCheck.toLocaleTimeString('pt-BR');
+  }
+
+  // Métodos de login
+  openLoginModal() {
+    this.showLoginModal = true;
+  }
+
+  closeLoginModal() {
+    this.showLoginModal = false;
+  }
+
+  handleLoginSuccess() {
+    this.closeLoginModal();
+    // Recarregar status, contatos e grupos após login bem-sucedido
+    setTimeout(() => {
+      this.loadConnectionStatus();
+      // Aguardar um pouco mais para garantir que a API esteja pronta
+      setTimeout(() => {
+        this.getContacts();
+        this.getGroups();
+        this.cdr.markForCheck();
+      }, 1500);
+    }, 1000);
+  }
+
+  logout() {
+    if (confirm('Tem certeza que deseja fazer logout do WhatsApp?')) {
+      this.whatsappService.logout()
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: (result) => {
+            if (result.success) {
+              // Recarregar status após logout
+              setTimeout(() => {
+                this.loadConnectionStatus();
+              }, 1000);
+            }
+            this.cdr.markForCheck();
+          },
+          error: (error) => {
+            console.error('Erro ao fazer logout:', error);
+            this.cdr.markForCheck();
+          }
+        });
+    }
+  }
+
+  shouldShowLoginButton(): boolean {
+    // Mostrar botão de login apenas quando NÃO estiver logado
+    return this.connectionStatus !== null && 
+           this.connectionStatus.is_logged_in === false;
+  }
+
+  shouldShowReconnectButton(): boolean {
+    // Mostrar botão de reconectar apenas quando estiver logado mas desconectado
+    return this.connectionStatus !== null && 
+           this.connectionStatus.is_logged_in === true &&
+           this.connectionStatus.is_connected === false;
+  }
+
+  canSendMessages(): boolean {
+    // Pode enviar mensagens apenas quando estiver conectado E logado
+    return this.connectionStatus !== null && 
+           this.connectionStatus.is_connected === true &&
+           this.connectionStatus.is_logged_in === true;
   }
 }

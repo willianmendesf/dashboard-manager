@@ -1,5 +1,5 @@
 {
-  "serverUrl": "http://prod002.ison-duck.ts.net/home",
+  "serverUrl": "http://prod002.ison-duck.ts.net/landing",
   "appName": "IPBF Admin",
   "version": "1.2.0"
 }

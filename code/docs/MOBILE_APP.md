@@ -15,7 +15,7 @@ A URL do servidor é configurada em `src/assets/app-config.json`:
 
 ```json
 {
-  "serverUrl": "http://prod002.ison-duck.ts.net/home",
+  "serverUrl": "http://prod002.ison-duck.ts.net/landing",
   "appName": "IPBF Dashboard",
   "version": "1.0.0"
 }
