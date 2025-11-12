@@ -224,9 +224,13 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
   sendMessage() {
     if (!this.canSendMessage() || !this.selectedRecipient) return;
 
+    // Capturar conteúdo antes de limpar
+    const messageText = this.messageContent.trim();
+    if (!messageText && this.messageType === 'text') return;
+
     const newMessage: Message = {
       id: Date.now().toString(),
-      content: this.messageType === 'text' ? this.messageContent : `Arquivo: ${this.selectedFile?.name}`,
+      content: this.messageType === 'text' ? messageText : `Arquivo: ${this.selectedFile?.name}`,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       status: 'sending',
       type: this.messageType,
@@ -245,18 +249,24 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
 
     this.messages.push(newMessage);
 
+    // Limpar formulário imediatamente após enviar
+    this.messageContent = '';
+    this.selectedFile = null;
+    this.messageType = 'text';
+    
+    // Forçar atualização da UI
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
+
     // Simular envio
     setTimeout(() => {
       newMessage.status = 'sent';
       setTimeout(() => {
         newMessage.status = 'delivered';
+        this.cdr.markForCheck();
       }, 1000);
     }, 500);
-
-    // Limpar formulário
-    this.messageContent = '';
-    this.selectedFile = null;
-    this.messageType = 'text';
   }
 
   scheduleMessage() {
@@ -417,7 +427,8 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
         next: (status) => {
           this.isAutoReconnectEnabled = status.enabled;
           this.autoReconnectIntervalMinutes = status.intervalMinutes;
-          this.cdr.markForCheck();
+          // Forçar atualização para atualizar botão reconectar
+          this.cdr.detectChanges();
         },
         error: (error) => {
           console.error('Erro ao carregar status de reconexão automática:', error);
@@ -455,10 +466,16 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.isAutoReconnectEnabled = newValue;
-          this.cdr.markForCheck();
+          // Forçar atualização imediata da UI
+          this.cdr.detectChanges();
+          // Recarregar status para garantir sincronização
+          this.loadAutoReconnectStatus();
         },
         error: (error) => {
           console.error('Erro ao alterar reconexão automática:', error);
+          // Reverter em caso de erro
+          this.isAutoReconnectEnabled = !newValue;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -531,10 +548,13 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
   }
 
   shouldShowReconnectButton(): boolean {
-    // Mostrar botão de reconectar apenas quando estiver logado mas desconectado
+    // Mostrar botão de reconectar apenas quando:
+    // - Estiver logado mas desconectado
+    // - E a reconexão automática estiver desabilitada
     return this.connectionStatus !== null && 
            this.connectionStatus.is_logged_in === true &&
-           this.connectionStatus.is_connected === false;
+           this.connectionStatus.is_connected === false &&
+           !this.isAutoReconnectEnabled;
   }
 
   canSendMessages(): boolean {

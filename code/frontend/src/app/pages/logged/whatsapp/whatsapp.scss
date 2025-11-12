@@ -138,25 +138,41 @@
     }
   }
   
-  .toggle-auto-reconnect {
+  .auto-reconnect-status {
     display: flex;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
     font-size: 14px;
     color: #374151;
     
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
+    .status-label {
+      color: #6B7280;
+      font-weight: 500;
+    }
+    
+    .status-value {
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      
+      &.active {
+        color: #065F46;
+        background: #D1FAE5;
+      }
+      
+      &.inactive {
+        color: #991B1B;
+        background: #FEE2E2;
+      }
     }
     
     small {
       color: #6B7280;
       font-size: 12px;
+      margin-left: 4px;
     }
   }
+  
   
   .status-footer {
     display: flex;
