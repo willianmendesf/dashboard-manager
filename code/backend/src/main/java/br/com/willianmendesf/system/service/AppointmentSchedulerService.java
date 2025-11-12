@@ -298,6 +298,18 @@ public class AppointmentSchedulerService {
                 execution.setScheduledTime(scheduledTime);
                 execution.setExecutionTime(now);
                 execution.setStatus(TaskStatus.FAILURE);
+                
+                // Capturar e salvar mensagem de erro
+                String errorMessage = e.getMessage();
+                if (errorMessage == null || errorMessage.isEmpty()) {
+                    errorMessage = e.getClass().getSimpleName();
+                }
+                // Limitar tamanho da mensagem de erro para evitar problemas com TEXT
+                if (errorMessage.length() > 5000) {
+                    errorMessage = errorMessage.substring(0, 5000) + "...";
+                }
+                execution.setErrorMessage(errorMessage);
+                
                 executionRepository.save(execution);
             } catch (Exception ex) {
                 log.error("Erro ao registrar falha de execução: {}", ex.getMessage(), ex);
@@ -476,6 +488,17 @@ public class AppointmentSchedulerService {
             appointment.setLastExecution(Timestamp.valueOf(scheduledTime));
             appointment.setLastStatus(TaskStatus.FAILURE);
             execution.setStatus(TaskStatus.FAILURE);
+            
+            // Capturar e salvar mensagem de erro
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.isEmpty()) {
+                errorMessage = e.getClass().getSimpleName();
+            }
+            // Limitar tamanho da mensagem de erro para evitar problemas com TEXT
+            if (errorMessage.length() > 5000) {
+                errorMessage = errorMessage.substring(0, 5000) + "...";
+            }
+            execution.setErrorMessage(errorMessage);
 
             // Salvar registro de execução com falha
             try {

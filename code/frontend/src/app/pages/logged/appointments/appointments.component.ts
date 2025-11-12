@@ -2,12 +2,14 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRe
 import { ApiService } from '../../../shared/service/api.service';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Appointment } from './model/appointment.model';
+import { AppointmentExecutionLog } from './model/appointment-execution-log.model';
 import { Subject, takeUntil } from 'rxjs';
 import { PageTitleComponent } from "../../../shared/modules/pagetitle/pagetitle.component";
 import { FormsModule } from '@angular/forms';
 import { CronSelectorComponent } from '../../../shared/modules/cron-selector/cron-selector.component';
 import { ImageUploadComponent } from "../../../shared/modules/image-upload/image-upload.component";
 import { ModalComponent, ModalButton } from '../../../shared/modules/modal/modal.component';
+import { DataTableComponent, TableColumn, TableAction } from '../../../shared/lib/utils/data-table.component';
 import { environment } from '../../../../environments/environment';
 import { ActionIcons, NavigationIcons } from '../../../shared/lib/utils/icons';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -21,7 +23,7 @@ export interface ChecklistItem {
   standalone: true,
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent, ImageUploadComponent, ModalComponent, DatePipe]
+  imports: [CommonModule, FormsModule, PageTitleComponent, CronSelectorComponent, ImageUploadComponent, ModalComponent, DatePipe, DataTableComponent]
 })
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
@@ -31,6 +33,14 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   public groups: Group[] = []
   public contacts: Contact[] = []
   public env = environment.apiUrl;
+
+  // Tabs
+  activeTab: 'list' | 'logs' = 'list';
+
+  // Logs
+  public executionLogs: AppointmentExecutionLog[] = [];
+  public logColumns: TableColumn[] = [];
+  public logActions: TableAction[] = [];
 
   // Filtros
   searchTerm = '';
@@ -60,6 +70,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.getAll();
     this.getContacts();
     this.getGroups();
+    this.initializeLogColumns();
+    this.getExecutionLogs();
   }
 
   onImageUploaded(path: string) {
@@ -394,5 +406,72 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
           this.getAll()
         }
       });
+  }
+
+  // Métodos para logs
+  initializeLogColumns() {
+    this.logColumns = [
+      { key: 'appointmentName', label: 'Agendamento', sortable: true },
+      { key: 'scheduledTime', label: 'Data/Hora Agendada', sortable: true },
+      { key: 'executionTime', label: 'Data/Hora Execução', sortable: true },
+      { key: 'status', label: 'Status', sortable: true },
+      { key: 'errorMessage', label: 'Erro', sortable: false }
+    ];
+  }
+
+  getExecutionLogs() {
+    this.api.get("appointments/executions/logs")
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (logs: AppointmentExecutionLog[]) => {
+          this.executionLogs = logs || [];
+          this.cdr.markForCheck();
+        },
+        error: error => {
+          console.error('Error fetching execution logs:', error);
+          this.executionLogs = [];
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  getLogTableData(): any[] {
+    return this.executionLogs.map(log => ({
+      ...log,
+      scheduledTime: this.formatDateTime(log.scheduledTime),
+      executionTime: this.formatDateTime(log.executionTime),
+      status: this.getStatusLabel(log.status),
+      errorMessage: log.errorMessage || '-',
+      _original: log
+    }));
+  }
+
+  formatDateTime(dateTime: string): string {
+    if (!dateTime) return '-';
+    const date = new Date(dateTime);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getStatusLabel(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'SUCCESS': 'Sucesso',
+      'FAILURE': 'Erro',
+      'PENDING': 'Pendente'
+    };
+    return statusMap[status] || status;
+  }
+
+  switchTab(tab: 'list' | 'logs') {
+    this.activeTab = tab;
+    if (tab === 'logs') {
+      this.getExecutionLogs();
+    }
+    this.cdr.markForCheck();
   }
 }

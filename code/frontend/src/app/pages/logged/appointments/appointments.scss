@@ -1211,3 +1211,97 @@ app-modal textarea {
     grid-template-columns: 1fr;
   }
 }
+
+// Tabs Styles
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  position: relative;
+}
+
+.tab-button:hover {
+  color: #374151;
+  background: #F9FAFB;
+}
+
+.tab-button.active {
+  color: #3B82F6;
+  border-bottom-color: #3B82F6;
+  font-weight: 600;
+}
+
+// Logs Section Styles
+.logs-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.logs-header h3 {
+  margin: 0;
+  color: #1F2937;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+// Status Badge Styles for Logs
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.status-success {
+  background: #DEF7EC;
+  color: #047857;
+}
+
+.status-badge.status-failure {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.status-badge.status-pending {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+// Error Message Styles
+.error-message {
+  color: #DC2626;
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 400px;
+  display: block;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}

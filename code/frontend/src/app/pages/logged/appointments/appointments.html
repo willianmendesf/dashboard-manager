@@ -1,6 +1,26 @@
 <div class="page-container">
   <pagetitle title="Agendamentos" subtitle="Gerencie seus agendamentos"></pagetitle>
 
+  <!-- Tabs -->
+  <div class="filter-tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'list'"
+      (click)="switchTab('list')"
+    >
+      Lista de Agendamentos
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'logs'"
+      (click)="switchTab('logs')"
+    >
+      Logs de Execução
+    </button>
+  </div>
+
+  <!-- Conteúdo da aba Lista -->
+  @if (activeTab === 'list') {
   <div class="actions-bar">
     <div class="search-filters">
       <div class="search-box">
@@ -445,4 +465,41 @@
         </form>
     </app-modal>
   </div>
+  }
+
+  <!-- Conteúdo da aba Logs -->
+  @if (activeTab === 'logs') {
+  <div class="logs-section">
+    <div class="logs-header">
+      <h3>Histórico de Execuções</h3>
+      <button class="btn-secondary" (click)="getExecutionLogs()">Atualizar</button>
+    </div>
+    
+    <app-data-table
+      [columns]="logColumns"
+      [data]="getLogTableData()"
+      [actions]="logActions"
+      [loading]="false"
+      emptyMessage="Nenhum log de execução encontrado"
+      [striped]="true"
+      [hoverable]="true"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'status') {
+          <span class="status-badge" [class.status-success]="row._original.status === 'SUCCESS'" 
+                [class.status-failure]="row._original.status === 'FAILURE'"
+                [class.status-pending]="row._original.status === 'PENDING'">
+            {{ row.status }}
+          </span>
+        } @else if (column.key === 'errorMessage' && row._original.status === 'FAILURE') {
+          <span class="error-message" [title]="row.errorMessage">
+            {{ row.errorMessage }}
+          </span>
+        } @else {
+          {{ row[column.key] }}
+        }
+      </ng-template>
+    </app-data-table>
+  </div>
+  }
 </div>
