@@ -195,7 +195,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
         if (Array.isArray(res)) {
           this.contacts = res;
           this.contacts.forEach(item => item.selected = false);
-          console.log(`Loaded ${this.contacts.length} contacts`);
         } else {
           console.warn('Contacts response is not an array:', res);
           this.contacts = [];
@@ -220,7 +219,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
         if (Array.isArray(res)) {
           this.groups = res;
           this.groups.forEach(item => item.selected = false);
-          console.log(`Loaded ${this.groups.length} groups`);
         } else {
           console.warn('Groups response is not an array:', res);
           this.groups = [];
@@ -441,10 +439,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   private create(appointment : Appointment) {
-    console.log('Creating appointment with data:', JSON.stringify(appointment, null, 2));
-    console.log('recipientType:', appointment.recipientType);
-    console.log('sendTo:', appointment.sendTo);
-    console.log('sendToGroups:', appointment.sendToGroups);
     this.api.post("appointments", appointment)
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe({
@@ -513,7 +507,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
         next: () => this.getAll(),
         error: error => console.error(error),
         complete: () => {
-          console.log('Deleted!')
           this.getAll()
         }
       });
