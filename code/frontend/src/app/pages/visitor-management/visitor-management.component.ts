@@ -159,7 +159,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
                 return 'Data inválida';
               }
               
-              return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+              return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             } catch (e) {
               console.error('Error parsing date:', s.data, e);
               return 'Data inválida';
@@ -241,12 +241,31 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
   }
 
   updateTableData(): void {
-    this.tableData = this.filteredVisitors.map(visitor => ({
-      ...visitor,
-      _original: visitor,
-      foto: visitor.fotoUrl || null,
-      eDeSP: visitor.eDeSP ? 'Sim' : 'Não'
-    }));
+    this.tableData = this.filteredVisitors.map(visitor => {
+      let dataVisitaFormatted = '-';
+      if (visitor.dataVisita) {
+        try {
+          const date = new Date(visitor.dataVisita);
+          if (!isNaN(date.getTime())) {
+            dataVisitaFormatted = date.toLocaleDateString('pt-BR', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric' 
+            });
+          }
+        } catch (e) {
+          console.error('Error formatting dataVisita:', e);
+        }
+      }
+      
+      return {
+        ...visitor,
+        _original: visitor,
+        foto: visitor.fotoUrl || null,
+        eDeSP: visitor.eDeSP ? 'Sim' : 'Não',
+        dataVisita: dataVisitaFormatted
+      };
+    });
   }
 
   onSearchTermChange(): void {

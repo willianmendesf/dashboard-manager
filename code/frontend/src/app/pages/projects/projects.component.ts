@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DatePipe],
   templateUrl: './projects.component.html',
   styleUrl: './projects.component.scss'
 })
@@ -16,8 +16,8 @@ export class ProjectsComponent {
       progress: 75,
       status: 'active',
       team: ['A', 'B', 'C'],
-      startDate: '01/02/2024',
-      endDate: '15/04/2024'
+      startDate: new Date(2024, 1, 1), // 01/02/2024
+      endDate: new Date(2024, 3, 15) // 15/04/2024
     },
     {
       name: 'App Mobile',
@@ -25,8 +25,8 @@ export class ProjectsComponent {
       progress: 45,
       status: 'active',
       team: ['D', 'E'],
-      startDate: '15/01/2024',
-      endDate: '30/05/2024'
+      startDate: new Date(2024, 0, 15), // 15/01/2024
+      endDate: new Date(2024, 4, 30) // 30/05/2024
     },
     {
       name: 'Website Corporativo',
@@ -34,8 +34,8 @@ export class ProjectsComponent {
       progress: 100,
       status: 'completed',
       team: ['F', 'G', 'H', 'I'],
-      startDate: '01/11/2023',
-      endDate: '15/01/2024'
+      startDate: new Date(2023, 10, 1), // 01/11/2023
+      endDate: new Date(2024, 0, 15) // 15/01/2024
     },
     {
       name: 'Sistema de CRM',
@@ -43,8 +43,8 @@ export class ProjectsComponent {
       progress: 30,
       status: 'paused',
       team: ['J', 'K'],
-      startDate: '01/03/2024',
-      endDate: '30/06/2024'
+      startDate: new Date(2024, 2, 1), // 01/03/2024
+      endDate: new Date(2024, 5, 30) // 30/06/2024
     },
     {
       name: 'Dashboard Analytics',
@@ -52,8 +52,8 @@ export class ProjectsComponent {
       progress: 60,
       status: 'active',
       team: ['L', 'M', 'N'],
-      startDate: '15/02/2024',
-      endDate: '30/04/2024'
+      startDate: new Date(2024, 1, 15), // 15/02/2024
+      endDate: new Date(2024, 3, 30) // 30/04/2024
     }
   ];
 

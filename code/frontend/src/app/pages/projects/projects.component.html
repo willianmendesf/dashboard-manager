@@ -38,11 +38,11 @@
         <div class="project-dates">
           <div class="date-item">
             <span class="date-label">Início:</span>
-            <span class="date-value">{{ project.startDate }}</span>
+            <span class="date-value">{{ project.startDate | date:'dd/MM/yyyy' }}</span>
           </div>
           <div class="date-item">
             <span class="date-label">Entrega:</span>
-            <span class="date-value">{{ project.endDate }}</span>
+            <span class="date-value">{{ project.endDate | date:'dd/MM/yyyy' }}</span>
           </div>
         </div>
         <div class="project-actions">
