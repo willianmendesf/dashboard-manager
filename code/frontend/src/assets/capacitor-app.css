@@ -1,0 +1,10 @@
+/* CSS específico para app mobile (Capacitor) */
+/* Adiciona margem superior para evitar sobreposição da barra nativa do Android */
+
+body {
+  padding-top: env(safe-area-inset-top, 24px) !important;
+  background: linear-gradient(180deg, #141920 0%, #3f4d5e 100%) top !important;
+  background-size: 100% 24px !important;
+  background-repeat: no-repeat !important;
+}
+

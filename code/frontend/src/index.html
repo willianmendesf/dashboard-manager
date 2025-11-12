@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/">
     <link rel="icon" type="image/png" sizes="32x32" href="#">
+    <script>
+      // Detectar se está rodando no Capacitor e injetar CSS específico do app
+      if (window.Capacitor || window.cordova) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = './assets/capacitor-app.css';
+        document.head.appendChild(link);
+      }
+    </script>
   </head>
   <body>
     <app-root>Loading...</app-root>
