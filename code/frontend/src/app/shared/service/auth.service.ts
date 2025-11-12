@@ -245,5 +245,15 @@ export class AuthService {
    * REMOVIDO: decodeToken() - Não precisamos mais decodificar tokens JWT
    * A autenticação é gerenciada via cookie de sessão pelo Spring Security
    */
+
+  /**
+   * Clear authentication state without calling backend
+   * Used when session expires (401) and we need to clear local state immediately
+   */
+  clearAuthState(): void {
+    localStorage.removeItem(this.userKey);
+    this.currentUser = null;
+    this.authStatus$.next(false);
+  }
 }
 

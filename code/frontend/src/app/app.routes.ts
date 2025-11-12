@@ -17,6 +17,7 @@ import { AtualizarCadastroComponent } from './pages/atualizar-cadastro/atualizar
 import { GroupManagementComponent } from './pages/group-management/group-management.component';
 import { AdicionarVisitantesComponent } from './pages/adicionar-visitantes/adicionar-visitantes.component';
 import { VisitorManagementComponent } from './pages/visitor-management/visitor-management.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -75,5 +76,9 @@ export const routes: Routes = [
     component: SettingsComponent,
     canActivate: [PermissionGuard],
     data: { permission: 'ACCESS_SCREEN_SETTINGS' }
+  },
+  { 
+    path: '**', 
+    component: NotFoundComponent 
   }
 ];
