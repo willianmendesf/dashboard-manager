@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of, Subject, takeUntil } from 'rxjs';
-import { normalizeImageUrl } from '../../../../shared/utils/url-normalizer';
+import { buildProfileImageUrl } from '../../../../shared/utils/image-url-builder';
 
 interface MemberSpouseDTO {
   nomeCompleto: string;
@@ -229,7 +229,7 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
   }
   
   getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
-    return normalizeImageUrl(fotoUrl);
+    return buildProfileImageUrl(fotoUrl);
   }
 
   ngOnDestroy() {

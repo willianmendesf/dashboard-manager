@@ -16,7 +16,7 @@ import { SpousePreviewComponent } from './components/spouse-preview.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { GroupService, GroupDTO } from '../../../shared/service/group.service';
-import { normalizeImageUrl } from '../../../shared/utils/url-normalizer';
+import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
 
 @Component({
   selector: 'member-management',
@@ -895,10 +895,10 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   /**
-   * Normalize member photo URL for display
+   * Build member photo URL for display (like appointments)
    */
   getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
-    return normalizeImageUrl(fotoUrl);
+    return buildProfileImageUrl(fotoUrl);
   }
 }
 

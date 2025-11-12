@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, LoginResponse } from '../../shared/service/auth.service';
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
-import { normalizeImageUrl } from '../../shared/utils/url-normalizer';
+import { buildProfileImageUrl } from '../../shared/utils/image-url-builder';
 
 @Component({
   selector: 'app-user-header',
@@ -23,7 +23,7 @@ export class UserHeaderComponent {
   }
 
   get userPhotoUrl(): string {
-    return normalizeImageUrl(this.currentUser?.fotoUrl);
+    return buildProfileImageUrl(this.currentUser?.fotoUrl);
   }
 
   get userName(): string {

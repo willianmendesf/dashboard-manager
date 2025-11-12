@@ -66,10 +66,9 @@ public class LocalStorageService implements StorageService {
             // Save processed image
             Files.write(filePath, processedImage);
 
-            // Return relative URL (works in all environments)
-            String publicUrl = String.format("/api/v1/files/%s/%s", folder, filename);
-            log.info("File uploaded, processed and saved successfully: {}", publicUrl);
-            return publicUrl;
+            // Return only filename (frontend will construct URL like appointments)
+            log.info("File uploaded, processed and saved successfully: {}", filename);
+            return filename;
 
         } catch (IOException e) {
             log.error("Error uploading file", e);
@@ -248,22 +247,39 @@ public class LocalStorageService implements StorageService {
     }
 
     @Override
-    public boolean deleteFile(String fileUrl) {
+    public boolean deleteFile(String fileUrlOrFilename) {
         try {
-            // Extract filename from URL
-            String filename = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-            String folder = fileUrl.contains("/files/") 
-                ? fileUrl.substring(fileUrl.indexOf("/files/") + 7, fileUrl.lastIndexOf("/"))
-                : "profiles";
+            String filename;
+            String folder = "profiles"; // default
+            
+            // Handle both old format (URL) and new format (filename only)
+            if (fileUrlOrFilename.contains("/")) {
+                // Old format: URL like "/api/v1/files/profiles/filename.jpg"
+                filename = fileUrlOrFilename.substring(fileUrlOrFilename.lastIndexOf("/") + 1);
+                if (fileUrlOrFilename.contains("/files/")) {
+                    folder = fileUrlOrFilename.substring(fileUrlOrFilename.indexOf("/files/") + 7, fileUrlOrFilename.lastIndexOf("/"));
+                }
+            } else {
+                // New format: filename only like "usuario_id_1.jpg"
+                filename = fileUrlOrFilename;
+                // Try to determine folder from filename pattern
+                if (filename.startsWith("logo_")) {
+                    folder = "logos";
+                } else if (filename.startsWith("favicon_")) {
+                    folder = "favicons";
+                } else {
+                    folder = "profiles";
+                }
+            }
             
             Path filePath = Paths.get(imagesDirectory, folder, filename);
             boolean deleted = Files.deleteIfExists(filePath);
             if (deleted) {
-                log.info("File deleted successfully: {}", fileUrl);
+                log.info("File deleted successfully: {}", fileUrlOrFilename);
             }
             return deleted;
         } catch (Exception e) {
-            log.error("Error deleting file: {}", fileUrl, e);
+            log.error("Error deleting file: {}", fileUrlOrFilename, e);
             return false;
         }
     }

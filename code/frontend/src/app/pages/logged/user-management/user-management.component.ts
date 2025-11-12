@@ -15,7 +15,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { AuthService } from '../../../shared/service/auth.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UtilsService } from '../../../shared/services/utils.service';
-import { normalizeImageUrl } from '../../../shared/utils/url-normalizer';
+import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
 
 @Component({
   selector: 'app-user-management',
@@ -641,20 +641,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     // Priority: currentUser.fotoUrl > photoPreview > default
     const fotoUrl = this.currentUser?.fotoUrl;
     if (fotoUrl && fotoUrl.trim() !== '') {
-      return normalizeImageUrl(fotoUrl);
+      return buildProfileImageUrl(fotoUrl);
     }
     if (this.photoPreview && this.photoPreview.trim() !== '' && this.photoPreview !== 'img/avatar-default.png') {
-      return normalizeImageUrl(this.photoPreview);
+      return buildProfileImageUrl(this.photoPreview);
     }
     // Always return default if no photo exists
     return './img/avatar-default.png';
   }
 
   /**
-   * Normalize user photo URL for display
+   * Build user photo URL for display (like appointments)
    */
   getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
-    return normalizeImageUrl(fotoUrl);
+    return buildProfileImageUrl(fotoUrl);
   }
 
   getTableData(): any[] {

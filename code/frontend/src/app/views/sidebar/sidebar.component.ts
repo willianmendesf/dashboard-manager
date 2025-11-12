@@ -6,7 +6,7 @@ import { NavigationIcons } from '../../shared/lib/utils/icons';
 import { AuthService } from '../../shared/service/auth.service';
 import { ConfigService } from '../../shared/service/config.service';
 import { catchError, of } from 'rxjs';
-import { normalizeImageUrl } from '../../shared/utils/url-normalizer';
+import { buildProfileImageUrl } from '../../shared/utils/image-url-builder';
 
 @Component({
   selector: 'app-sidebar',
@@ -118,7 +118,7 @@ export class SidebarComponent implements OnInit {
   }
 
   get userPhotoUrl(): string {
-    return normalizeImageUrl(this.currentUser?.fotoUrl);
+    return buildProfileImageUrl(this.currentUser?.fotoUrl);
   }
 
   onImageError(event: Event): void {
