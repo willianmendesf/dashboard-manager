@@ -5,6 +5,29 @@ import { routes } from './app.routes';
 import { provideToastr } from 'ngx-toastr';
 import { authInterceptor } from './shared/interceptors/auth.interceptor';
 
+import { 
+  Chart, 
+  CategoryScale, 
+  LinearScale, 
+  PointElement, 
+  LineElement, 
+  LineController,
+  Title, 
+  Tooltip, 
+  Legend 
+} from 'chart.js';
+
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  LineController,
+  Title,
+  Tooltip,
+  Legend
+);
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),

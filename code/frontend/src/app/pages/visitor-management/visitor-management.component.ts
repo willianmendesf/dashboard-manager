@@ -11,13 +11,15 @@ import { Visitor, VisitorStats } from './model/visitor.model';
 import { VisitorService } from '../../shared/service/visitor.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { ChartData, ChartOptions } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
 
 @Component({
   selector: 'app-visitor-management',
   standalone: true,
   templateUrl: './visitor-management.component.html',
   styleUrl: './visitor-management.component.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DataTableComponent, NgxMaskDirective],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DataTableComponent, NgxMaskDirective, BaseChartDirective],
   providers: [provideNgxMask()]
 })
 export class VisitorManagementComponent implements OnInit, OnDestroy {
@@ -33,9 +35,69 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
 
   // Graph data
   visitorStats: VisitorStats[] = [];
-  chartData: number[] = [];
-  chartLabels: string[] = [];
-  maxChartValue: number = 1;
+  
+  // Chart.js configuration
+  lineChartType = 'line' as const;
+  lineChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: [{
+      data: [],
+      label: 'Visitantes',
+      borderColor: '#667eea',
+      backgroundColor: 'rgba(102, 126, 234, 0.1)',
+      tension: 0.4,
+      fill: false,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      pointBackgroundColor: '#667eea',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2
+    }]
+  };
+  lineChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: (context) => `Visitantes: ${context.parsed.y}`
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          precision: 0
+        },
+        title: {
+          display: true,
+          text: 'Número de Visitantes'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Data'
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45
+        }
+      }
+    },
+    elements: {
+      line: {
+        tension: 0.4
+      }
+    }
+  };
   
   // Chart date range filters
   chartStartDate: string | null = null;
@@ -134,23 +196,30 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           console.log('Visitor stats received:', stats);
           
           if (!stats || stats.length === 0) {
-            this.chartData = [];
-            this.chartLabels = [];
-            this.maxChartValue = 1;
+            this.lineChartData = {
+              labels: [],
+              datasets: [{
+                data: [],
+                label: 'Visitantes',
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: false,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2
+              }]
+            };
             this.cdr.detectChanges();
             return;
           }
           
           this.visitorStats = stats;
           
-          // Mapear quantidades garantindo que sejam números
-          this.chartData = stats.map(s => {
-            const qty = typeof s.quantidade === 'number' ? s.quantidade : Number(s.quantidade) || 0;
-            return qty;
-          });
-          
           // Mapear labels formatando datas
-          this.chartLabels = stats.map(s => {
+          const labels = stats.map(s => {
             try {
               const date = new Date(s.data as any);
               
@@ -166,25 +235,44 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
             }
           });
           
-          // Calcular valor máximo garantindo pelo menos 1
-          if (this.chartData.length > 0) {
-            const maxValue = Math.max(...this.chartData);
-            this.maxChartValue = maxValue > 0 ? maxValue : 1;
-          } else {
-            this.maxChartValue = 1;
-          }
+          // Mapear quantidades garantindo que sejam números
+          const data = stats.map(s => {
+            const qty = typeof s.quantidade === 'number' ? s.quantidade : Number(s.quantidade) || 0;
+            return qty;
+          });
           
-          console.log('Chart data:', this.chartData);
-          console.log('Chart labels:', this.chartLabels);
-          console.log('Max chart value:', this.maxChartValue);
+          // Atualizar dados do gráfico
+          this.lineChartData = {
+            labels: labels,
+            datasets: [{
+              ...this.lineChartData.datasets[0],
+              data: data
+            }]
+          };
+          
+          console.log('Chart data:', data);
+          console.log('Chart labels:', labels);
           
           this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Error loading visitor stats:', err);
-          this.chartData = [];
-          this.chartLabels = [];
-          this.maxChartValue = 1;
+          this.lineChartData = {
+            labels: [],
+            datasets: [{
+              data: [],
+              label: 'Visitantes',
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              tension: 0.4,
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#667eea',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2
+            }]
+          };
           this.cdr.detectChanges();
         }
       });

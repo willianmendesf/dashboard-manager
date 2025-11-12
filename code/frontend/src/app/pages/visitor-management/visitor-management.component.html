@@ -8,7 +8,7 @@
   <div class="graph-section">
     <div class="graph-card">
       <div class="graph-header">
-        <h3>Visitantes por Período</h3>
+        <h3>Contagem de Visitantes por Data</h3>
         <div class="graph-controls">
           <div class="controls-row">
             <div class="control-group">
@@ -65,23 +65,14 @@
           </div>
         </div>
       </div>
-      <div class="chart-placeholder">
-        @if (chartData.length > 0) {
-          <div class="chart-bars-container">
-            <div class="chart-bars">
-              @for (value of chartData; track $index) {
-                <div class="bar-wrapper">
-                  <div class="bar-value">{{ value }}</div>
-                  <div class="bar" [style.height.%]="maxChartValue > 0 ? (value / maxChartValue) * 100 : 0"></div>
-                </div>
-              }
-            </div>
-          </div>
-          <div class="chart-labels">
-            @for (label of chartLabels; track $index) {
-              <span>{{ label }}</span>
-            }
-          </div>
+      <div class="chart-container">
+        @if (lineChartData.labels && lineChartData.labels.length > 0) {
+          <canvas
+            baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [type]="lineChartType">
+          </canvas>
         } @else {
           <div class="no-data-message">
             <p>Nenhum dado disponível</p>
