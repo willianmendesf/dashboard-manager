@@ -315,7 +315,14 @@ public class AppointmentSchedulerService {
 
         appointments.stream()
                 .filter(appointment -> isAppointmentDueForExecution(appointment, now))
-                .forEach(this::executeAppointment);
+                .forEach(appointment -> {
+                    try {
+                        executeAppointment(appointment);
+                    } catch (Exception e) {
+                        log.error("Error executing appointment {} (ID: {}): {}. Continuing with other appointments.", 
+                                appointment.getName(), appointment.getId(), e.getMessage(), e);
+                    }
+                });
     }
 
     /**
@@ -513,8 +520,8 @@ public class AppointmentSchedulerService {
             log.warn("Optimistic locking conflict for appointment {}: {}. Will retry on next execution.", 
                     appointment.getId(), e.getMessage());
         } catch (Exception e) {
+            // Logar erro mas não relançar para evitar bloquear outros agendamentos
             log.error("Error saving appointment {}: {}", appointment.getId(), e.getMessage(), e);
-            throw e;
         }
     }
 
@@ -574,24 +581,42 @@ public class AppointmentSchedulerService {
      * Executa chamada de API
      */
     private void executeApiCall(AppointmentEntity appointment) {
-        log.info("Starting call request to: {}", appointment.getEndpoint());
-        ApiRequest.post(appointment.getEndpoint(), null);
+        try {
+            log.info("Starting call request to: {}", appointment.getEndpoint());
+            ApiRequest.post(appointment.getEndpoint(), null);
+        } catch (Exception e) {
+            log.error("Error executing API call for appointment {} (ID: {}): {}", 
+                    appointment.getName(), appointment.getId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to execute API call for appointment: " + appointment.getName(), e);
+        }
     }
 
     /**
      * Executa o envio de mensagens de monitoramento
      */
     private void executeMonitoringMessage(AppointmentEntity appointment) {
-        if (Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
-            log.info("Monitoring message for numbers start send!");
-            sendMessages("monitoring", appointment, appointment.getMonitoringNumbers());
-            log.info("Monitoring message for numbers sent!");
+        try {
+            if (Boolean.TRUE.equals(appointment.getMonitoring()) && !isNull(appointment.getMonitoringNumbers())) {
+                log.info("Monitoring message for numbers start send!");
+                sendMessages("monitoring", appointment, appointment.getMonitoringNumbers());
+                log.info("Monitoring message for numbers sent!");
+            }
+        } catch (Exception e) {
+            log.error("Error sending monitoring messages to numbers for appointment {} (ID: {}): {}", 
+                    appointment.getName(), appointment.getId(), e.getMessage(), e);
+            // Não relançar para não interromper a execução principal do agendamento
         }
 
-        if (Boolean.TRUE.equals(appointment.getMonitoringGroups()) && !isNull(appointment.getMonitoringGroupsIds())) {
-            log.info("Monitoring message for groups start send!");
-            sendMessages("monitoring", appointment, appointment.getMonitoringGroupsIds());
-            log.info("Monitoring message for groups sent!");
+        try {
+            if (Boolean.TRUE.equals(appointment.getMonitoringGroups()) && !isNull(appointment.getMonitoringGroupsIds())) {
+                log.info("Monitoring message for groups start send!");
+                sendMessages("monitoring", appointment, appointment.getMonitoringGroupsIds());
+                log.info("Monitoring message for groups sent!");
+            }
+        } catch (Exception e) {
+            log.error("Error sending monitoring messages to groups for appointment {} (ID: {}): {}", 
+                    appointment.getName(), appointment.getId(), e.getMessage(), e);
+            // Não relançar para não interromper a execução principal do agendamento
         }
     }
 
@@ -605,20 +630,26 @@ public class AppointmentSchedulerService {
         String monitoringMessage = MessagesUtils.generateMonitoringMessage(appointment);
 
         recipients.forEach(recipient -> {
-            WhatsappSender message = new WhatsappSender();
+            try {
+                WhatsappSender message = new WhatsappSender();
 
-            if(!type.equals("monitoring")) {
-                if(Boolean.TRUE.equals(appointment.getSendImage()) && !isNull(appointment.getImageToSend())) {
-                    message.setMedia(appointment.getImageToSend());
-                    message.setMediaType(WhatsappMediaType.IMAGE);
+                if(!type.equals("monitoring")) {
+                    if(Boolean.TRUE.equals(appointment.getSendImage()) && !isNull(appointment.getImageToSend())) {
+                        message.setMedia(appointment.getImageToSend());
+                        message.setMediaType(WhatsappMediaType.IMAGE);
+                    }
+                    message.setPhone(recipient);
+                    message.setMessage(appointment.getMessage());
+                } else {
+                    message.setPhone(recipient);
+                    message.setMessage(monitoringMessage);
                 }
-                message.setPhone(recipient);
-                message.setMessage(appointment.getMessage());
-            } else {
-                message.setPhone(recipient);
-                message.setMessage(monitoringMessage);
+                whatsapp.sendMessage(message);
+            } catch (Exception e) {
+                log.error("Error sending message to recipient {} for appointment {} (ID: {}): {}. Continuing with other recipients.", 
+                        recipient, appointment.getName(), appointment.getId(), e.getMessage(), e);
+                // Continuar com os próximos destinatários mesmo se um falhar
             }
-            whatsapp.sendMessage(message);
         });
     }
 }
