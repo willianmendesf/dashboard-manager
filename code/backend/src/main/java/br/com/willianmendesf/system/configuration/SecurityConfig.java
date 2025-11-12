@@ -86,7 +86,7 @@ public class SecurityConfig {
                 .requestMatchers("/emergency/**").permitAll()
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
-                .requestMatchers("/public/**").permitAll() // Portal público de atualização cadastral
+                .requestMatchers("/public/**").permitAll() // Portal público de atualização cadastral e visitantes
 
                 // 4c. Exija autenticação para todo o resto
                 .anyRequest().authenticated()

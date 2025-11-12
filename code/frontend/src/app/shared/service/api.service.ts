@@ -35,4 +35,12 @@ export class ApiService {
   public delete(uri : string) {
     return this.http.delete<any>(this.apiUrl + uri, this.httpOptions);
   }
+
+  public getBlob(uri: string) {
+    return this.http.get(this.apiUrl + uri, { ...this.httpOptions, responseType: 'blob' });
+  }
+
+  public postFormData(uri: string, formData: FormData) {
+    return this.http.post<any>(this.apiUrl + uri, formData, this.httpOptions);
+  }
 }

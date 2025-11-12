@@ -17,6 +17,8 @@ import { PermissionGuard } from './shared/guards/permission.guard';
 
 import { AtualizarCadastroComponent } from './pages/atualizar-cadastro/atualizar-cadastro.component';
 import { GroupManagementComponent } from './pages/group-management/group-management.component';
+import { AddVisitorsComponent } from './pages/add-visitors/add-visitors.component';
+import { VisitorManagementComponent } from './pages/visitor-management/visitor-management.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -24,6 +26,7 @@ export const routes: Routes = [
   { path: 'esqueci-senha', component: SolicitarResetComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'atualizar-cadastro', component: AtualizarCadastroComponent },
+  { path: 'add-visitors', component: AddVisitorsComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,
@@ -72,6 +75,11 @@ export const routes: Routes = [
   { 
     path: 'group-management', 
     component: GroupManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'visitor-management', 
+    component: VisitorManagementComponent,
     canActivate: [AuthGuard]
   },
   { 

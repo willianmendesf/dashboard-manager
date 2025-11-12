@@ -57,6 +57,13 @@ export class SidebarComponent {
       permission: 'READ_MEMBERS'
     },
     { 
+      path: '/visitor-management', 
+      label: 'Visitantes', 
+      icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: 'READ_VISITORS'
+    },
+    { 
       path: '/user-management', 
       label: 'Usuários', 
       icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
@@ -77,7 +84,14 @@ export class SidebarComponent {
       if (!item.permission) {
         return true;
       }
-      return this.authService.hasPermission(item.permission);
+      if (this.authService.hasPermission(item.permission)) {
+        return true;
+      }
+      const user = this.authService.getCurrentUser();
+      if (user && (user.profileName === 'ROOT' || user.profileName === 'ADMIN')) {
+        return true;
+      }
+      return false;
     });
   }
 

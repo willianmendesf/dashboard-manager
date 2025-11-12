@@ -59,6 +59,11 @@ public class DataInitializationService {
         createPermissionIfNotExists("WRITE_MEMBERS", "Create and update members");
         createPermissionIfNotExists("DELETE_MEMBERS", "Delete members");
         
+        // Visitor management permissions
+        createPermissionIfNotExists("READ_VISITORS", "Read visitors");
+        createPermissionIfNotExists("WRITE_VISITORS", "Create and update visitors");
+        createPermissionIfNotExists("DELETE_VISITORS", "Delete visitors");
+        
         // Profile management permissions
         createPermissionIfNotExists("READ_PROFILES", "Read profiles");
         createPermissionIfNotExists("WRITE_PROFILES", "Create and update profiles");
