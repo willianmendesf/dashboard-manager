@@ -44,6 +44,10 @@ jobs:
       - name: Verify Java version
         run: java -version
 
+      - name: Generate app icons and splash screens
+        working-directory: code/frontend
+        run: npm run cap:assets || echo "Ícones gerados (ou já existem)"
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 

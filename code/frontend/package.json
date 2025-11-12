@@ -15,6 +15,7 @@
     "cap:update": "npx cap update",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
+    "cap:assets": "npx capacitor-assets generate",
     "cap:build:android": "npm run build && npx cap sync && cd android && ./gradlew assembleDebug",
     "cap:build:android:release": "npm run build && npx cap sync && cd android && ./gradlew assembleRelease"
   },
@@ -63,6 +64,7 @@
     "@angular/build": "^20.3.2",
     "@angular/cli": "^20.3.2",
     "@angular/compiler-cli": "^20.3.0",
+    "@capacitor/assets": "^3.0.5",
     "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
