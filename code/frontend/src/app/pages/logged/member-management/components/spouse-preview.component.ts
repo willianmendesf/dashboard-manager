@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
@@ -17,112 +17,8 @@ interface MemberSpouseDTO {
   selector: 'app-spouse-preview',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="spouse-info-section">
-      @if (isLoading) {
-        <div class="loading-state">
-          <p>Buscando informações do cônjuge...</p>
-        </div>
-      }
-      
-      @if (!isLoading && hasError) {
-        <div class="error-state">
-          <p>Não foi possível carregar as informações do cônjuge ou CPF não encontrado.</p>
-        </div>
-      }
-      
-      @if (!isLoading && !hasError && conjugue) {
-        <div class="spouse-details-box">
-          <img 
-            [src]="getNormalizedPhotoUrl(conjugue?.fotoUrl)" 
-            alt="Foto do Cônjuge"
-            class="spouse-avatar"
-            onerror="this.src='./img/avatar-default.png'"
-          />
-          <div class="spouse-text-details">
-            <h3>{{ conjugue.nomeCompleto }}</h3>
-            @if (conjugue.cpf) {
-              <p><strong>CPF:</strong> {{ formatCpf(conjugue.cpf) }}</p>
-            }
-            @if (conjugue.celular) {
-              <p><strong>Celular:</strong> {{ formatCelular(conjugue.celular) }}</p>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  `,
-  styles: [`
-    .spouse-info-section {
-      width: 100%;
-      margin-top: 12px;
-    }
-    
-    .loading-state,
-    .error-state {
-      padding: 16px;
-      text-align: center;
-      border-radius: 8px;
-      margin-top: 12px;
-    }
-    
-    .loading-state {
-      background: #f5f5f5;
-      color: #666;
-      border: 1px solid #e0e0e0;
-    }
-    
-    .error-state {
-      background: #fff5f5;
-      color: #dc3545;
-      border: 1px solid #fecaca;
-    }
-    
-    .spouse-details-box {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px;
-      background: #f5f5f5;
-      border-radius: 8px;
-      margin-top: 12px;
-      border: 1px solid #e0e0e0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    
-    .spouse-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-      border: 2px solid #e0e0e0;
-    }
-    
-    .spouse-text-details {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .spouse-text-details h3 {
-      margin: 0 0 8px 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .spouse-text-details p {
-      margin: 4px 0;
-      font-size: 0.9rem;
-      color: #666;
-    }
-    
-    .spouse-text-details strong {
-      color: #333;
-      font-weight: 600;
-    }
-  `]
+  templateUrl: './spouse-preview.component.html',
+  styleUrl: './spouse-preview.component.scss'
 })
 export class SpousePreviewComponent implements OnInit, OnDestroy {
   private _cpf: string = '';
@@ -132,6 +28,7 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
   
   private destroy$ = new Subject<void>();
   private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
   
   @Input() 
   set cpf(value: string) {
@@ -144,6 +41,7 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
         this.conjugue = null;
         this.isLoading = false;
         this.hasError = false;
+        this.cdr.detectChanges();
       }
     }
   }
@@ -158,6 +56,8 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
       const cleanCpf = this._cpf.replace(/\D/g, '');
       if (cleanCpf.length === 11) {
         this.searchSpouse(cleanCpf);
+      } else {
+        this.cdr.detectChanges();
       }
     }
   }
@@ -198,12 +98,14 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
           this.hasError = true;
         }
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('[SpousePreview] Subscribe error:', err);
         this.conjugue = null;
         this.isLoading = false;
         this.hasError = true;
+        this.cdr.detectChanges();
       }
     });
   }

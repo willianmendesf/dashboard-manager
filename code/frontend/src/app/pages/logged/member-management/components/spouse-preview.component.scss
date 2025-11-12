@@ -1,0 +1,70 @@
+.spouse-info-section {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.loading-state,
+.error-state {
+  padding: 16px;
+  text-align: center;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.loading-state {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.error-state {
+  background: #fff5f5;
+  color: #dc3545;
+  border: 1px solid #fecaca;
+}
+
+.spouse-details-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-top: 12px;
+  border: 1px solid #e0e0e0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.spouse-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #e0e0e0;
+}
+
+.spouse-text-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.spouse-text-details h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.spouse-text-details p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.spouse-text-details strong {
+  color: #333;
+  font-weight: 600;
+}
+
