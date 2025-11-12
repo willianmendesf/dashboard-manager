@@ -16,14 +16,17 @@ RUN apk update && apk add maven && \
 # Usa a imagem Corretto JRE na base Alpine (muito mais leve)
 FROM amazoncorretto:21-alpine
 
-# [Resto da sua lógica de criação de diretórios e CMD]
-RUN mkdir -p /opt/app/images && \
-    mkdir -p /opt/app/files && \
-    chmod 777 /opt/app/images && \
-    chmod 777 /opt/app/files
-
 WORKDIR /opt/app
 
+# Copiar o JAR da aplicação
 COPY --from=build /app/target/system-0.0.1-SNAPSHOT.jar app.jar
 
-CMD ["java", "-jar", "app.jar"]
+# Copiar o script de inicialização
+COPY entrypoint.sh /opt/app/entrypoint.sh
+
+# Tornar o script executável
+RUN chmod +x /opt/app/entrypoint.sh
+
+# Usar o entrypoint.sh como ponto de entrada
+# O script criará/validará os diretórios e depois iniciará a aplicação Java
+ENTRYPOINT ["/opt/app/entrypoint.sh"]

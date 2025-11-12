@@ -13,9 +13,8 @@ services:
     restart: always
     networks:
       - app-network
-    volumes:
-      - images_volume:/opt/app/images
-      - files_volume:/opt/app/files
+    # Volumes são configurados dinamicamente via docker-compose.override.yml
+    # O script docker-compose-up.sh detecta o OS (Windows/Linux) e cria o override.yml
     healthcheck:
       # Verifica se a porta 8080 está aberta e respondendo
       # Usa um endpoint público que sempre retorna resposta (mesmo que erro 400/401)
@@ -42,9 +41,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  images_volume:
-    driver: local
-  files_volume:
-    driver: local
