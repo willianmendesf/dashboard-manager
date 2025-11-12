@@ -1,23 +1,23 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './pages/home/home.component';
-import { SettingsComponent } from './pages/settings/settings.component';
-import { MessagesComponent } from './pages/messages/messages.component';
-import { UserManagementComponent } from './pages/user-management/user-management.component';
-import { WhatsAppComponent } from './pages/whatsapp/whatsapp.component';
-import { MemberManagementComponent } from './pages/member-management/member-management.component';
-import { AppointmentsComponent } from './pages/appointments/appointments.component';
-import { LoginComponent } from './pages/login/login.component';
-import { SolicitarResetComponent } from './pages/solicitar-reset/solicitar-reset.component';
-import { RedefinirSenhaComponent } from './pages/redefinir-senha/redefinir-senha.component';
-import { MyProfileComponent } from './pages/my-profile/my-profile.component';
+import { HomeComponent } from './pages/logged/home/home.component';
+import { SettingsComponent } from './pages/logged/settings/settings.component';
+import { MessagesComponent } from './pages/logged/messages/messages.component';
+import { UserManagementComponent } from './pages/logged/user-management/user-management.component';
+import { WhatsAppComponent } from './pages/logged/whatsapp/whatsapp.component';
+import { MemberManagementComponent } from './pages/logged/member-management/member-management.component';
+import { AppointmentsComponent } from './pages/logged/appointments/appointments.component';
+import { LoginComponent } from './pages/access/login/login.component';
+import { SolicitarResetComponent } from './pages/access/solicitar-reset/solicitar-reset.component';
+import { RedefinirSenhaComponent } from './pages/access/redefinir-senha/redefinir-senha.component';
+import { MyProfileComponent } from './pages/logged/my-profile/my-profile.component';
 import { AuthGuard } from './shared/guards/auth.guard';
 import { PermissionGuard } from './shared/guards/permission.guard';
 
-import { AtualizarCadastroComponent } from './pages/atualizar-cadastro/atualizar-cadastro.component';
-import { GroupManagementComponent } from './pages/group-management/group-management.component';
-import { AdicionarVisitantesComponent } from './pages/adicionar-visitantes/adicionar-visitantes.component';
-import { VisitorManagementComponent } from './pages/visitor-management/visitor-management.component';
-import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { AtualizarCadastroComponent } from './pages/public/atualizar-cadastro/atualizar-cadastro.component';
+import { GroupManagementComponent } from './pages/logged/group-management/group-management.component';
+import { AdicionarVisitantesComponent } from './pages/public/adicionar-visitantes/adicionar-visitantes.component';
+import { VisitorManagementComponent } from './pages/logged/visitor-management/visitor-management.component';
+import { NotFoundComponent } from './pages/logged/not-found/not-found.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
