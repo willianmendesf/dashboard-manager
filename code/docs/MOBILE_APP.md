@@ -58,7 +58,7 @@ cd android
 ./gradlew assembleDebug
 ```
 
-O APK estará em: `android/app/build/outputs/apk/debug/ipbf-apk.apk`
+O APK estará em: `android/app/build/outputs/apk/debug/ipbf-app.apk`
 
 ## Recursos (Ícones e Splash Screen)
 

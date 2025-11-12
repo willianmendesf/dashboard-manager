@@ -63,15 +63,15 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ipbf-apk
-          path: code/frontend/android/app/build/outputs/apk/debug/ipbf-apk.apk
+          name: ipbf-app
+          path: code/frontend/android/app/build/outputs/apk/debug/ipbf-app.apk
           retention-days: 90
 
       - name: Create Release (if tag)
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
         with:
-          files: code/frontend/android/app/build/outputs/apk/debug/ipbf-apk.apk
+          files: code/frontend/android/app/build/outputs/apk/debug/ipbf-app.apk
           draft: false
           prerelease: false
         env:
@@ -82,5 +82,5 @@ jobs:
           echo "APK disponível para download em:"
           echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo ""
-          echo "Ou baixe diretamente do artifact 'ipbf-apk'"
+          echo "Ou baixe diretamente do artifact 'ipbf-app'"
 
