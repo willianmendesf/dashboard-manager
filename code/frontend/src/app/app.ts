@@ -94,7 +94,7 @@ export class App implements OnInit {
       const link = document.createElement('link');
       link.rel = 'icon';
       link.type = 'image/png';
-      link.href = './favicon.ico';
+      link.href = './img/icon.png';
       document.head.appendChild(link);
     }
   }
