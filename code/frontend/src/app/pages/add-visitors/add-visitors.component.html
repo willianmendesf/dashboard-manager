@@ -1,0 +1,129 @@
+<div class="public-update-container">
+  <div class="public-update-card">
+    <div class="header">
+      <h1>Adicionar Visitante</h1>
+      <p class="subtitle">Preencha os dados do visitante</p>
+    </div>
+
+    <div class="form-section">
+      <form [formGroup]="visitorForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="nomeCompleto">Nome Completo *</label>
+          <input
+            id="nomeCompleto"
+            type="text"
+            formControlName="nomeCompleto"
+            class="form-control"
+            placeholder="Digite o nome completo"
+            [disabled]="isLoading"
+          />
+          @if (visitorForm.get('nomeCompleto')?.invalid && visitorForm.get('nomeCompleto')?.touched) {
+            <small class="error-text">Nome completo é obrigatório</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="dataVisita">Data de Hoje *</label>
+          <input
+            id="dataVisita"
+            type="date"
+            formControlName="dataVisita"
+            class="form-control"
+            [disabled]="isLoading"
+          />
+          @if (visitorForm.get('dataVisita')?.invalid && visitorForm.get('dataVisita')?.touched) {
+            <small class="error-text">Data é obrigatória</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="telefone">Número (Telefone, WhatsApp)</label>
+          <input
+            id="telefone"
+            type="text"
+            formControlName="telefone"
+            class="form-control"
+            placeholder="(00) 00000-0000"
+            [mask]="'(00) 00000-0000'"
+            [dropSpecialCharacters]="false"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="jaFrequentaIgreja">Já Frequenta Igreja?</label>
+          <select
+            id="jaFrequentaIgreja"
+            formControlName="jaFrequentaIgreja"
+            class="form-control"
+            [disabled]="isLoading"
+          >
+            <option value="">Selecione</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="procuraIgreja">Está à Procura de uma Igreja?</label>
+          <select
+            id="procuraIgreja"
+            formControlName="procuraIgreja"
+            class="form-control"
+            [disabled]="isLoading"
+          >
+            <option value="">Selecione</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="eDeSP">É de SP?</label>
+          <select
+            id="eDeSP"
+            formControlName="eDeSP"
+            class="form-control"
+            [disabled]="isLoading"
+          >
+            <option [value]="true">Sim</option>
+            <option [value]="false">Não</option>
+          </select>
+        </div>
+
+        @if (!eDeSP) {
+          <div class="form-group">
+            <label for="estado">Estado *</label>
+            <select
+              id="estado"
+              formControlName="estado"
+              class="form-control"
+              [disabled]="isLoading"
+            >
+              <option value="">Selecione o estado</option>
+              @for (estado of estadosBR; track estado) {
+                <option [value]="estado">{{ estado }}</option>
+              }
+            </select>
+            @if (visitorForm.get('estado')?.invalid && visitorForm.get('estado')?.touched) {
+              <small class="error-text">Estado é obrigatório quando não é de SP</small>
+            }
+          </div>
+        }
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="visitorForm.invalid || isLoading"
+        >
+          @if (isLoading) {
+            Enviando...
+          } @else {
+            Enviar
+          }
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
