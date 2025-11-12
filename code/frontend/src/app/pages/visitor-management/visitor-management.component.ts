@@ -257,6 +257,11 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
     this.loadVisitors();
   }
 
+  refreshData(): void {
+    this.loadVisitors();
+    this.loadVisitorStats();
+  }
+
   openCreateModal(): void {
     this.isEditing = false;
     this.currentVisitor = {
@@ -340,6 +345,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
             } else {
               this.notificationService.showSuccess('Visitante atualizado com sucesso!');
               this.loadVisitors();
+              this.loadVisitorStats();
               this.closeVisitorModal();
             }
           },
@@ -359,6 +365,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
             } else {
               this.notificationService.showSuccess('Visitante criado com sucesso!');
               this.loadVisitors();
+              this.loadVisitorStats();
               this.closeVisitorModal();
             }
           },
@@ -454,6 +461,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           // Se estava criando (não editando), fechar modal após upload
           if (!this.isEditing) {
             this.loadVisitors();
+            this.loadVisitorStats();
             this.closeVisitorModal();
           }
           
