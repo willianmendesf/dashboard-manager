@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'br.com.ipbf.dashboard',
-  appName: 'IPBF Dashboard',
+  appName: 'IPBF',
   webDir: 'dist/dashboard/browser',
   server: {
     // URL será carregada dinamicamente via app-config.json
