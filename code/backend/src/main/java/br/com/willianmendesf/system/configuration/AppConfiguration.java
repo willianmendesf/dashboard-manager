@@ -14,14 +14,6 @@ public class AppConfiguration {
     }
 
     @Bean
-    public String apiNodeUrl() {
-        Dotenv dotenv = Dotenv.configure()
-                .ignoreIfMissing()
-                .load();
-        return dotenv.get("API_WTZ_URL");
-    }
-
-    @Bean
     public Dotenv loadDotenv() {
         Dotenv dotenv = Dotenv.configure()
                 .ignoreIfMissing()

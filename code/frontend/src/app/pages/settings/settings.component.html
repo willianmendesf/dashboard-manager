@@ -79,6 +79,20 @@
                 <small class="field-hint">Chave de API para serviços externos (tipo senha)</small>
               </div>
 
+              <div class="setting-item">
+                <label>URL da API WhatsApp</label>
+                <input 
+                  type="text" 
+                  formControlName="whatsappApiUrl"
+                  placeholder="https://api-whatsapp.exemplo.com"
+                  autocomplete="off"
+                />
+                <small class="field-hint">
+                  URL da API externa do WhatsApp Web. 
+                  Se não configurado, será usado o valor do arquivo .env como fallback.
+                </small>
+              </div>
+
               <div class="setting-item section-divider">
                 <h3 class="section-subtitle">Outras Configurações</h3>
               </div>

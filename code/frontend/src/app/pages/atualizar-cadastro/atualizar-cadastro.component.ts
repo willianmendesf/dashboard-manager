@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 import { CommonModule } from '@angular/common';
 import { PublicMemberService, MemberDTO, UpdateMemberDTO } from '../../shared/service/public-member.service';
 import { NotificationService } from '../../shared/services/notification.service';
+import { GroupService, GroupDTO } from '../../shared/service/group.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 function cpfValidator(control: AbstractControl): ValidationErrors | null {
@@ -65,11 +66,14 @@ export class AtualizarCadastroComponent implements OnInit {
   isLoading = false;
   showEditForm = false;
   hasConjugueCPF = false; // Flag para controlar write-once
+  availableGroups: GroupDTO[] = [];
+  selectedGroupIds: number[] = [];
 
   constructor(
     private fb: FormBuilder,
     private memberService: PublicMemberService,
     private notificationService: NotificationService,
+    private groupService: GroupService,
     private cdr: ChangeDetectorRef
   ) {
 
@@ -95,7 +99,7 @@ export class AtualizarCadastroComponent implements OnInit {
       estadoCivil: [false],
       rg: [''],
       conjugueCPF: ['', conjugueCpfValidator],
-      grupos: [''],
+      groupIds: [[]],
       rede: [''],
       operadora: [''],
       contato: ['']
@@ -103,6 +107,8 @@ export class AtualizarCadastroComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadGroups();
+    
     this.editForm.get('estadoCivil')?.valueChanges.subscribe((estadoCivil) => {
       const conjugueCPFControl = this.editForm.get('conjugueCPF');
       if (!estadoCivil && !this.hasConjugueCPF) {
@@ -117,6 +123,17 @@ export class AtualizarCadastroComponent implements OnInit {
         if (estadoCivilControl && !estadoCivilControl.disabled) {
           estadoCivilControl.setValue(true);
         }
+      }
+    });
+  }
+
+  loadGroups(): void {
+    this.groupService.getAll().subscribe({
+      next: (groups) => {
+        this.availableGroups = groups;
+      },
+      error: (err) => {
+        console.error('Error loading groups:', err);
       }
     });
   }
@@ -166,6 +183,9 @@ export class AtualizarCadastroComponent implements OnInit {
 
     this.hasConjugueCPF = !!(member.conjugueCPF && member.conjugueCPF.trim().length > 0);
 
+    // Carrega os grupos selecionados
+    this.selectedGroupIds = member.groupIds || [];
+
     this.editForm.patchValue({
       cpf: member.cpf || '',
       nome: member.nome || '',
@@ -183,7 +203,8 @@ export class AtualizarCadastroComponent implements OnInit {
       complemento: member.complemento || '',
       bairro: member.bairro || '',
       cidade: member.cidade || '',
-      estado: member.estado || ''
+      estado: member.estado || '',
+      groupIds: this.selectedGroupIds
     });
 
     // Bloqueia os campos se já existe CPF do cônjuge
@@ -246,7 +267,7 @@ export class AtualizarCadastroComponent implements OnInit {
       rg: formData.rg,
       conjugueCPF: conjugueCPF.length > 0 ? conjugueCPF : undefined,
       tipoCadastro: formData.tipoCadastro,
-      grupos: formData.grupos,
+      groupIds: this.selectedGroupIds.length > 0 ? this.selectedGroupIds : undefined,
       rede: formData.rede,
       operadora: formData.operadora,
       contato: formData.contato
@@ -274,10 +295,24 @@ export class AtualizarCadastroComponent implements OnInit {
     this.showEditForm = false;
     this.foundMember = null;
     this.hasConjugueCPF = false;
+    this.selectedGroupIds = [];
     this.searchForm.reset();
     this.editForm.reset();
     this.editForm.get('estadoCivil')?.enable();
     this.editForm.get('conjugueCPF')?.enable();
+  }
+
+  toggleGroup(groupId: number): void {
+    const index = this.selectedGroupIds.indexOf(groupId);
+    if (index > -1) {
+      this.selectedGroupIds.splice(index, 1);
+    } else {
+      this.selectedGroupIds.push(groupId);
+    }
+  }
+
+  isGroupSelected(groupId: number): boolean {
+    return this.selectedGroupIds.includes(groupId);
   }
 }
 

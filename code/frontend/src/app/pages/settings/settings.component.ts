@@ -78,7 +78,8 @@ export class SettingsComponent implements OnInit {
       notificationsPush: [true],
       notificationsWhatsApp: [false],
       whatsAppWeeklyReports: [false],
-      whatsAppSecurityAlerts: [false]
+      whatsAppSecurityAlerts: [false],
+      whatsappApiUrl: [''],
     });
   }
 
@@ -147,7 +148,8 @@ export class SettingsComponent implements OnInit {
       notificationsPush: this.parseBoolean(configMap.get('NOTIFICATIONS_PUSH'), true),
       notificationsWhatsApp: this.parseBoolean(configMap.get('NOTIFICATIONS_WHATSAPP'), false),
       whatsAppWeeklyReports: this.parseBoolean(configMap.get('WHATSAPP_WEEKLY_REPORTS'), false),
-      whatsAppSecurityAlerts: this.parseBoolean(configMap.get('WHATSAPP_SECURITY_ALERTS'), false)
+      whatsAppSecurityAlerts: this.parseBoolean(configMap.get('WHATSAPP_SECURITY_ALERTS'), false),
+      whatsappApiUrl: configMap.get('API_WTZ_URL') || '',
     });
   }
 
@@ -221,7 +223,8 @@ export class SettingsComponent implements OnInit {
       NOTIFICATIONS_PUSH: String(formValue.notificationsPush),
       NOTIFICATIONS_WHATSAPP: String(formValue.notificationsWhatsApp),
       WHATSAPP_WEEKLY_REPORTS: String(formValue.whatsAppWeeklyReports),
-      WHATSAPP_SECURITY_ALERTS: String(formValue.whatsAppSecurityAlerts)
+      WHATSAPP_SECURITY_ALERTS: String(formValue.whatsAppSecurityAlerts),
+      API_WTZ_URL: formValue.whatsappApiUrl || '',
     };
 
     // Atualizar API keys apenas se não forem ****** ou vazias

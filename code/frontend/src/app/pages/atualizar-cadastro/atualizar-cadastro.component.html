@@ -279,6 +279,33 @@
             </div>
           }
 
+          @if (availableGroups.length > 0) {
+            <div class="form-group">
+              <label>Grupos de Voluntariado</label>
+              <div class="groups-checkbox-list">
+                @for (group of availableGroups; track group.id) {
+                  <div class="checkbox-item">
+                    <input
+                      type="checkbox"
+                      [id]="'group-' + group.id"
+                      [checked]="isGroupSelected(group.id!)"
+                      (change)="toggleGroup(group.id!)"
+                    />
+                    <label [for]="'group-' + group.id">
+                      {{ group.nome }}
+                      @if (group.descricao) {
+                        <small class="text-muted"> - {{ group.descricao }}</small>
+                      }
+                    </label>
+                  </div>
+                }
+              </div>
+              <small class="form-text text-muted">
+                Selecione os grupos de voluntariado aos quais você deseja se inscrever.
+              </small>
+            </div>
+          }
+
           <div class="form-actions">
             <button
               type="button"

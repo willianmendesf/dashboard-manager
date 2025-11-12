@@ -50,6 +50,13 @@ export class SidebarComponent {
       permission: null
     },
     { 
+      path: '/group-management', 
+      label: 'Grupos', 
+      icon: this.getSafeIcon(() => NavigationIcons.groups({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: 'READ_MEMBERS'
+    },
+    { 
       path: '/user-management', 
       label: 'Usuários', 
       icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
@@ -68,7 +75,7 @@ export class SidebarComponent {
   get filteredMenuItems() {
     return this.menuItems.filter(item => {
       if (!item.permission) {
-        return true; // No permission required
+        return true;
       }
       return this.authService.hasPermission(item.permission);
     });
@@ -111,6 +118,3 @@ export class SidebarComponent {
     this.isOpen.set(false);
   }
 }
-
-// { path: '/analytics', label: 'Analytics', icon: '📊', exact: true },
-// { path: '/messages', label: 'Mensagens', icon: '📨', exact: true },

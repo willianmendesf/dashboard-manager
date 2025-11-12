@@ -16,6 +16,7 @@ import { AuthGuard } from './shared/guards/auth.guard';
 import { PermissionGuard } from './shared/guards/permission.guard';
 
 import { AtualizarCadastroComponent } from './pages/atualizar-cadastro/atualizar-cadastro.component';
+import { GroupManagementComponent } from './pages/group-management/group-management.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -66,6 +67,11 @@ export const routes: Routes = [
   { 
     path: 'user-management', 
     component: UserManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'group-management', 
+    component: GroupManagementComponent,
     canActivate: [AuthGuard]
   },
   { 

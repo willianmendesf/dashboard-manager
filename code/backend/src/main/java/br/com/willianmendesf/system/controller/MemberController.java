@@ -5,6 +5,7 @@ import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
+import br.com.willianmendesf.system.repository.GroupRepository;
 import br.com.willianmendesf.system.service.MemberImportService;
 import br.com.willianmendesf.system.service.MemberService;
 import br.com.willianmendesf.system.service.storage.StorageService;
@@ -31,12 +32,16 @@ public class MemberController {
 
     private final MemberService service;
     private final MemberRepository memberRepository;
+    private final GroupRepository groupRepository;
     private final StorageService storageService;
     private final MemberImportService memberImportService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_MEMBERS')")
-    public ResponseEntity<List<MemberEntity>> getAll() {
+    public ResponseEntity<List<MemberDTO>> getAll(@RequestParam(required = false) Long groupId) {
+        if (groupId != null) {
+            return ResponseEntity.ok(service.getAllByGroupId(groupId));
+        }
         return ResponseEntity.ok(service.getAll());
     }
 
@@ -54,11 +59,6 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * GET /api/v1/members/cpf/{cpf}/spouse
-     * Returns basic spouse information (nomeCompleto and fotoUrl) for relationship preview
-     * Requires READ_MEMBERS permission
-     */
     @GetMapping("/cpf/{cpf}/spouse")
     @PreAuthorize("hasAuthority('READ_MEMBERS')")
     public ResponseEntity<MemberSpouseDTO> getSpouseByCpf(@PathVariable String cpf) {
@@ -77,8 +77,6 @@ public class MemberController {
     @PostMapping
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<MemberDTO> create(@RequestBody MemberEntity member) {
-        // O service.create() salva o membro, mas precisamos retornar o membro salvo com ID
-        // Vamos salvar diretamente aqui para ter acesso ao membro criado
         try {
             if (member.getCpf() != null && !member.getCpf().trim().isEmpty()) {
                 var cpf = CPFUtil.validateAndFormatCPF(member.getCpf());
@@ -92,6 +90,22 @@ public class MemberController {
             if (member.getRg() != null && !member.getRg().trim().isEmpty()) {
                 member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
             }
+            
+            if (member.getGroups() != null && !member.getGroups().isEmpty()) {
+                var groupIds = member.getGroups().stream()
+                    .map(g -> g.getId())
+                    .filter(id -> id != null)
+                    .toList();
+                if (!groupIds.isEmpty()) {
+                    var groups = groupRepository.findAllById(groupIds);
+                    member.setGroups(new java.util.HashSet<>(groups));
+                } else {
+                    member.setGroups(new java.util.HashSet<>());
+                }
+            } else {
+                member.setGroups(new java.util.HashSet<>());
+            }
+            
             MemberEntity savedMember = memberRepository.save(member);
             return ResponseEntity.status(HttpStatus.CREATED).body(new MemberDTO(savedMember));
         } catch (Exception e) {
@@ -103,8 +117,16 @@ public class MemberController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<HttpStatus> updateUserById(@PathVariable Long id, @RequestBody MemberEntity member) {
-        MemberEntity createdUserEntity = service.updateById(id, member);
-        return ResponseEntity.status(201).body(HttpStatus.CREATED);
+        try {
+            log.info("Received update request for member ID: {}", id);
+            log.debug("Member data: nome={}, email={}, estadoCivil={}, intercessor={}", 
+                member.getNome(), member.getEmail(), member.getEstadoCivil(), member.getIntercessor());
+            service.updateById(id, member);
+            return ResponseEntity.status(201).body(HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("Error updating member with ID: {}", id, e);
+            throw e;
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -114,11 +136,6 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * POST /api/v1/members/{id}/upload-foto
-     * Uploads profile photo for a specific member
-     * Requires WRITE_MEMBERS permission
-     */
     @PostMapping("/{id}/upload-foto")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<?> uploadMemberPhoto(
@@ -137,8 +154,6 @@ public class MemberController {
             MemberEntity member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found: " + id));
 
-            // Upload file to storage with overwrite strategy
-            // Uses standardized naming: membro_id_{memberId}.{ext}
             String fotoUrl = storageService.uploadFile(
                 file, 
                 "profiles", 
@@ -146,12 +161,10 @@ public class MemberController {
                 member.getId().toString()
             );
             
-            // Delete old photo if exists (overwrite strategy)
             if (member.getFotoUrl() != null && !member.getFotoUrl().equals(fotoUrl)) {
                 storageService.deleteFile(member.getFotoUrl());
             }
             
-            // Update member's fotoUrl
             member.setFotoUrl(fotoUrl);
             MemberEntity updatedMember = memberRepository.save(member);
             
@@ -166,11 +179,6 @@ public class MemberController {
         }
     }
 
-    /**
-     * POST /api/v1/members/import
-     * Imports members from Excel (.xlsx) or CSV file
-     * Requires WRITE_MEMBERS permission
-     */
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<ImportResultDTO> importMembers(@RequestParam("file") MultipartFile file) {
@@ -193,11 +201,6 @@ public class MemberController {
         }
     }
 
-    /**
-     * GET /api/v1/members/import/template
-     * Downloads Excel template file for member import
-     * Requires WRITE_MEMBERS permission
-     */
     @GetMapping("/import/template")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<ByteArrayResource> downloadTemplate() {

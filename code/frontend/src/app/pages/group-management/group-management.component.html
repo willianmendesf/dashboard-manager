@@ -1,0 +1,62 @@
+<div class="group-management-container">
+  <pagetitle title="Gerenciamento de Grupos" subtitle="Gerencie os grupos de voluntariado e atividades"></pagetitle>
+
+  <div class="content-card">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar grupos..."
+          [(ngModel)]="searchTerm"
+          (input)="filterGroups()"
+        />
+      </div>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        + Novo Grupo
+      </button>
+    </div>
+
+    <app-data-table
+      [columns]="tableColumns"
+      [data]="getTableData()"
+      [actions]="getTableActions()"
+      [loading]="isLoading"
+      emptyMessage="Nenhum grupo encontrado"
+    ></app-data-table>
+  </div>
+
+  <app-modal
+    [title]="modalTitle"
+    [isOpen]="showModal"
+    [size]="'medium'"
+    [footerButtons]="getModalButtons()"
+    (close)="closeModal()"
+  >
+    <div class="form-container">
+      <div class="form-group">
+        <label for="nome">Nome do Grupo *</label>
+        <input
+          type="text"
+          id="nome"
+          class="form-control"
+          [(ngModel)]="currentGroup.nome"
+          placeholder="Ex: Professor de EBD"
+          maxlength="100"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="descricao">Descrição</label>
+        <textarea
+          id="descricao"
+          class="form-control"
+          [(ngModel)]="currentGroup.descricao"
+          placeholder="Descrição opcional do grupo"
+          rows="3"
+        ></textarea>
+      </div>
+    </div>
+  </app-modal>
+</div>
+

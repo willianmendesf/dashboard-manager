@@ -5,7 +5,7 @@ import br.com.willianmendesf.system.model.WhatsappSender;
 import br.com.willianmendesf.system.model.enums.WhatsappMediaType;
 import br.com.willianmendesf.system.service.utils.WhatsappExtractor;
 import br.com.willianmendesf.system.service.utils.WhatsappSenderService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -28,15 +28,15 @@ import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WhatsappMessageService {
 
     @Value("${file.images-dir}")
     private String uploadDir;
 
-    private final String SEND_MESSAGE = "/send/";
-    private final String GET_GROUPS = "/user/my/groups";
-    private final String GET_CONTACTS = "/user/my/contacts";
+    private static final String SEND_MESSAGE = "/send/";
+    private static final String GET_GROUPS = "/user/my/groups";
+    private static final String GET_CONTACTS = "/user/my/contacts";
 
     private final WhatsappSenderService whatsappSender;
 

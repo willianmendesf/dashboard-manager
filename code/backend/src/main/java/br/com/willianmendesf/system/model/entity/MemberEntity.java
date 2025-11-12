@@ -1,15 +1,19 @@
 package br.com.willianmendesf.system.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @Entity
 @Table(name = "register")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MemberEntity {
 
     @Id
@@ -76,9 +80,6 @@ public class MemberEntity {
     @Column(name = "celular")
     private String celular;
 
-    @Column(name = "contato")
-    private String contato;
-
     @Column(name = "email")
     private String email;
 
@@ -91,15 +92,20 @@ public class MemberEntity {
     @Column(name = "lgpd_aceito_em")
     private LocalDate lgpdAceitoEm;
 
-    @Column(name = "rede")
-    private String rede;
-
     @Column(name = "foto_url", length = 500)
     private String fotoUrl;
 
     @Version // 30 campos
     @Column(name = "version")
     private Long version;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "member_groups",
+        joinColumns = @JoinColumn(name = "member_id"),
+        inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
+    private Set<GroupEntity> groups = new HashSet<>();
 
     public MemberEntity() {}
 
@@ -125,12 +131,10 @@ public class MemberEntity {
         this.telefone = member.getTelefone();
         this.comercial = member.getComercial();
         this.celular = member.getCelular();
-        this.contato = member.getContato();
         this.email = member.getEmail();
         this.grupos = member.getGrupos();
         this.lgpd = member.getLgpd();
         this.lgpdAceitoEm = member.getLgpdAceitoEm();
-        this.rede = member.getRede();
         this.fotoUrl = member.getFotoUrl();
         this.version = member.getVersion();
     }
@@ -157,12 +161,10 @@ public class MemberEntity {
         this.telefone = (isNotEmpty(actual.getTelefone())) ? actual.getTelefone() : newValue.getTelefone();
         this.comercial = (isNotEmpty(actual.getComercial())) ? actual.getComercial() : newValue.getComercial();
         this.celular = (isNotEmpty(actual.getCelular())) ? actual.getCelular() : newValue.getCelular();
-        this.contato = (isNotEmpty(actual.getContato())) ? actual.getContato() : newValue.getContato();
         this.email = (isNotEmpty(actual.getEmail())) ? actual.getEmail() : newValue.getEmail();
         this.grupos = (isNotEmpty(actual.getGrupos())) ? actual.getGrupos() : newValue.getGrupos();
         this.lgpd = (actual.getLgpd() != null) ? actual.getLgpd() : newValue.getLgpd();
         this.lgpdAceitoEm = (actual.getLgpdAceitoEm() != null) ? actual.getLgpdAceitoEm() : newValue.getLgpdAceitoEm();
-        this.rede = (isNotEmpty(actual.getRede())) ? actual.getRede() : newValue.getRede();
         this.fotoUrl = (isNotEmpty(actual.getFotoUrl())) ? actual.getFotoUrl() : newValue.getFotoUrl();
         this.version = (actual.getVersion() != null) ? actual.getVersion() : newValue.getVersion();
     }

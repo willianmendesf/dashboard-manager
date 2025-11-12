@@ -15,6 +15,7 @@ import { NotificationService } from '../../shared/services/notification.service'
 import { SpousePreviewComponent } from './components/spouse-preview.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UtilsService } from '../../shared/services/utils.service';
+import { GroupService, GroupDTO } from '../../shared/service/group.service';
 
 @Component({
   selector: 'member-management',
@@ -32,14 +33,17 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   members: Member[] = [];
   filteredMembers: Member[] = [...this.members];
-  tableData: any[] = []; // Dados formatados para a tabela
+  tableData: any[] = [];
   searchTerm = '';
   tipoCadastroFilter = '';
   estadoCivilFilter = '';
   intercessorFilter = '';
+  groupFilter = '';
   currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
+  
+  availableGroups: GroupDTO[] = [];
+  selectedGroupIds: number[] = [];
 
-  // Configuração da tabela
   tableColumns: TableColumn[] = [
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
@@ -63,7 +67,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         label: 'Editar',
         icon: 'edit',
         action: (row) => {
-          if (row._original) this.editMember(row._original);
+          if (row._original) this.editMember(row._original.id);
         }
       },
       {
@@ -83,13 +87,10 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   currentMember: any = {};
   viewingMember: Member | null = null;
   
-  // Import modal state
   selectedImportFile: File | null = null;
   importProgress = '';
   importResult: any = null;
   isImporting = false;
-
-  // Paginação agora é gerenciada pelo DataTableComponent
 
   selectedPhotoFile: File | null = null;
   photoPreview: string | null = null;
@@ -98,7 +99,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private cdr: ChangeDetectorRef,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private groupService: GroupService
   ) {}
 
   ngOnDestroy(): void {
@@ -106,7 +108,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
-  // Import methods
   openImportModal(): void {
     this.showImportModal = true;
     this.selectedImportFile = null;
@@ -221,10 +222,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
             );
           }
 
-          // Refresh members list
           this.getMembers();
           
-          // Show detailed result
           this.importProgress = `
             Total de linhas: ${totalRows}
             Criados: ${createdCount}
@@ -245,24 +244,54 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.getMembers();
+    this.loadGroups();
+  }
+
+  loadGroups(): void {
+    this.groupService.getAll()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (groups) => {
+          this.availableGroups = groups;
+        },
+        error: (err) => {
+          console.error('Error loading groups:', err);
+        }
+      });
   }
 
   public getMembers() {
-    this.api.get("members")
+    const url = this.groupFilter 
+      ? `members?groupId=${this.groupFilter}` 
+      : "members";
+    
+    this.api.get(url)
       .pipe(takeUntil(this.unsubscribe$))
-      .subscribe({
-        next: res => {
-          // Garantir que fotoUrl seja mapeado corretamente
-          this.members = (res || []).map((member: any) => ({
-            ...member,
-            fotoUrl: member.fotoUrl || null
-          }));
-          this.filterMembers(); // Isso já chama getTableData() internamente
-          // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
-          setTimeout(() => {
-            this.cdr.markForCheck();
-          }, 0);
-        },
+        .subscribe({
+          next: res => {
+            this.members = (res || []).map((member: any) => {
+              // Converter estadoCivil de string para boolean se necessário
+              let estadoCivilBoolean: boolean;
+              if (typeof member.estadoCivil === 'boolean') {
+                estadoCivilBoolean = member.estadoCivil;
+              } else if (typeof member.estadoCivil === 'string') {
+                estadoCivilBoolean = member.estadoCivil === 'Casado' || member.estadoCivil.toLowerCase() === 'casado';
+              } else {
+                estadoCivilBoolean = false; // default para Solteiro
+              }
+              
+              return {
+                ...member,
+                fotoUrl: member.fotoUrl || null,
+                groupIds: member.groupIds || [],
+                estadoCivil: estadoCivilBoolean
+              };
+            });
+            this.filterMembers();
+            setTimeout(() => {
+              this.cdr.markForCheck();
+            }, 0);
+          },
         error: error => {
           console.error('Error loading members:', error);
           this.members = [];
@@ -272,17 +301,22 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
           }, 0);
         },
         complete: () => {
-          // Não precisa chamar filterMembers novamente aqui, já foi chamado no next
         }
       });
   }
 
   public createMember(member: Member) {
-    this.api.post("members", member)
+    const memberData = {
+      ...member,
+      groups: this.selectedGroupIds.length > 0 
+        ? this.selectedGroupIds.map(id => ({ id }))
+        : undefined
+    };
+    
+    this.api.post("members", memberData)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: async (res: any) => {
-          // Upload photo if selected after member is created
           if (this.selectedPhotoFile && res && res.id) {
             await this.uploadMemberPhoto(res.id);
           }
@@ -299,7 +333,91 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   public updateMember(member: Member) {
-    this.api.update(`members/${member.id}`, member)
+    const estadoCivilValue: any = (member as any).estadoCivil;
+    let estadoCivilBoolean: boolean;
+    
+    if (typeof estadoCivilValue === 'boolean') {
+      estadoCivilBoolean = estadoCivilValue;
+    } else if (typeof estadoCivilValue === 'string') {
+      const estadoCivilStr = estadoCivilValue.toLowerCase().trim();
+      estadoCivilBoolean = estadoCivilStr === 'casado' || estadoCivilStr === 'true';
+    } else {
+      estadoCivilBoolean = false;
+    }
+    
+    console.log('Converting estadoCivil:', estadoCivilValue, '->', estadoCivilBoolean, typeof estadoCivilBoolean);
+    
+    const memberData: any = {
+      nome: member.nome || '',
+      email: member.email || '',
+      cpf: member.cpf || null,
+      rg: member.rg || null,
+      conjugueCPF: member.conjugueCPF || null,
+      comungante: member.comungante !== undefined ? member.comungante : null,
+      intercessor: member.intercessor !== undefined ? member.intercessor : false,
+      tipoCadastro: (member.tipoCadastro && typeof member.tipoCadastro === 'string' && member.tipoCadastro.trim()) ? member.tipoCadastro.trim() : null,
+      nascimento: member.nascimento || null,
+      idade: member.idade || null,
+      estadoCivil: estadoCivilBoolean,
+      cep: member.cep || null,
+      logradouro: member.logradouro || null,
+      numero: member.numero || null,
+      complemento: member.complemento || null,
+      bairro: member.bairro || null,
+      cidade: member.cidade || null,
+      estado: member.estado || null,
+      telefone: member.telefone || null,
+      comercial: member.comercial || null,
+      celular: member.celular || null,
+      lgpd: typeof member.lgpd === 'boolean' ? member.lgpd : (member.lgpd === 'true' ? true : (member.lgpd === 'false' ? false : null)),
+      lgpdAceitoEm: member.lgpdAceitoEm ? member.lgpdAceitoEm : null,
+      rede: member.rede || null,
+      fotoUrl: (member as any).fotoUrl || null
+    };
+    
+    // Adicionar groups apenas se houver grupos selecionados (não enviar array vazio)
+    if (this.selectedGroupIds.length > 0) {
+      memberData.groups = this.selectedGroupIds.map(id => ({ id }));
+    }
+    
+    // Garantir que campos obrigatórios estejam presentes
+    if (!memberData.nome || memberData.nome.trim() === '') {
+      this.notificationService.showError('O nome do membro é obrigatório.');
+      return;
+    }
+    
+    if (memberData.estadoCivil === undefined || memberData.estadoCivil === null || typeof memberData.estadoCivil !== 'boolean') {
+      memberData.estadoCivil = false;
+    }
+    if (memberData.intercessor === undefined || memberData.intercessor === null) {
+      memberData.intercessor = false;
+    }
+    if (memberData.comungante === undefined) {
+      memberData.comungante = null;
+    }
+    if (memberData.tipoCadastro === '' || (memberData.tipoCadastro && typeof memberData.tipoCadastro === 'string' && memberData.tipoCadastro.trim() === '')) {
+      memberData.tipoCadastro = null;
+    }
+    if (memberData.lgpd === undefined) {
+      memberData.lgpd = null;
+    }
+    
+    const fieldsToAlwaysInclude = ['nome', 'email', 'estadoCivil', 'intercessor', 'groups', 
+                                    'comungante', 'tipoCadastro', 'lgpd', 'lgpdAceitoEm'];
+    
+    Object.keys(memberData).forEach(key => {
+      const value = memberData[key];
+      if (fieldsToAlwaysInclude.includes(key)) {
+        return;
+      }
+      if (value === '' || value === null || value === undefined) {
+        delete memberData[key];
+      }
+    });
+    
+    console.log('Sending update request with data:', JSON.stringify(memberData, null, 2));
+    
+    this.api.update(`members/${member.id}`, memberData)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => {
@@ -308,7 +426,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
           this.closeMemberModal();
         },
         error: (error) => {
-          console.error(error);
+          console.error('Error updating member:', error);
+          console.error('Request data:', memberData);
           const errorMessage = error?.error?.message || error?.error || 'Erro ao atualizar membro. Tente novamente.';
           this.notificationService.showError(errorMessage);
         }
@@ -364,7 +483,7 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   filterMembers() {
     if (!this.members || this.members.length === 0) {
       this.filteredMembers = [];
-      this.getTableData(); // Atualizar tableData
+      this.getTableData();
       this.cdr.detectChanges();
       return;
     }
@@ -377,12 +496,10 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
                             (member.nome && member.nome.toLowerCase().includes(searchLower)) ||
                             (member.email && member.email.toLowerCase().includes(searchLower)) ||
                             (member.cpf && member.cpf.toLowerCase().includes(searchLower));
-      // Filtro por Tipo de Cadastro
       const matchesTipoCadastro = !this.tipoCadastroFilter || 
                                    this.tipoCadastroFilter === '' || 
                                    (member.tipoCadastro && member.tipoCadastro === this.tipoCadastroFilter);
       
-      // Filtro por Estado Civil
       let matchesEstadoCivil = true;
       if (this.estadoCivilFilter !== '') {
         if (this.estadoCivilFilter === 'Casado') {
@@ -392,7 +509,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Filtro por Intercessor
       let matchesIntercessor = true;
       if (this.intercessorFilter !== '') {
         if (this.intercessorFilter === 'Sim') {
@@ -405,16 +521,13 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       return matchesSearch && matchesEstadoCivil && matchesTipoCadastro && matchesIntercessor;
     });
 
-    // Atualizar tableData após filtrar
     this.getTableData();
-    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.cdr.detectChanges();
     }, 0);
   }
 
   openMemberModal(member?: Member) {
-    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.showMemberModal = true;
       this.isEditing = !!member;
@@ -423,9 +536,9 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         cpf: '',
         rg: '',
         conjugueCPF: '',
-        comungante: false,
+        comungante: null,
         intercessor: false,
-        tipoCadastro: '',
+        tipoCadastro: null,
         nascimento: null,
         idade: null,
         estadoCivil: false,
@@ -439,14 +552,14 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         telefone: '',
         comercial: '',
         celular: '',
-        contato: '',
         email: '',
-        grupos: '',
-        lgpd: '',
+        groupIds: [],
+        lgpd: null,
         lgpdAceitoEm: null,
         rede: '',
         version: null
       };
+      this.selectedGroupIds = member?.groupIds ? [...member.groupIds] : [];
       this.photoPreview = (member as any)?.fotoUrl || null;
       this.selectedPhotoFile = null;
       this.cdr.markForCheck();
@@ -454,15 +567,32 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   closeMemberModal() {
-    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.showMemberModal = false;
       this.isEditing = false;
       this.currentMember = {};
+      this.selectedGroupIds = [];
       this.photoPreview = null;
       this.selectedPhotoFile = null;
       this.cdr.markForCheck();
     }, 0);
+  }
+
+  toggleGroup(groupId: number): void {
+    const index = this.selectedGroupIds.indexOf(groupId);
+    if (index > -1) {
+      this.selectedGroupIds.splice(index, 1);
+    } else {
+      this.selectedGroupIds.push(groupId);
+    }
+  }
+
+  isGroupSelected(groupId: number): boolean {
+    return this.selectedGroupIds.includes(groupId);
+  }
+
+  onGroupFilterChange(): void {
+    this.getMembers();
   }
 
   onPhotoSelected(event: Event): void {
@@ -474,7 +604,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.photoPreview = e.target.result;
-          // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
           setTimeout(() => {
             this.cdr.markForCheck();
           }, 0);
@@ -498,38 +627,29 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         { withCredentials: true }
       ).toPromise();
       
-      // Get fotoUrl from response
       const fotoUrl = response?.fotoUrl || response?.member?.fotoUrl;
       
       if (fotoUrl) {
-        // Adicionar timestamp para forçar atualização da imagem (cache busting)
         const fotoUrlWithTimestamp = fotoUrl + (fotoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
         
-        // Update current member in modal
         (this.currentMember as any).fotoUrl = fotoUrlWithTimestamp;
         
-        // Update member in local list immediately
         const memberIndex = this.members.findIndex(m => m.id === memberId);
         if (memberIndex !== -1) {
-          // Atualizar o objeto completo para garantir que a referência mude
           this.members[memberIndex] = {
             ...this.members[memberIndex],
             fotoUrl: fotoUrlWithTimestamp
           };
         }
         
-        // Update viewing member if it's the same member
         if (this.viewingMember && this.viewingMember.id === memberId) {
           (this.viewingMember as any).fotoUrl = fotoUrlWithTimestamp;
         }
         
         this.notificationService.showSuccess('Foto enviada com sucesso!');
         
-        // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
-        // Atualizar photoPreview de forma assíncrona
         setTimeout(() => {
           this.photoPreview = fotoUrlWithTimestamp;
-          // Atualizar filteredMembers com a nova fotoUrl
           const filteredIndex = this.filteredMembers.findIndex(m => m.id === memberId);
           if (filteredIndex !== -1) {
             this.filteredMembers[filteredIndex] = {
@@ -537,7 +657,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
               fotoUrl: fotoUrlWithTimestamp
             };
           }
-          // Forçar atualização da tabela recriando os dados
           this.getTableData();
           this.cdr.markForCheck();
         }, 0);
@@ -549,7 +668,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao fazer upload da foto. Tente novamente.';
       this.notificationService.showError(errorMessage);
     } finally {
-      // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
       setTimeout(() => {
         this.uploadingPhoto = false;
         this.selectedPhotoFile = null;
@@ -595,50 +713,43 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       return this.tableData;
     }
     
-    // Criar uma nova referência do array para evitar problemas de detecção de mudanças
     const newTableData = this.filteredMembers.map(member => {
-      // Prioriza celular, se não tiver usa telefone
       const phoneNumber = (member.celular && member.celular.trim() !== '') 
         ? member.celular 
         : ((member.telefone && member.telefone.trim() !== '') ? member.telefone : null);
       
       return {
         ...member,
-        _original: member, // Manter referência ao objeto original
+        _original: member,
         foto: member.fotoUrl || null,
         estadoCivil: member.estadoCivil ? 'Casado' : 'Solteiro',
         telefone: member.telefone || '-',
         celular: member.celular || '-',
-        whatsapp: phoneNumber, // Campo para a coluna WhatsApp (número limpo ou null)
+        whatsapp: phoneNumber,
         tipoCadastro: member.tipoCadastro || '-',
         intercessor: member.intercessor ? 'Sim' : 'Não',
         nascimento: member.nascimento ? new Date(member.nascimento).toLocaleDateString('pt-BR') : '-'
       };
     });
     
-    // Aplicar ordenação se houver
     if (this.currentSort) {
       newTableData.sort((a, b) => {
         const column = this.currentSort!.column;
         const aValue = (a as any)[column];
         const bValue = (b as any)[column];
         
-        // Tratar valores nulos ou indefinidos
         if (aValue === null || aValue === undefined || aValue === '-') return 1;
         if (bValue === null || bValue === undefined || bValue === '-') return -1;
         
-        // Comparação de strings
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           const comparison = aValue.localeCompare(bValue, 'pt-BR', { sensitivity: 'base' });
           return this.currentSort!.direction === 'asc' ? comparison : -comparison;
         }
         
-        // Comparação numérica
         if (typeof aValue === 'number' && typeof bValue === 'number') {
           return this.currentSort!.direction === 'asc' ? aValue - bValue : bValue - aValue;
         }
         
-        // Fallback: converter para string e comparar
         const aStr = String(aValue);
         const bStr = String(bValue);
         const comparison = aStr.localeCompare(bStr, 'pt-BR', { sensitivity: 'base' });
@@ -646,20 +757,37 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       });
     }
     
-    // Atribuir a nova referência
     this.tableData = newTableData;
     return this.tableData;
   }
   
   onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
     this.currentSort = sort;
-    this.getTableData(); // Reaplica a ordenação
+    this.getTableData();
     this.cdr.markForCheck();
   }
 
-  editMember(member: Member) {
+  editMember(memberId: number) {
     this.closeViewModal();
-    this.openMemberModal(member);
+    this.api.get(`members/${memberId}`)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (member: any) => {
+          // Converter estadoCivil de string para boolean se necessário
+          if (typeof member.estadoCivil === 'boolean') {
+            // Já é boolean, não precisa converter
+          } else if (typeof member.estadoCivil === 'string') {
+            member.estadoCivil = member.estadoCivil === 'Casado' || member.estadoCivil.toLowerCase() === 'casado';
+          } else {
+            member.estadoCivil = false; // default para Solteiro
+          }
+          this.openMemberModal(member);
+        },
+        error: (error) => {
+          console.error('Error loading member:', error);
+          this.notificationService.showError('Erro ao carregar dados do membro');
+        }
+      });
   }
 
   getViewModalButtons(): ModalButton[] {
@@ -682,8 +810,8 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
         label: 'Editar Membro',
         type: 'primary',
         action: () => {
-          if (this.viewingMember) {
-            this.editMember(this.viewingMember);
+          if (this.viewingMember?.id) {
+            this.editMember(this.viewingMember.id);
           }
         }
       }
@@ -706,7 +834,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
   }
 
   async saveMember() {
-    // Validate LGPD date if LGPD is accepted
     if (this.currentMember.lgpd === true && !this.currentMember.lgpdAceitoEm) {
       this.notificationService.showError('Por favor, informe a data de aceite do LGPD.');
       return;
@@ -716,21 +843,16 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       const index = this.members.findIndex(m => m.id === this.currentMember.id);
       if (index !== -1) this.members[index] = { ...this.currentMember };
       
-      // Upload photo first if selected
       if (this.selectedPhotoFile && this.currentMember.id) {
         await this.uploadMemberPhoto(this.currentMember.id);
       }
       
-      // Then update member data
       this.updateMember(this.members[index]);
     } else {
       const newMember = {
         ...this.currentMember
       };
       this.createMember(newMember);
-      
-      // Upload photo after member is created (need to get the new member ID from response)
-      // This will be handled in the createMember response
     }
   }
 
@@ -741,8 +863,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       this.filterMembers();
     }
   }
-
-  // Métodos de paginação removidos - agora gerenciados pelo DataTableComponent
 
   getImportModalButtons(): ModalButton[] {
     return [
@@ -759,8 +879,6 @@ export class MemberManagementComponent implements OnInit, OnDestroy {
       }
     ];
   }
-
-  // Método removido - paginação agora é gerenciada pelo DataTableComponent
 
   formatImportProgress(progress: string): string {
     if (!progress) return '';

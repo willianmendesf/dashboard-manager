@@ -5,7 +5,9 @@ import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
 import br.com.willianmendesf.system.model.dto.UpdateMemberDTO;
+import br.com.willianmendesf.system.model.entity.GroupEntity;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
+import br.com.willianmendesf.system.repository.GroupRepository;
 import br.com.willianmendesf.system.repository.MemberRepository;
 import br.com.willianmendesf.system.service.utils.CPFUtil;
 import br.com.willianmendesf.system.service.utils.RGUtil;
@@ -16,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Objects.isNull;
 
@@ -26,24 +30,40 @@ import static java.util.Objects.isNull;
 public class MemberService {
 
     private final MemberRepository repository;
+    private final GroupRepository groupRepository;
 
-    public List<MemberEntity> getAll() {
+    public List<MemberDTO> getAll() {
         try {
             log.info("Getting all members from database");
-            return repository.findAll().stream().map(MemberEntity::new).toList();
+            return repository.findAllWithGroups().stream()
+                    .map(MemberDTO::new)
+                    .collect(java.util.stream.Collectors.toList());
         } catch (Exception e) {
             throw new MembersException("Error to return values" ,e);
+        }
+    }
+    
+    public List<MemberDTO> getAllByGroupId(Long groupId) {
+        try {
+            log.info("Getting all members by group ID: {}", groupId);
+            return repository.findByGroupsId(groupId).stream()
+                    .map(MemberDTO::new)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            throw new MembersException("Error to return members by group", e);
         }
     }
 
     public MemberDTO getById(Long id) {
         try {
             log.info("Getting member by ID: {}", id);
-            MemberEntity entity = repository.findById(id).orElse(null);
-            if (entity == null) throw new MembersException("Cadastro not found for ID: " + id);
+            MemberEntity entity = repository.findByIdWithGroups(id)
+                    .orElseThrow(() -> new MembersException("Cadastro not found for ID: " + id));
             return new MemberDTO(entity);
+        } catch (MembersException e) {
+            throw e;
         } catch (Exception e) {
-            throw new MembersException("ID " + id + " not found");
+            throw new MembersException("ID " + id + " not found", e);
         }
     }
 
@@ -106,10 +126,15 @@ public class MemberService {
     }
 
     public MemberEntity updateById(Long id, MemberEntity member) {
-        log.info("Updating user: {}", member.getCpf());
+        log.info("Updating user with ID: {}", id);
         try {
-            MemberEntity originalMember = repository.findById(id)
+            MemberEntity originalMember = repository.findByIdWithGroups(id)
                     .orElseThrow(() -> new MembersException("User not found for id " + id));
+
+            if (member.getNome() == null || member.getNome().trim().isEmpty()) {
+                throw new MembersException("Nome é obrigatório");
+            }
+            originalMember.setNome(member.getNome().trim());
 
             if (member.getCpf() != null && !member.getCpf().trim().isEmpty()) {
                 originalMember.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
@@ -118,12 +143,14 @@ public class MemberService {
             if (member.getRg() != null && !member.getRg().trim().isEmpty()) {
                 originalMember.setRg(RGUtil.validateAndFormatRG(member.getRg()));
             }
-
-            if (member.getNome() != null && !member.getNome().trim().isEmpty()) originalMember.setNome(member.getNome());
             if (member.getConjugueCPF() != null && !member.getConjugueCPF().trim().isEmpty()) originalMember.setConjugueCPF(member.getConjugueCPF());
-            if (member.getComungante() != null) originalMember.setComungante(member.getComungante());
-            if (member.getIntercessor() != null) originalMember.setIntercessor(member.getIntercessor());
-            if (member.getTipoCadastro() != null && !member.getTipoCadastro().trim().isEmpty()) originalMember.setTipoCadastro(member.getTipoCadastro());
+            originalMember.setComungante(member.getComungante());
+            originalMember.setIntercessor(member.getIntercessor());
+            if (member.getTipoCadastro() != null && !member.getTipoCadastro().trim().isEmpty()) {
+                originalMember.setTipoCadastro(member.getTipoCadastro().trim());
+            } else {
+                originalMember.setTipoCadastro(null);
+            }
             if (member.getNascimento() != null) originalMember.setNascimento(member.getNascimento());
             if (member.getIdade() != null) originalMember.setIdade(member.getIdade());
             if (member.getEstadoCivil() != null) originalMember.setEstadoCivil(member.getEstadoCivil());
@@ -137,13 +164,28 @@ public class MemberService {
             if (member.getTelefone() != null && !member.getTelefone().trim().isEmpty()) originalMember.setTelefone(member.getTelefone());
             if (member.getComercial() != null && !member.getComercial().trim().isEmpty()) originalMember.setComercial(member.getComercial());
             if (member.getCelular() != null && !member.getCelular().trim().isEmpty()) originalMember.setCelular(member.getCelular());
-            if (member.getContato() != null && !member.getContato().trim().isEmpty()) originalMember.setContato(member.getContato());
             if (member.getEmail() != null && !member.getEmail().trim().isEmpty()) originalMember.setEmail(member.getEmail());
-            if (member.getGrupos() != null && !member.getGrupos().trim().isEmpty()) originalMember.setGrupos(member.getGrupos());
-            if (member.getLgpd() != null) originalMember.setLgpd(member.getLgpd());
-            if (member.getLgpdAceitoEm() != null) originalMember.setLgpdAceitoEm(member.getLgpdAceitoEm());
-            if (member.getRede() != null && !member.getRede().trim().isEmpty()) originalMember.setRede(member.getRede());
+            originalMember.setLgpd(member.getLgpd());
+            originalMember.setLgpdAceitoEm(member.getLgpdAceitoEm());
             if (member.getFotoUrl() != null && !member.getFotoUrl().trim().isEmpty()) originalMember.setFotoUrl(member.getFotoUrl());
+            
+            if (member.getGroups() != null) {
+                Set<GroupEntity> newGroupsSet = new HashSet<>();
+                if (!member.getGroups().isEmpty()) {
+                    var groupIds = member.getGroups().stream()
+                        .map(g -> g != null ? g.getId() : null)
+                        .filter(groupId -> groupId != null)
+                        .distinct()
+                        .toList();
+                    if (!groupIds.isEmpty()) {
+                        var groups = groupRepository.findAllById(groupIds);
+                        for (GroupEntity group : groups) {
+                            newGroupsSet.add(group);
+                        }
+                    }
+                }
+                originalMember.setGroups(newGroupsSet);
+            }
 
             return repository.save(originalMember);
         } catch (org.hibernate.StaleObjectStateException | jakarta.persistence.OptimisticLockException e) {
@@ -171,7 +213,7 @@ public class MemberService {
         try {
             log.info("Finding member by CPF for public portal: {}", cpf);
             String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity entity = repository.findByCpf(formattedCpf);
+            MemberEntity entity = repository.findByCpfWithGroups(formattedCpf);
             
             if (entity == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
@@ -194,13 +236,12 @@ public class MemberService {
         try {
             log.info("Updating member by CPF for public portal: {}", cpf);
             String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity existingMember = repository.findByCpf(formattedCpf);
+            MemberEntity existingMember = repository.findByCpfWithGroups(formattedCpf);
             
             if (existingMember == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
             }
 
-            // Atualizar apenas os campos permitidos (CPF nunca é alterado)
             if (dto.getNome() != null && !dto.getNome().trim().isEmpty()) {
                 existingMember.setNome(dto.getNome());
             }
@@ -287,17 +328,13 @@ public class MemberService {
             if (dto.getTipoCadastro() != null) {
                 existingMember.setTipoCadastro(dto.getTipoCadastro());
             }
-            
-            if (dto.getGrupos() != null) {
-                existingMember.setGrupos(dto.getGrupos());
-            }
-            
-            if (dto.getRede() != null) {
-                existingMember.setRede(dto.getRede());
-            }
-            
-            if (dto.getContato() != null) {
-                existingMember.setContato(dto.getContato());
+
+            if (dto.getGroupIds() != null) {
+                Set<GroupEntity> newGroupsSet = new HashSet<>();
+                for (Long groupId : dto.getGroupIds()) {
+                    groupRepository.findById(groupId).ifPresent(newGroupsSet::add);
+                }
+                existingMember.setGroups(newGroupsSet);
             }
 
             MemberEntity updatedMember = repository.save(existingMember);

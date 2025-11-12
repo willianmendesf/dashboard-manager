@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * DTO para atualização de dados de membro via portal público
@@ -32,9 +33,6 @@ public class UpdateMemberDTO {
     private String rg;
     private String conjugueCPF;
     private String tipoCadastro;
-    private String grupos;
-    private String rede;
-    private String operadora;
-    private String contato;
+    private List<Long> groupIds;
 }
 

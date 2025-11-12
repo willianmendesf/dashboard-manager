@@ -2,7 +2,7 @@ package br.com.willianmendesf.system.configuration;
 
 import br.com.willianmendesf.system.service.AppointmentSchedulerService;
 import br.com.willianmendesf.system.service.ConfigService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -14,12 +14,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Slf4j
 @Configuration
 @EnableScheduling
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AppointmentSchedulerConfig {
     private final AppointmentSchedulerService schedulerService;
     private final ConfigService configService;
 
     // Default value from .env (kept for compatibility)
+    // Este campo NÃO é final, então NÃO será incluído no construtor
+    // Será injetado via field injection pelo Spring (@Value)
     @Value("${scheduler.cron.scheduleTimeLoad:0 */5 * * * *}")
     private String defaultScheduleTimeLoad;
 

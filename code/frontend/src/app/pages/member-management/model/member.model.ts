@@ -23,7 +23,7 @@ export interface Member {
   operadora?: string;
   contato?: string;
   email: string;
-  grupos?: string;
+  groupIds?: number[];
   lgpd?: string;
   lgpdAceitoEm?: string | Date;
   rede?: string;
