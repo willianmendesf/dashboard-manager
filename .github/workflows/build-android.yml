@@ -73,26 +73,17 @@ jobs:
             exit 1
           fi
 
-      - name: Create Release and Upload APK
-        uses: softprops/action-gh-release@v1
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: code/frontend/android/app/build/outputs/apk/debug/ipbf-app.apk
-          tag_name: build-${{ github.sha }}
-          name: Build ${{ github.sha }}
-          body: |
-            APK gerado automaticamente
-            - Commit: ${{ github.sha }}
-            - Branch: ${{ github.ref_name }}
-            - Data: ${{ github.event.head_commit.timestamp }}
-          draft: false
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ipbf-app
+          path: code/frontend/android/app/build/outputs/apk/debug/ipbf-app.apk
+          retention-days: 90
 
       - name: Output download URL
         run: |
-          echo "✅ APK disponível para download em:"
-          echo "https://github.com/${{ github.repository }}/releases/tag/build-${{ github.sha }}"
+          echo "APK disponível para download em:"
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo ""
-          echo "📱 Nome do arquivo: ipbf-app.apk"
+          echo "Ou baixe diretamente do artifact 'ipbf-app'"
 
