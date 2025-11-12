@@ -44,14 +44,14 @@ jobs:
       - name: Verify Java version
         run: java -version
 
-      - name: Generate app icons and splash screens
+      - name: Verify resources exist
         working-directory: code/frontend
         run: |
-          # Verificar se o ícone existe e gerar assets
-          if [ -f "resources/icon/icon.png" ]; then
-            npx capacitor-assets generate --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#141920' || echo "Ícones gerados"
+          if [ -d "resources/android/res" ]; then
+            echo "✅ Recursos Android encontrados em resources/android/res"
+            ls -la resources/android/res/ || true
           else
-            echo "AVISO: resources/icon/icon.png não encontrado"
+            echo "⚠️ Pasta resources/android/res não encontrada"
           fi
 
       - name: Setup Android SDK
