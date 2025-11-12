@@ -47,14 +47,15 @@ jobs:
       - name: Add Android platform
         working-directory: code/frontend
         run: |
-          npx cap add android || true
+          npx cap add android
           npx cap sync
+        continue-on-error: true
 
       - name: Build APK
         working-directory: code/frontend/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
