@@ -34,6 +34,15 @@ export class VisitorService {
     return this.api.delete(`visitors/${id}`);
   }
 
+  getStats(startDate?: string, endDate?: string): Observable<VisitorStats[]> {
+    let url = 'visitors/stats';
+    const params: string[] = [];
+    if (startDate) params.push(`startDate=${startDate}`);
+    if (endDate) params.push(`endDate=${endDate}`);
+    if (params.length > 0) url += '?' + params.join('&');
+    return this.api.get(url);
+  }
+
   getSundayStats(): Observable<VisitorStats[]> {
     return this.api.get('visitors/stats/sundays');
   }

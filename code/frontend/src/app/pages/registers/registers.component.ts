@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ApiService } from '../../shared/service/api.service';
 import { Register } from './model/register.model';
 import { WhatsappsService } from '../../shared/service/whatsapp.service';
@@ -10,7 +10,7 @@ import { Subject, takeUntil } from 'rxjs';
   templateUrl: './registers.html',
   styleUrl: './registers.scss',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, DatePipe]
 })
 export class Registers implements OnInit {
   private unsubscribe$ = new Subject<void>();

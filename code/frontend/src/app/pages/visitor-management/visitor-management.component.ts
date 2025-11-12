@@ -32,10 +32,15 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
   isLoading = false;
 
   // Graph data
-  sundayStats: VisitorStats[] = [];
+  visitorStats: VisitorStats[] = [];
   chartData: number[] = [];
   chartLabels: string[] = [];
   maxChartValue: number = 1;
+  
+  // Chart date range filters
+  chartStartDate: string | null = null;
+  chartEndDate: string | null = null;
+  useCustomRange: boolean = false;
 
   // Estados BR
   estadosBR = [
@@ -95,7 +100,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadSundayStats();
+    this.loadVisitorStats();
     this.loadVisitors();
   }
 
@@ -104,12 +109,29 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
-  loadSundayStats(): void {
-    this.visitorService.getSundayStats()
+  loadVisitorStats(): void {
+    let startDate: string | undefined;
+    let endDate: string | undefined;
+    
+    if (this.useCustomRange) {
+      if (this.chartStartDate) startDate = this.chartStartDate;
+      if (this.chartEndDate) endDate = this.chartEndDate;
+    } else {
+      // Calcular últimos 15 dias a partir de hoje
+      const today = new Date();
+      const endDateObj = new Date(today);
+      const startDateObj = new Date(today);
+      startDateObj.setDate(today.getDate() - 14); // 15 dias incluindo hoje
+      
+      startDate = startDateObj.toISOString().split('T')[0];
+      endDate = endDateObj.toISOString().split('T')[0];
+    }
+    
+    this.visitorService.getStats(startDate, endDate)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: (stats) => {
-          console.log('Sunday stats received:', stats);
+          console.log('Visitor stats received:', stats);
           
           if (!stats || stats.length === 0) {
             this.chartData = [];
@@ -119,7 +141,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
             return;
           }
           
-          this.sundayStats = stats;
+          this.visitorStats = stats;
           
           // Mapear quantidades garantindo que sejam números
           this.chartData = stats.map(s => {
@@ -130,7 +152,6 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           // Mapear labels formatando datas
           this.chartLabels = stats.map(s => {
             try {
-              // Converter para Date (aceita string ISO ou Date)
               const date = new Date(s.data as any);
               
               if (isNaN(date.getTime())) {
@@ -138,7 +159,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
                 return 'Data inválida';
               }
               
-              return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+              return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             } catch (e) {
               console.error('Error parsing date:', s.data, e);
               return 'Data inválida';
@@ -160,13 +181,39 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error('Error loading Sunday stats:', err);
+          console.error('Error loading visitor stats:', err);
           this.chartData = [];
           this.chartLabels = [];
           this.maxChartValue = 1;
           this.cdr.detectChanges();
         }
       });
+  }
+
+  onChartDateRangeChange(): void {
+    if (!this.useCustomRange) {
+      this.loadVisitorStats();
+      return;
+    }
+    
+    if (this.chartStartDate && this.chartEndDate) {
+      const start = new Date(this.chartStartDate);
+      const end = new Date(this.chartEndDate);
+      
+      if (start > end) {
+        this.notificationService.showError('Data de início não pode ser posterior à data de fim.');
+        return;
+      }
+    }
+    
+    this.loadVisitorStats();
+  }
+
+  resetChartToDefault(): void {
+    this.chartStartDate = null;
+    this.chartEndDate = null;
+    this.useCustomRange = false;
+    this.loadVisitorStats();
   }
 
   loadVisitors(): void {
@@ -194,12 +241,31 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
   }
 
   updateTableData(): void {
-    this.tableData = this.filteredVisitors.map(visitor => ({
-      ...visitor,
-      _original: visitor,
-      foto: visitor.fotoUrl || null,
-      eDeSP: visitor.eDeSP ? 'Sim' : 'Não'
-    }));
+    this.tableData = this.filteredVisitors.map(visitor => {
+      let dataVisitaFormatted = '-';
+      if (visitor.dataVisita) {
+        try {
+          const date = new Date(visitor.dataVisita);
+          if (!isNaN(date.getTime())) {
+            dataVisitaFormatted = date.toLocaleDateString('pt-BR', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric' 
+            });
+          }
+        } catch (e) {
+          console.error('Error formatting dataVisita:', e);
+        }
+      }
+      
+      return {
+        ...visitor,
+        _original: visitor,
+        foto: visitor.fotoUrl || null,
+        eDeSP: visitor.eDeSP ? 'Sim' : 'Não',
+        dataVisita: dataVisitaFormatted
+      };
+    });
   }
 
   onSearchTermChange(): void {
@@ -208,6 +274,11 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
 
   onDateFilterChange(): void {
     this.loadVisitors();
+  }
+
+  refreshData(): void {
+    this.loadVisitors();
+    this.loadVisitorStats();
   }
 
   openCreateModal(): void {
@@ -293,6 +364,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
             } else {
               this.notificationService.showSuccess('Visitante atualizado com sucesso!');
               this.loadVisitors();
+              this.loadVisitorStats();
               this.closeVisitorModal();
             }
           },
@@ -312,6 +384,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
             } else {
               this.notificationService.showSuccess('Visitante criado com sucesso!');
               this.loadVisitors();
+              this.loadVisitorStats();
               this.closeVisitorModal();
             }
           },
@@ -333,7 +406,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           next: () => {
             this.notificationService.showSuccess('Visitante deletado com sucesso!');
             this.loadVisitors();
-            this.loadSundayStats();
+            this.loadVisitorStats();
           },
           error: (err) => {
             console.error('Error deleting visitor:', err);
@@ -407,6 +480,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           // Se estava criando (não editando), fechar modal após upload
           if (!this.isEditing) {
             this.loadVisitors();
+            this.loadVisitorStats();
             this.closeVisitorModal();
           }
           
@@ -519,7 +593,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
           if (result.errorCount === 0) {
             this.notificationService.showSuccess(`Importação concluída: ${result.successCount} visitante(s) importado(s).`);
             this.loadVisitors();
-            this.loadSundayStats();
+            this.loadVisitorStats();
             setTimeout(() => this.closeImportModal(), 2000);
           } else {
             this.notificationService.showWarning(`Importação concluída com erros: ${result.successCount} sucesso(s), ${result.errorCount} erro(s).`);

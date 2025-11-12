@@ -77,11 +77,11 @@
           </div>
           <div class="date-item">
             <span class="date-label">Data de início:</span>
-            <span class="date-value">{{ appointment.startDate }}</span>
+            <span class="date-value">{{ appointment.startDate ? (appointment.startDate | date:'dd/MM/yyyy') : 'Não definida' }}</span>
           </div>
           <div class="date-item">
             <span class="date-label">Data de fim:</span>
-            <span class="date-value">{{ appointment.endDate }}</span>
+            <span class="date-value">{{ appointment.endDate ? (appointment.endDate | date:'dd/MM/yyyy') : 'Não definida' }}</span>
           </div>
         </div>
       </div>

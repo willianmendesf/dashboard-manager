@@ -273,6 +273,63 @@ public class VisitorService {
         }
     }
 
+    public List<VisitorStatsDTO> getVisitorStatsByDateRange(LocalDate startDate, LocalDate endDate) {
+        try {
+            LocalDate actualStartDate = startDate;
+            LocalDate actualEndDate = endDate;
+            
+            // Se ambos forem null, calcular últimos 15 dias a partir de hoje
+            if (actualStartDate == null && actualEndDate == null) {
+                actualEndDate = LocalDate.now();
+                actualStartDate = actualEndDate.minusDays(14); // 15 dias incluindo hoje
+                log.info("No date range provided, using last 15 days: {} to {}", actualStartDate, actualEndDate);
+            } else if (actualStartDate == null) {
+                // Se só endDate fornecido, usar últimos 15 dias a partir de endDate
+                actualStartDate = actualEndDate.minusDays(14);
+                log.info("Only endDate provided, using last 15 days from endDate: {} to {}", actualStartDate, actualEndDate);
+            } else if (actualEndDate == null) {
+                // Se só startDate fornecido, usar até hoje
+                actualEndDate = LocalDate.now();
+                log.info("Only startDate provided, using from startDate to today: {} to {}", actualStartDate, actualEndDate);
+            }
+            
+            // Validar que startDate <= endDate
+            if (actualStartDate.isAfter(actualEndDate)) {
+                throw new MembersException("Data de início não pode ser posterior à data de fim");
+            }
+            
+            log.info("Getting visitor statistics from {} to {}", actualStartDate, actualEndDate);
+            
+            // Buscar visitantes no intervalo
+            List<VisitorEntity> visitorsInRange = repository.findByDataVisitaBetween(actualStartDate, actualEndDate);
+            log.info("Found {} visitors in date range", visitorsInRange.size());
+            
+            // Agrupar por dataVisita e contar (apenas datas que têm visitantes)
+            List<VisitorStatsDTO> stats = visitorsInRange.stream()
+                    .filter(v -> v.getDataVisita() != null)
+                    .collect(Collectors.groupingBy(
+                            VisitorEntity::getDataVisita,
+                            Collectors.counting()
+                    ))
+                    .entrySet().stream()
+                    .map(entry -> {
+                        VisitorStatsDTO stat = new VisitorStatsDTO(entry.getKey(), entry.getValue());
+                        log.debug("Stat: {} - {} visitors", stat.getData(), stat.getQuantidade());
+                        return stat;
+                    })
+                    .sorted((a, b) -> a.getData().compareTo(b.getData())) // Ordenar por data (mais antiga primeiro)
+                    .collect(Collectors.toList());
+            
+            log.info("Found {} dates with visitors in range", stats.size());
+            return stats;
+        } catch (MembersException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting visitor statistics by date range", e);
+            throw new MembersException("Erro ao buscar estatísticas de visitantes por intervalo de datas", e);
+        }
+    }
+
     @Transactional
     public VisitorDTO uploadPhoto(Long id, MultipartFile file) {
         try {
