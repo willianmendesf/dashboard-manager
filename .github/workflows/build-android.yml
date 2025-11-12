@@ -46,7 +46,13 @@ jobs:
 
       - name: Generate app icons and splash screens
         working-directory: code/frontend
-        run: npm run cap:assets || echo "Ícones gerados (ou já existem)"
+        run: |
+          # Verificar se o ícone existe e gerar assets
+          if [ -f "resources/icon/icon.png" ]; then
+            npx capacitor-assets generate --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#141920' || echo "Ícones gerados"
+          else
+            echo "AVISO: resources/icon/icon.png não encontrado"
+          fi
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3

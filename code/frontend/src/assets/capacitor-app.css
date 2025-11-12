@@ -1,14 +1,13 @@
 /* CSS específico para app mobile (Capacitor) */
 /* Adiciona margem superior para evitar sobreposição da barra nativa do Android */
 
-/* Barra de fundo com cor do gradiente acima de tudo */
-body::before {
-  content: '';
+/* Barra de fundo com cor do gradiente - será criada via JavaScript */
+#capacitor-status-bar-bg {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: env(safe-area-inset-top, 24px);
+  height: 48px;
   background: linear-gradient(180deg, #141920 0%, #3f4d5e 100%);
   z-index: 1003;
   pointer-events: none;
@@ -16,29 +15,31 @@ body::before {
 
 /* Adiciona margem superior na barra de menu mobile */
 .mobile-navbar {
-  top: env(safe-area-inset-top, 24px) !important;
+  top: 48px !important;
+  position: fixed !important;
 }
 
 /* Adiciona margem superior no header do usuário (desktop) */
 .user-header {
-  top: env(safe-area-inset-top, 24px) !important;
+  top: 48px !important;
+  position: fixed !important;
 }
 
 /* Ajusta o conteúdo principal em mobile para compensar a margem da barra */
 @media (max-width: 768px) {
   .main-content {
-    padding-top: calc(75px + env(safe-area-inset-top, 24px) + 10px) !important;
+    padding-top: calc(75px + 48px + 10px) !important;
   }
   
   .main-content.full-width {
-    padding-top: env(safe-area-inset-top, 24px) !important;
+    padding-top: 48px !important;
   }
 }
 
 /* Ajusta o conteúdo principal em desktop */
 @media (min-width: 769px) {
   .main-content {
-    padding-top: calc(60px + env(safe-area-inset-top, 24px) + 24px) !important;
+    padding-top: calc(60px + 48px + 24px) !important;
   }
 }
 
