@@ -32,5 +32,5 @@ COPY --from=builder /app/dist/dashboard/browser /usr/share/nginx/html
 # Porta padrão de serviço do Nginx
 EXPOSE 80
 
-# Comando para iniciar o Nginx
-#CMD ["nginx", "-g", "daemon off;"]
+# Comando para iniciar o Nginx em foreground
+CMD ["nginx", "-g", "daemon off;"]

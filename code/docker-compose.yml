@@ -37,6 +37,14 @@ services:
         condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      # Verifica se o processo nginx está rodando
+      # Método mais confiável que funciona em qualquer imagem nginx
+      test: ["CMD-SHELL", "pgrep nginx > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 networks:
   app-network:
