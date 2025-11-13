@@ -136,6 +136,42 @@
   flex: 1;
 }
 
+.nav-link.logout-link {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  width: 100%;
+  
+  .nav-text {
+    color: #DC2626;
+  }
+  
+  .nav-icon {
+    color: #DC2626;
+  }
+  
+  &:hover {
+    background: rgba(220, 38, 38, 0.1);
+    transform: none;
+    
+    .nav-text,
+    .nav-icon {
+      color: #DC2626;
+    }
+  }
+  
+  &:active {
+    background: rgba(220, 38, 38, 0.2);
+  }
+  
+  &.active {
+    background: rgba(220, 38, 38, 0.15);
+  }
+}
+
 @media (max-width: 999px) {
   .sidebar {
     width: 100%;
@@ -211,145 +247,16 @@
       }
     }
 
-    .sidebar-footer {
-      display: none;
-    }
-    
     .nav-link.logout-link {
       margin-top: 24px;
       padding-top: 16px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: inherit;
-      font-weight: 500;
-      width: 100%;
       text-align: center;
-      
-      .nav-text {
-        color: #DC2626;
-      }
-      
-      .nav-icon {
-        color: #DC2626;
-      }
-      
-      &:hover {
-        background: rgba(220, 38, 38, 0.1);
-        
-        .nav-text,
-        .nav-icon {
-          color: #DC2626;
-        }
-        
-        transform: none;
-      }
-      
-      &:active {
-        background: rgba(220, 38, 38, 0.2);
-      }
     }
   }
 }
 
-.sidebar-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px;
-  border-top: 1px solid #374151;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    flex-shrink: 0;
-  }
-
-  .user-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .user-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .user-profile {
-    font-size: 12px;
-    color: #9CA3AF;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-}
-
-.btn-edit-profile {
-  width: 100%;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  text-align: center;
-  display: block;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
-.btn-logout {
-  width: 100%;
-  padding: 10px;
-  background: #DC2626;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #B91C1C;
-    transform: translateY(-1px);
-  }
-}
+// Estilos do sidebar-footer removidos - usando apenas botão Sair na navegação
 
 @media (max-width: 480px) {
   .sidebar {
