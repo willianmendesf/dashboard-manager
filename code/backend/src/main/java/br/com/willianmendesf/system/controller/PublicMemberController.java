@@ -1,13 +1,17 @@
 package br.com.willianmendesf.system.controller;
 
+import br.com.willianmendesf.system.model.dto.GroupDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.UpdateMemberDTO;
+import br.com.willianmendesf.system.service.GroupService;
 import br.com.willianmendesf.system.service.MemberService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Controller público para atualização cadastral de membros
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class PublicMemberController {
 
     private final MemberService memberService;
+    private final GroupService groupService;
 
     /**
      * Busca um membro por CPF (público)
@@ -57,6 +62,22 @@ public class PublicMemberController {
             return ResponseEntity.ok(updatedMember);
         } catch (Exception e) {
             log.error("Error updating member by CPF: {}", cpf, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Busca todos os grupos disponíveis (público)
+     * GET /api/v1/public/members/groups
+     */
+    @GetMapping("/groups")
+    public ResponseEntity<List<GroupDTO>> getAllGroups() {
+        try {
+            log.info("Public request to get all groups");
+            List<GroupDTO> groups = groupService.getAll();
+            return ResponseEntity.ok(groups);
+        } catch (Exception e) {
+            log.error("Error getting all groups", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

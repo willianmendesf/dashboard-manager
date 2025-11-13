@@ -3,6 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface GroupDTO {
+  id?: number;
+  nome?: string;
+  descricao?: string;
+  memberCount?: number;
+}
+
 export interface MemberDTO {
   id?: number;
   nome?: string;
@@ -73,6 +80,13 @@ export class PublicMemberService {
     return this.http.put<MemberDTO>(
       `${this.apiUrl}public/members/cpf/${cleanCpf}`,
       memberData,
+      { withCredentials: false }
+    );
+  }
+
+  getAllGroups(): Observable<GroupDTO[]> {
+    return this.http.get<GroupDTO[]>(
+      `${this.apiUrl}public/members/groups`,
       { withCredentials: false }
     );
   }

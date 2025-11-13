@@ -2,9 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { PublicMemberService, MemberDTO, UpdateMemberDTO } from '../../../shared/service/public-member.service';
+import { PublicMemberService, MemberDTO, UpdateMemberDTO, GroupDTO } from '../../../shared/service/public-member.service';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { GroupService, GroupDTO } from '../../../shared/service/group.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 function cpfValidator(control: AbstractControl): ValidationErrors | null {
@@ -74,7 +73,6 @@ export class AtualizarCadastroComponent implements OnInit {
     private fb: FormBuilder,
     private memberService: PublicMemberService,
     private notificationService: NotificationService,
-    private groupService: GroupService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {
@@ -130,7 +128,7 @@ export class AtualizarCadastroComponent implements OnInit {
   }
 
   loadGroups(): void {
-    this.groupService.getAll().subscribe({
+    this.memberService.getAllGroups().subscribe({
       next: (groups) => {
         this.availableGroups = groups;
       },
