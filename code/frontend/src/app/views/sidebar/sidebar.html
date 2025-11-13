@@ -22,6 +22,15 @@
           <span class="nav-text">{{ item.label }}</span>
         </a>
       </li>
+      <li *ngIf="currentUser">
+        <button
+          class="nav-link logout-link"
+          (click)="logout(); close()"
+        >
+          <span class="nav-icon" [innerHTML]="getLogoutIcon()" [attr.aria-hidden]="true"></span>
+          <span class="nav-text">Sair</span>
+        </button>
+      </li>
     </ul>
   </nav>
 

@@ -56,7 +56,7 @@ table {
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 100%;
+	height: 100vh;
 	background: rgba(0, 0, 0, 0.5);
 	z-index: 999;
 	animation: fadeIn 0.3s ease;
@@ -73,17 +73,15 @@ table {
 
 .mobile-navbar {
 	display: none;
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
+	position: relative;
+	width: 100%;
 	height: 75px;
 	background: linear-gradient(180deg, #141920 0%, #3f4d5e 100%);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-	z-index: 1001;
 	padding: 4px 16px;
 	align-items: center;
 	justify-content: space-between;
+	box-sizing: border-box;
 }
 
 .navbar-logo {
@@ -155,22 +153,22 @@ table {
 	}
 }
 
-@media (max-width: 768px) {
+@media (max-width: 999px) {
 	.mobile-navbar {
 		display: flex;
 	}
 
 	.sidebar-overlay {
 		display: block;
-		top: 75px;
+		top: 0;
 		z-index: 1001;
 	}
 
 	.main-content {
 		margin-left: 0 !important;
 		width: 100% !important;
-		padding: 85px 16px 16px 16px !important; // 75px navbar + 10px top, 16px sides/bottom
-		min-height: calc(100vh - 75px);
+		padding: 16px !important;
+		min-height: 100vh;
 		box-sizing: border-box;
 		position: relative;
 		z-index: 1;

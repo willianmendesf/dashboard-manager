@@ -21,7 +21,7 @@ import { filter, catchError, of } from 'rxjs';
 })
 export class App implements OnInit {
   protected readonly title = signal('frontend');
-  public readonly isMobile = signal(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  public readonly isMobile = signal(typeof window !== 'undefined' ? window.innerWidth <= 999 : false);
   public showSidebar = signal(true);
   public logoUrl = signal<string>('./img/logo.png');
   private sanitizer = inject(DomSanitizer);
@@ -34,6 +34,11 @@ export class App implements OnInit {
   );
 
   ngOnInit(): void {
+    // Initialize isMobile on component init
+    if (typeof window !== 'undefined') {
+      this.isMobile.set(window.innerWidth <= 999);
+    }
+
     // Hide sidebar on public pages (login, password reset) and check authentication
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -107,7 +112,7 @@ export class App implements OnInit {
   @HostListener('window:resize')
   onResize() {
     if (typeof window !== 'undefined') {
-      this.isMobile.set(window.innerWidth <= 768);
+      this.isMobile.set(window.innerWidth <= 999);
     }
   }
 }

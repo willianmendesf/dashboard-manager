@@ -19,12 +19,9 @@ $section-spacing: 32px;
   padding: 32px 40px;
   box-sizing: border-box;
   
-  @media (max-width: 1024px) {
-    padding: 24px 32px;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 20px 16px;
+  // Mobile (abaixo de 1000px)
+  @media (max-width: 999px) {
+    padding: 24px 20px;
   }
 }
 
@@ -36,12 +33,9 @@ $section-spacing: 32px;
   box-sizing: border-box;
   max-width: 100%;
   
-  @media (max-width: 1024px) {
-    padding: 20px;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 16px;
+  // Mobile (abaixo de 1000px)
+  @media (max-width: 999px) {
+    padding: 20px 16px;
   }
 }
 
@@ -55,7 +49,7 @@ $section-spacing: 32px;
   margin-bottom: $section-spacing;
   width: 100%;
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     flex-direction: column;
     align-items: stretch;
   }
@@ -70,7 +64,7 @@ $section-spacing: 32px;
   width: 100%;
   margin-bottom: $section-spacing;
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     gap: 16px;
   }
 }
@@ -78,7 +72,7 @@ $section-spacing: 32px;
 .stats-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     grid-template-columns: 1fr;
   }
 }
@@ -86,7 +80,7 @@ $section-spacing: 32px;
 .projects-grid {
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     grid-template-columns: 1fr;
   }
 }
@@ -94,7 +88,7 @@ $section-spacing: 32px;
 .content-grid {
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     grid-template-columns: 1fr;
   }
 }
@@ -116,7 +110,7 @@ $section-spacing: 32px;
     transform: translateY(-2px);
   }
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     padding: 16px;
   }
 }
@@ -173,7 +167,7 @@ $section-spacing: 32px;
     }
   }
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     thead th,
     tbody td {
       padding: 12px 8px;
@@ -193,7 +187,7 @@ $section-spacing: 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     padding: 20px;
   }
 }
@@ -216,7 +210,7 @@ $section-spacing: 32px;
 .half-width {
   width: calc(50% - calc($content-gap / 2));
   
-  @media (max-width: 768px) {
+  @media (max-width: 999px) {
     width: 100%;
   }
 }
