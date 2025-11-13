@@ -6,67 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/">
     <link rel="icon" type="image/png" sizes="32x32" href="#">
-    <script>
-      // Detectar se está rodando no Capacitor e aplicar ajustes
-      (function() {
-        if (window.Capacitor || window.cordova) {
-          // Injetar CSS
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = './assets/capacitor-app.css';
-          document.head.appendChild(link);
-          
-          // Aplicar margem superior dinamicamente após carregar
-          function applyStatusBarMargin() {
-            const statusBarHeight = 48; // Altura fixa da barra de status Android
-            
-            // Criar barra de fundo (só uma vez)
-            if (!document.getElementById('capacitor-status-bar-bg')) {
-              const statusBarBg = document.createElement('div');
-              statusBarBg.id = 'capacitor-status-bar-bg';
-              statusBarBg.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; height: ' + statusBarHeight + 'px; background: linear-gradient(180deg, #141920 0%, #3f4d5e 100%); z-index: 1003; pointer-events: none;';
-              document.body.appendChild(statusBarBg);
-            }
-            
-            // Aplicar margem na barra mobile
-            const mobileNavbar = document.querySelector('.mobile-navbar');
-            if (mobileNavbar) {
-              mobileNavbar.style.top = statusBarHeight + 'px';
-              mobileNavbar.style.position = 'fixed';
-            }
-            
-            // Aplicar margem no header desktop
-            const userHeader = document.querySelector('.user-header');
-            if (userHeader) {
-              userHeader.style.top = statusBarHeight + 'px';
-              userHeader.style.position = 'fixed';
-            }
-          }
-          
-          // Aplicar imediatamente e também após DOM carregar
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', applyStatusBarMargin);
-          } else {
-            applyStatusBarMargin();
-          }
-          
-          // Aplicar novamente após Angular renderizar (com delay)
-          setTimeout(applyStatusBarMargin, 500);
-          setTimeout(applyStatusBarMargin, 1000);
-          setTimeout(applyStatusBarMargin, 2000);
-          
-          // Observer para detectar quando elementos são adicionados
-          const observer = new MutationObserver(function(mutations) {
-            applyStatusBarMargin();
-          });
-          
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true
-          });
-        }
-      })();
-    </script>
   </head>
   <body>
     <app-root>Loading...</app-root>
