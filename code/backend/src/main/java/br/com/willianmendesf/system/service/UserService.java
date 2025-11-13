@@ -314,15 +314,26 @@ public class UserService {
 
     /**
      * Updates the logged-in user's own profile
-     * Only allows updating name and telefone
+     * Only allows updating name and telefone (telefone is write-once)
      */
     @Transactional
     public UserDTO updateMyProfile(User loggedUser, String name, String telefone) {
         if (name != null && !name.trim().isEmpty()) {
             loggedUser.setName(name.trim());
         }
-        if (telefone != null) {
-            loggedUser.setTelefone(telefone.trim());
+        
+        // Telefone: Only update if current value is null/empty (write-once protection)
+        if (telefone != null && !telefone.trim().isEmpty()) {
+            if (loggedUser.getTelefone() != null && !loggedUser.getTelefone().trim().isEmpty()) {
+                // Telefone already exists, ignore the update (write-once protection)
+                log.debug("User {} attempted to change their telefone. Ignored (write-once protection).", loggedUser.getUsername());
+            } else {
+                // Telefone is empty, allow setting it (first time)
+                if (userRepository.existsByTelefone(telefone.trim())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefone já cadastrado.");
+                }
+                loggedUser.setTelefone(telefone.trim());
+            }
         }
         
         User savedUser = userRepository.save(loggedUser);

@@ -47,6 +47,13 @@ export class SidebarComponent implements OnInit {
       permission: null // No permission required
     },
     { 
+      path: '/visitor-management', 
+      label: 'Visitantes', 
+      icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: 'READ_VISITORS'
+    },
+    { 
       path: '/appointments', 
       label: 'Agendamentos', 
       icon: this.getSafeIcon(() => NavigationIcons.appointments({ size: 20, color: 'currentColor' })),
@@ -61,13 +68,6 @@ export class SidebarComponent implements OnInit {
       permission: null
     },
     { 
-      path: '/member-management', 
-      label: 'Membros', 
-      icon: this.getSafeIcon(() => NavigationIcons.members({ size: 20, color: 'currentColor' })),
-      exact: true,
-      permission: null
-    },
-    { 
       path: '/group-management', 
       label: 'Grupos', 
       icon: this.getSafeIcon(() => NavigationIcons.groups({ size: 20, color: 'currentColor' })),
@@ -75,11 +75,11 @@ export class SidebarComponent implements OnInit {
       permission: 'READ_MEMBERS'
     },
     { 
-      path: '/visitor-management', 
-      label: 'Visitantes', 
-      icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
+      path: '/member-management', 
+      label: 'Membros', 
+      icon: this.getSafeIcon(() => NavigationIcons.members({ size: 20, color: 'currentColor' })),
       exact: true,
-      permission: 'READ_VISITORS'
+      permission: null
     },
     { 
       path: '/user-management', 

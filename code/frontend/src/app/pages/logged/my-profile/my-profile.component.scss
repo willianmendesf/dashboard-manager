@@ -188,7 +188,15 @@
   color: #6B7280;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 999px) {
+  .profile-form {
+    padding: 24px 16px;
+  }
+
+  .profile-photo-section {
+    padding: 16px;
+  }
+
   .photo-container {
     flex-direction: column;
     align-items: center;

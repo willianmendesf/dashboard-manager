@@ -76,7 +76,9 @@
               class="form-control"
               placeholder="(00) 00000-0000"
               mask="(00) 90000-0000"
+              [disabled]="!!currentUser.telefone"
             />
+            <small *ngIf="currentUser.telefone" class="field-hint">O telefone não pode ser alterado após o cadastro</small>
           </div>
 
           <div class="form-group">
@@ -114,6 +116,69 @@
         </div>
       </div>
 
+      <!-- Seção de Alteração de Senha -->
+      <div class="form-section">
+        <h3>Alterar Senha</h3>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="senhaAtual">Senha Atual</label>
+            <input 
+              type="password" 
+              id="senhaAtual"
+              formControlName="senhaAtual"
+              class="form-control"
+              [class.invalid]="profileForm.get('senhaAtual')?.invalid && profileForm.get('senhaAtual')?.touched"
+              placeholder="Deixe em branco para não alterar"
+            />
+            <div *ngIf="profileForm.get('senhaAtual')?.hasError('passwordRequired') && profileForm.get('senhaAtual')?.touched" class="error-message">
+              Senha atual é obrigatória para alterar a senha
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="novaSenha">Nova Senha</label>
+            <input 
+              type="password" 
+              id="novaSenha"
+              formControlName="novaSenha"
+              class="form-control"
+              [class.invalid]="profileForm.get('novaSenha')?.invalid && profileForm.get('novaSenha')?.touched"
+              placeholder="Mínimo 6 caracteres"
+            />
+            <div *ngIf="profileForm.get('novaSenha')?.touched" class="error-message">
+              <div *ngIf="profileForm.get('novaSenha')?.hasError('passwordRequired')">
+                Nova senha é obrigatória para alterar a senha
+              </div>
+              <div *ngIf="profileForm.get('novaSenha')?.hasError('minlength') && !profileForm.get('novaSenha')?.hasError('passwordRequired')">
+                Nova senha deve ter pelo menos 6 caracteres
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmarNovaSenha">Confirmar Nova Senha</label>
+            <input 
+              type="password" 
+              id="confirmarNovaSenha"
+              formControlName="confirmarNovaSenha"
+              class="form-control"
+              [class.invalid]="profileForm.get('confirmarNovaSenha')?.invalid && profileForm.get('confirmarNovaSenha')?.touched"
+              placeholder="Repita a nova senha"
+            />
+            <div *ngIf="profileForm.get('confirmarNovaSenha')?.touched" class="error-message">
+              <div *ngIf="profileForm.get('confirmarNovaSenha')?.hasError('passwordRequired')">
+                Confirmação de senha é obrigatória para alterar a senha
+              </div>
+              <div *ngIf="profileForm.get('confirmarNovaSenha')?.errors?.['passwordMismatch'] && !profileForm.get('confirmarNovaSenha')?.hasError('passwordRequired')">
+                As senhas não coincidem
+              </div>
+            </div>
+          </div>
+        </div>
+        <small class="field-hint">Deixe os campos de senha em branco se não desejar alterar sua senha.</small>
+      </div>
+
       <div class="form-actions">
         <button 
           type="submit" 
@@ -121,13 +186,6 @@
           [disabled]="saving || profileForm.invalid"
         >
           {{ saving ? 'Salvando...' : 'Salvar Alterações' }}
-        </button>
-        <button 
-          type="button" 
-          class="btn-secondary"
-          (click)="openPasswordModal()"
-        >
-          Alterar Senha
         </button>
       </div>
     </form>
@@ -140,56 +198,5 @@
     </div>
   </ng-template>
 
-  <!-- Modal de Alteração de Senha -->
-  <app-modal
-    *ngIf="showPasswordModal"
-    [title]="'Alterar Senha'"
-    [footerButtons]="getPasswordModalButtons()"
-    (close)="closePasswordModal()"
-  >
-    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-      <div class="form-group">
-        <label for="senhaAtual">Senha Atual <span class="required">*</span></label>
-        <input 
-          type="password" 
-          id="senhaAtual"
-          formControlName="senhaAtual"
-          class="form-control"
-          [class.invalid]="passwordForm.get('senhaAtual')?.invalid && passwordForm.get('senhaAtual')?.touched"
-        />
-        <div *ngIf="passwordForm.get('senhaAtual')?.invalid && passwordForm.get('senhaAtual')?.touched" class="error-message">
-          Senha atual é obrigatória
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="novaSenha">Nova Senha <span class="required">*</span></label>
-        <input 
-          type="password" 
-          id="novaSenha"
-          formControlName="novaSenha"
-          class="form-control"
-          [class.invalid]="passwordForm.get('novaSenha')?.invalid && passwordForm.get('novaSenha')?.touched"
-        />
-        <div *ngIf="passwordForm.get('novaSenha')?.invalid && passwordForm.get('novaSenha')?.touched" class="error-message">
-          Nova senha deve ter pelo menos 6 caracteres
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="confirmarNovaSenha">Confirmar Nova Senha <span class="required">*</span></label>
-        <input 
-          type="password" 
-          id="confirmarNovaSenha"
-          formControlName="confirmarNovaSenha"
-          class="form-control"
-          [class.invalid]="passwordForm.get('confirmarNovaSenha')?.invalid && passwordForm.get('confirmarNovaSenha')?.touched"
-        />
-        <div *ngIf="passwordForm.get('confirmarNovaSenha')?.errors?.['passwordMismatch'] && passwordForm.get('confirmarNovaSenha')?.touched" class="error-message">
-          As senhas não coincidem
-        </div>
-      </div>
-    </form>
-  </app-modal>
 </div>
 

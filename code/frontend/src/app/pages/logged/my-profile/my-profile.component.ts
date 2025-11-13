@@ -7,7 +7,6 @@ import { AuthService } from '../../../shared/service/auth.service';
 import { UserService } from '../../../shared/service/user.service';
 import { environment } from '../../../../environments/environment';
 import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.component';
-import { ModalComponent, ModalButton } from '../../../shared/modules/modal/modal.component';
 import { Observable, catchError, of, tap } from 'rxjs';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
@@ -31,7 +30,6 @@ interface UserProfile {
     ReactiveFormsModule,
     RouterModule,
     PageTitleComponent,
-    ModalComponent,
     NgxMaskDirective
   ],
   providers: [provideNgxMask()],
@@ -45,15 +43,14 @@ export class MyProfileComponent implements OnInit {
   private userService = inject(UserService);
 
   profileForm!: FormGroup;
-  passwordForm!: FormGroup;
   saving = false;
   uploadingPhoto = false;
-  showPasswordModal = false;
   error = '';
   successMessage = '';
   
   // Observable para o perfil do usuário
   profileData$!: Observable<UserProfile | null>;
+  currentUserData: UserProfile | null = null;
 
   getProfilePhotoUrl(user: UserProfile | null): string {
     return buildProfileImageUrl(user?.fotoUrl);
@@ -62,23 +59,31 @@ export class MyProfileComponent implements OnInit {
   ngOnInit(): void {
     this.profileForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
-      telefone: ['']
-    });
-
-    this.passwordForm = this.fb.group({
-      senhaAtual: ['', [Validators.required]],
-      novaSenha: ['', [Validators.required, Validators.minLength(6)]],
-      confirmarNovaSenha: ['', [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
+      telefone: [''],
+      senhaAtual: [''],
+      novaSenha: [''],
+      confirmarNovaSenha: ['']
+    }, { validators: [this.passwordMatchValidator, this.passwordChangeValidator] });
 
     // Carregar perfil usando Observable com async pipe
     this.profileData$ = this.userService.getCurrentUserProfile().pipe(
       tap((user) => {
+        // Armazenar dados do usuário atual
+        this.currentUserData = user;
         // Popular formulário quando os dados chegarem
         this.profileForm.patchValue({
           name: user.name,
-          telefone: user.telefone || ''
+          telefone: user.telefone || '',
+          senhaAtual: '',
+          novaSenha: '',
+          confirmarNovaSenha: ''
         });
+        // Desabilitar campo telefone se já tiver valor no banco
+        if (user.telefone) {
+          this.profileForm.get('telefone')?.disable();
+        } else {
+          this.profileForm.get('telefone')?.enable();
+        }
       }),
       catchError((error) => {
         console.error('Error loading profile:', error);
@@ -98,33 +103,115 @@ export class MyProfileComponent implements OnInit {
     this.error = '';
     this.successMessage = '';
 
-    const request = {
-      name: this.profileForm.get('name')?.value,
-      telefone: this.profileForm.get('telefone')?.value
-    };
+    const senhaAtual = this.profileForm.get('senhaAtual')?.value?.trim() || '';
+    const novaSenha = this.profileForm.get('novaSenha')?.value?.trim() || '';
+    const confirmarNovaSenha = this.profileForm.get('confirmarNovaSenha')?.value?.trim() || '';
 
-    this.http.put<UserProfile>(`${environment.apiUrl}users/me`, request).subscribe({
-      next: (updated) => {
-        // Update auth service cache with new user data
-        const currentAuth = this.authService.getCurrentUser();
-        if (currentAuth) {
-          const updatedUserData: any = {
-            id: updated.id,
-            username: updated.username,
-            email: updated.email,
-            name: updated.name,
-            profileName: updated.profileName,
-            fotoUrl: updated.fotoUrl,
-            telefone: updated.telefone,
-            permissions: currentAuth.permissions || []
-          };
-          this.authService.updateUserCache(updatedUserData);
-        }
-        // Recarregar o perfil para atualizar o Observable
-        this.profileData$ = of(updated);
-        this.successMessage = 'Perfil atualizado com sucesso!';
+    // Se alguma senha foi preenchida, todas devem ser preenchidas
+    const isChangingPassword = senhaAtual || novaSenha || confirmarNovaSenha;
+    
+    if (isChangingPassword) {
+      if (!senhaAtual || !novaSenha || !confirmarNovaSenha) {
+        this.error = 'Para alterar a senha, preencha todos os campos de senha';
         this.saving = false;
-        setTimeout(() => this.successMessage = '', 3000);
+        this.profileForm.get('senhaAtual')?.markAsTouched();
+        this.profileForm.get('novaSenha')?.markAsTouched();
+        this.profileForm.get('confirmarNovaSenha')?.markAsTouched();
+        return;
+      }
+    }
+
+    // Primeiro atualiza o perfil
+    // Telefone só é enviado se não existir (write once)
+    const profileRequest: any = {
+      name: this.profileForm.get('name')?.value
+    };
+    
+    // Só envia telefone se ainda não estiver preenchido no perfil
+    const telefoneValue = this.profileForm.get('telefone')?.value?.trim();
+    if (this.currentUserData && !this.currentUserData.telefone && telefoneValue) {
+      profileRequest.telefone = telefoneValue;
+    }
+
+    this.http.put<UserProfile>(`${environment.apiUrl}users/me`, profileRequest).subscribe({
+      next: (updated) => {
+        // Se houver alteração de senha, fazer em segundo request
+        if (isChangingPassword) {
+          const passwordRequest = {
+            senhaAtual: senhaAtual,
+            novaSenha: novaSenha,
+            confirmarNovaSenha: confirmarNovaSenha
+          };
+
+          this.http.put<{message: string}>(`${environment.apiUrl}users/me/alterar-senha`, passwordRequest).subscribe({
+            next: (response) => {
+              // Update auth service cache
+              const currentAuth = this.authService.getCurrentUser();
+              if (currentAuth) {
+                const updatedUserData: any = {
+                  id: updated.id,
+                  username: updated.username,
+                  email: updated.email,
+                  name: updated.name,
+                  profileName: updated.profileName,
+                  fotoUrl: updated.fotoUrl,
+                  telefone: updated.telefone,
+                  permissions: currentAuth.permissions || []
+                };
+                this.authService.updateUserCache(updatedUserData);
+              }
+              this.currentUserData = updated;
+              this.profileData$ = of(updated);
+              this.successMessage = 'Perfil e senha atualizados com sucesso!';
+              this.saving = false;
+              // Limpar campos de senha e atualizar telefone no formulário
+              this.profileForm.patchValue({
+                telefone: updated.telefone || '',
+                senhaAtual: '',
+                novaSenha: '',
+                confirmarNovaSenha: ''
+              });
+              // Desabilitar campo telefone se agora tem valor
+              if (updated.telefone) {
+                this.profileForm.get('telefone')?.disable();
+              }
+              setTimeout(() => this.successMessage = '', 3000);
+            },
+            error: (error) => {
+              console.error('Error changing password:', error);
+              this.error = error.error?.error || 'Erro ao alterar senha';
+              this.saving = false;
+            }
+          });
+        } else {
+          // Update auth service cache
+          const currentAuth = this.authService.getCurrentUser();
+          if (currentAuth) {
+            const updatedUserData: any = {
+              id: updated.id,
+              username: updated.username,
+              email: updated.email,
+              name: updated.name,
+              profileName: updated.profileName,
+              fotoUrl: updated.fotoUrl,
+              telefone: updated.telefone,
+              permissions: currentAuth.permissions || []
+            };
+            this.authService.updateUserCache(updatedUserData);
+          }
+          this.currentUserData = updated;
+          this.profileData$ = of(updated);
+          this.successMessage = 'Perfil atualizado com sucesso!';
+          this.saving = false;
+          // Atualizar telefone no formulário e desabilitar se agora tem valor
+          this.profileForm.patchValue({
+            telefone: updated.telefone || ''
+          });
+          if (updated.telefone) {
+            this.profileForm.get('telefone')?.disable();
+          }
+          setTimeout(() => this.successMessage = '', 3000);
+        }
       },
       error: (error) => {
         console.error('Error updating profile:', error);
@@ -165,6 +252,7 @@ export class MyProfileComponent implements OnInit {
           this.authService.updateUserCache(updatedUserData);
         }
         // Recarregar o perfil para atualizar o Observable
+        this.currentUserData = updated;
         this.profileData$ = of(updated);
         this.successMessage = 'Foto atualizada com sucesso!';
         this.uploadingPhoto = false;
@@ -202,6 +290,7 @@ export class MyProfileComponent implements OnInit {
           this.authService.updateUserCache(updatedUserData);
         }
         // Recarregar o perfil para atualizar o Observable
+        this.currentUserData = updated;
         this.profileData$ = of(updated);
         this.successMessage = 'Foto removida com sucesso!';
         setTimeout(() => this.successMessage = '', 3000);
@@ -213,46 +302,6 @@ export class MyProfileComponent implements OnInit {
     });
   }
 
-  openPasswordModal(): void {
-    this.passwordForm.reset();
-    this.showPasswordModal = true;
-  }
-
-  closePasswordModal(): void {
-    this.showPasswordModal = false;
-    this.passwordForm.reset();
-    this.error = '';
-  }
-
-  changePassword(): void {
-    if (this.passwordForm.invalid) {
-      this.passwordForm.markAllAsTouched();
-      return;
-    }
-
-    this.saving = true;
-    this.error = '';
-
-    const request = {
-      senhaAtual: this.passwordForm.get('senhaAtual')?.value,
-      novaSenha: this.passwordForm.get('novaSenha')?.value,
-      confirmarNovaSenha: this.passwordForm.get('confirmarNovaSenha')?.value
-    };
-
-    this.http.put<{message: string}>(`${environment.apiUrl}users/me/alterar-senha`, request).subscribe({
-      next: (response) => {
-        this.successMessage = response.message || 'Senha alterada com sucesso!';
-        this.saving = false;
-        this.closePasswordModal();
-        setTimeout(() => this.successMessage = '', 3000);
-      },
-      error: (error) => {
-        console.error('Error changing password:', error);
-        this.error = error.error?.error || 'Erro ao alterar senha';
-        this.saving = false;
-      }
-    });
-  }
 
   passwordMatchValidator(form: FormGroup): { [key: string]: boolean } | null {
     const novaSenha = form.get('novaSenha');
@@ -260,13 +309,127 @@ export class MyProfileComponent implements OnInit {
 
     if (!novaSenha || !confirmarNovaSenha) return null;
 
-    if (novaSenha.value !== confirmarNovaSenha.value) {
-      confirmarNovaSenha.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    } else {
-      confirmarNovaSenha.setErrors(null);
-      return null;
+    const novaSenhaValue = novaSenha.value?.trim() || '';
+    const confirmarNovaSenhaValue = confirmarNovaSenha.value?.trim() || '';
+
+    // Só valida se ambos os campos tiverem valor
+    if (novaSenhaValue && confirmarNovaSenhaValue) {
+      if (novaSenhaValue !== confirmarNovaSenhaValue) {
+        confirmarNovaSenha.setErrors({ passwordMismatch: true });
+        return { passwordMismatch: true };
+      } else {
+        if (confirmarNovaSenha.hasError('passwordMismatch')) {
+          confirmarNovaSenha.setErrors(null);
+        }
+      }
     }
+    return null;
+  }
+
+  passwordChangeValidator(form: FormGroup): { [key: string]: boolean } | null {
+    const senhaAtual = form.get('senhaAtual');
+    const novaSenha = form.get('novaSenha');
+    const confirmarNovaSenha = form.get('confirmarNovaSenha');
+
+    if (!senhaAtual || !novaSenha || !confirmarNovaSenha) return null;
+
+    const senhaAtualValue = senhaAtual.value?.trim() || '';
+    const novaSenhaValue = novaSenha.value?.trim() || '';
+    const confirmarNovaSenhaValue = confirmarNovaSenha.value?.trim() || '';
+
+    // Se algum campo de senha foi preenchido, todos devem ser preenchidos
+    if (senhaAtualValue || novaSenhaValue || confirmarNovaSenhaValue) {
+      if (!senhaAtualValue || !novaSenhaValue || !confirmarNovaSenhaValue) {
+        // Limpa erros anteriores e define novos
+        if (!senhaAtualValue) {
+          const currentErrors = senhaAtual.errors || {};
+          senhaAtual.setErrors({ ...currentErrors, passwordRequired: true });
+        } else {
+          const currentErrors = senhaAtual.errors || {};
+          if (currentErrors['passwordRequired']) {
+            delete currentErrors['passwordRequired'];
+            senhaAtual.setErrors(Object.keys(currentErrors).length > 0 ? currentErrors : null);
+          }
+        }
+
+        if (!novaSenhaValue) {
+          const currentErrors = novaSenha.errors || {};
+          novaSenha.setErrors({ ...currentErrors, passwordRequired: true });
+        } else {
+          const currentErrors = novaSenha.errors || {};
+          if (currentErrors['passwordRequired']) {
+            delete currentErrors['passwordRequired'];
+            novaSenha.setErrors(Object.keys(currentErrors).length > 0 ? currentErrors : null);
+          }
+        }
+
+        if (!confirmarNovaSenhaValue) {
+          const currentErrors = confirmarNovaSenha.errors || {};
+          confirmarNovaSenha.setErrors({ ...currentErrors, passwordRequired: true });
+        } else {
+          const currentErrors = confirmarNovaSenha.errors || {};
+          if (currentErrors['passwordRequired']) {
+            delete currentErrors['passwordRequired'];
+            confirmarNovaSenha.setErrors(Object.keys(currentErrors).length > 0 ? currentErrors : null);
+          }
+        }
+        return { passwordIncomplete: true };
+      } else {
+        // Se todos estão preenchidos, remove erros passwordRequired
+        const senhaAtualErrors = senhaAtual.errors || {};
+        if (senhaAtualErrors['passwordRequired']) {
+          delete senhaAtualErrors['passwordRequired'];
+          senhaAtual.setErrors(Object.keys(senhaAtualErrors).length > 0 ? senhaAtualErrors : null);
+        }
+
+        const novaSenhaErrors = novaSenha.errors || {};
+        if (novaSenhaErrors['passwordRequired']) {
+          delete novaSenhaErrors['passwordRequired'];
+          novaSenha.setErrors(Object.keys(novaSenhaErrors).length > 0 ? novaSenhaErrors : null);
+        }
+
+        const confirmarNovaSenhaErrors = confirmarNovaSenha.errors || {};
+        if (confirmarNovaSenhaErrors['passwordRequired']) {
+          delete confirmarNovaSenhaErrors['passwordRequired'];
+          confirmarNovaSenha.setErrors(Object.keys(confirmarNovaSenhaErrors).length > 0 ? confirmarNovaSenhaErrors : null);
+        }
+      }
+    } else {
+      // Se todos os campos estão vazios, remove todos os erros relacionados a senha
+      const senhaAtualErrors = senhaAtual.errors || {};
+      if (senhaAtualErrors['passwordRequired']) {
+        delete senhaAtualErrors['passwordRequired'];
+        senhaAtual.setErrors(Object.keys(senhaAtualErrors).length > 0 ? senhaAtualErrors : null);
+      }
+
+      const novaSenhaErrors = novaSenha.errors || {};
+      if (novaSenhaErrors['passwordRequired']) {
+        delete novaSenhaErrors['passwordRequired'];
+        novaSenha.setErrors(Object.keys(novaSenhaErrors).length > 0 ? novaSenhaErrors : null);
+      }
+
+      const confirmarNovaSenhaErrors = confirmarNovaSenha.errors || {};
+      if (confirmarNovaSenhaErrors['passwordRequired']) {
+        delete confirmarNovaSenhaErrors['passwordRequired'];
+        confirmarNovaSenha.setErrors(Object.keys(confirmarNovaSenhaErrors).length > 0 ? confirmarNovaSenhaErrors : null);
+      }
+    }
+
+    // Validação de tamanho mínimo da nova senha
+    if (novaSenhaValue && novaSenhaValue.length > 0 && novaSenhaValue.length < 6) {
+      const existingErrors = novaSenha.errors || {};
+      novaSenha.setErrors({ ...existingErrors, minlength: { requiredLength: 6, actualLength: novaSenhaValue.length } });
+      return { minlength: true };
+    } else if (novaSenhaValue && novaSenhaValue.length >= 6) {
+      // Remove erro de minlength se a senha for válida
+      const existingErrors = novaSenha.errors || {};
+      if (existingErrors['minlength']) {
+        delete existingErrors['minlength'];
+        novaSenha.setErrors(Object.keys(existingErrors).length > 0 ? existingErrors : null);
+      }
+    }
+
+    return null;
   }
 
   isValidImageFile(file: File): boolean {
@@ -288,20 +451,5 @@ export class MyProfileComponent implements OnInit {
     return cpf;
   }
 
-  getPasswordModalButtons(): ModalButton[] {
-    return [
-      {
-        label: 'Cancelar',
-        type: 'secondary',
-        action: () => this.closePasswordModal()
-      },
-      {
-        label: 'Alterar Senha',
-        type: 'primary',
-        action: () => this.changePassword(),
-        disabled: this.saving || this.passwordForm.invalid
-      }
-    ];
-  }
 }
 
