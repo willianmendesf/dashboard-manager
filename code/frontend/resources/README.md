@@ -55,3 +55,17 @@ O splash screen deve usar o ícone centralizado com fundo branco.
 
 Os recursos serão copiados automaticamente pelo Capacitor quando você executar `npx cap sync`.
 
+### Copiando Recursos Customizados
+
+Se os recursos customizados não estiverem sendo copiados automaticamente, um script está configurado para garantir a cópia:
+
+```bash
+# O script é executado automaticamente após npx cap sync
+npm run cap:sync
+
+# Ou execute manualmente
+npm run cap:copy-resources
+```
+
+O script copia os recursos de `resources/android/res/` para `android/app/src/main/res/`, substituindo os ícones padrão do Capacitor pelos ícones customizados.
+

@@ -64,6 +64,17 @@ jobs:
           npx cap sync
         continue-on-error: true
 
+      - name: Copy Android resources
+        working-directory: code/frontend
+        run: |
+          if [ -d "android/app/src/main/res" ] && [ -d "resources/android/res" ]; then
+            echo "📦 Copiando recursos Android customizados..."
+            node scripts/copy-android-resources.js
+          else
+            echo "⚠️ Diretórios não encontrados, pulando cópia de recursos"
+          fi
+        continue-on-error: true
+
       - name: Build APK
         working-directory: code/frontend/android
         run: |

@@ -10,14 +10,15 @@
     "cap:init": "npx cap init",
     "cap:add:android": "npx cap add android",
     "cap:add:ios": "npx cap add ios",
-    "cap:sync": "npx cap sync",
+    "cap:sync": "npx cap sync && node scripts/copy-android-resources.js",
     "cap:copy": "npx cap copy",
     "cap:update": "npx cap update",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "cap:assets": "npx capacitor-assets generate",
-    "cap:build:android": "npm run build && npx cap sync && cd android && ./gradlew assembleDebug",
-    "cap:build:android:release": "npm run build && npx cap sync && cd android && ./gradlew assembleRelease"
+    "cap:copy-resources": "node scripts/copy-android-resources.js",
+    "cap:build:android": "npm run build && npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "cap:build:android:release": "npm run build && npm run cap:sync && cd android && ./gradlew assembleRelease"
   },
   "prettier": {
     "printWidth": 100,
