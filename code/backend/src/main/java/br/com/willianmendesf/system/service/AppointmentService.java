@@ -84,7 +84,16 @@ public class AppointmentService {
     public void delete(Long id) {
         try {
             log.info("Deleting appointment with ID: {}", id);
+            AppointmentEntity appointment = repository.findById(id)
+                    .orElseThrow(() -> new AppointmentException("Appointment not found for id: " + id));
+            
+            if (Boolean.TRUE.equals(appointment.getIsSystemAppointment())) {
+                throw new AppointmentException("Cannot delete system appointment");
+            }
+            
             repository.deleteById(id);
+        } catch(AppointmentException e) {
+            throw e;
         } catch(Exception e) {
             throw new AppointmentException(e.getMessage());
         }

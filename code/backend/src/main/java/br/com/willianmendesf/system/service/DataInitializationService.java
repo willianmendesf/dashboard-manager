@@ -1,8 +1,11 @@
 package br.com.willianmendesf.system.service;
 
+import br.com.willianmendesf.system.model.entity.AppointmentEntity;
 import br.com.willianmendesf.system.model.entity.Permission;
 import br.com.willianmendesf.system.model.entity.Profile;
 import br.com.willianmendesf.system.model.entity.User;
+import br.com.willianmendesf.system.model.enums.TaskType;
+import br.com.willianmendesf.system.repository.AppointmentRepository;
 import br.com.willianmendesf.system.repository.PermissionRepository;
 import br.com.willianmendesf.system.repository.ProfileRepository;
 import br.com.willianmendesf.system.repository.UserRepository;
@@ -26,6 +29,7 @@ public class DataInitializationService {
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AppointmentRepository appointmentRepository;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
@@ -40,6 +44,9 @@ public class DataInitializationService {
 
         // Create default ROOT user if it doesn't exist
         createDefaultRootUser();
+
+        // Initialize Prayer360 appointment
+        initializePrayer360Appointment();
 
         log.info("Data initialization completed.");
     }
@@ -72,6 +79,12 @@ public class DataInitializationService {
         // Dashboard permissions
         createPermissionIfNotExists("ACCESS_DASHBOARD", "Access dashboard");
         createPermissionIfNotExists("ACCESS_SCREEN_SETTINGS", "Access settings screen");
+        
+        // Prayer360 permissions
+        createPermissionIfNotExists("ACCESS_PRAYER360", "Access Prayer360 menu");
+        createPermissionIfNotExists("READ_PRAYER360", "Read Prayer360 data");
+        createPermissionIfNotExists("WRITE_PRAYER360", "Write Prayer360 data");
+        createPermissionIfNotExists("MANAGE_PRAYER360_CONFIG", "Manage Prayer360 configuration");
         
         log.info("Permissions initialized");
     }
@@ -159,6 +172,44 @@ public class DataInitializationService {
                 profile.setDescription(description);
                 return profileRepository.save(profile);
             });
+    }
+
+    private void initializePrayer360Appointment() {
+        log.info("Initializing Prayer360 appointment...");
+        String appointmentName = "Oração360 - Distribuição Automática";
+        
+        appointmentRepository.findByName(appointmentName).ifPresentOrElse(
+            existing -> {
+                // Se já existe, garantir que está marcado como sistema e em modo desenvolvimento
+                if (!Boolean.TRUE.equals(existing.getIsSystemAppointment())) {
+                    existing.setIsSystemAppointment(true);
+                    appointmentRepository.save(existing);
+                    log.info("Updated existing Prayer360 appointment to system appointment");
+                }
+                if (!Boolean.TRUE.equals(existing.getDevelopment())) {
+                    existing.setDevelopment(true);
+                    appointmentRepository.save(existing);
+                    log.info("Updated existing Prayer360 appointment to development mode");
+                }
+                log.info("Prayer360 appointment already exists: {}", appointmentName);
+            },
+            () -> {
+                // Criar novo agendamento
+                AppointmentEntity appointment = new AppointmentEntity();
+                appointment.setName(appointmentName);
+                appointment.setDescription("Agendamento automático para distribuição de orações do sistema Oração360");
+                appointment.setSchedule("0 0 8 * * MON"); // Segunda-feira às 8h
+                appointment.setEnabled(false); // DESABILITADO por padrão
+                appointment.setDevelopment(true); // MODO DESENVOLVIMENTO ATIVO
+                appointment.setIsSystemAppointment(true); // NÃO PODE SER DELETADO
+                appointment.setTaskType(TaskType.PRAYER360_DISTRIBUTION);
+                appointment.setRetries(0L);
+                appointment.setTimeout(300000L); // 5 minutos
+                
+                appointmentRepository.save(appointment);
+                log.info("Created Prayer360 appointment: {} (disabled, development mode, system appointment)", appointmentName);
+            }
+        );
     }
 }
 

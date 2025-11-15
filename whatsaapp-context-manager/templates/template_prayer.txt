@@ -1,0 +1,6 @@
+Graça e Paz {{nome}}! Segue os nomes da *Oração 360º IPBF* para essa semana.
+Ore por essa(s) pessoa(s):
+
+{{listaDeNomes}}
+
+Ore com fé e interceda por esses irmãos.

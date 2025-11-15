@@ -80,6 +80,12 @@ export const routes: Routes = [
     data: { permission: 'ACCESS_SCREEN_SETTINGS' }
   },
   { 
+    path: 'prayer360', 
+    loadComponent: () => import('./pages/logged/prayer360/prayer360.component').then(m => m.Prayer360Component),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'ACCESS_PRAYER360' }
+  },
+  { 
     path: '**', 
     component: NotFoundComponent 
   }

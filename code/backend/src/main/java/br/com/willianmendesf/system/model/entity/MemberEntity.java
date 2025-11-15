@@ -41,6 +41,9 @@ public class MemberEntity {
     @Column(name = "child", nullable = false)
     private Boolean child = false;
 
+    @Column(name = "pode_receber_oracao", nullable = false)
+    private Boolean podeReceberOracao = true;
+
     @Column(name = "tipo_cadastro")
     private String tipoCadastro;
 
@@ -121,6 +124,7 @@ public class MemberEntity {
         this.comungante = member.getComungante();
         this.intercessor = member.getIntercessor();
         this.child = member.getChild();
+        this.podeReceberOracao = member.getPodeReceberOracao();
         this.tipoCadastro = member.getTipoCadastro();
         this.nascimento = member.getNascimento();
         this.idade = member.getIdade();
@@ -152,6 +156,7 @@ public class MemberEntity {
         this.comungante = (actual.getComungante() != null) ? actual.getComungante() : newValue.getComungante();
         this.intercessor = (actual.getIntercessor() != null) ? actual.getIntercessor() : newValue.getIntercessor();
         this.child = (actual.getChild() != null) ? actual.getChild() : newValue.getChild();
+        this.podeReceberOracao = (actual.getPodeReceberOracao() != null) ? actual.getPodeReceberOracao() : newValue.getPodeReceberOracao();
         this.tipoCadastro = (isNotEmpty(actual.getTipoCadastro())) ? actual.getTipoCadastro() : newValue.getTipoCadastro();
         this.nascimento = (actual.getNascimento() != null) ? actual.getNascimento() : newValue.getNascimento();
         this.idade = (actual.getIdade() != null) ? actual.getIdade() : newValue.getIdade();

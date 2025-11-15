@@ -409,6 +409,18 @@
           </div>
 
           <div class="form-group">
+            <label>Pode Receber Oração?</label>
+            <select
+              [(ngModel)]="currentMember.podeReceberOracao"
+              name="podeReceberOracao"
+              class="form-control"
+            >
+              <option [value]="true">Sim</option>
+              <option [value]="false">Não</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label>LGPD Aceito?</label>
             <select
               [(ngModel)]="currentMember.lgpd"

@@ -3,10 +3,18 @@ package br.com.willianmendesf.system.service;
 import br.com.willianmendesf.system.cache.AppointmentCache;
 import br.com.willianmendesf.system.exception.WhatsappMessageException;
 import br.com.willianmendesf.system.model.WhatsappSender;
+import br.com.willianmendesf.system.model.dto.IntercessorDistributionDTO;
+import br.com.willianmendesf.system.model.dto.PrayerConfigDTO;
+import br.com.willianmendesf.system.model.dto.PrayerDistributionRequest;
+import br.com.willianmendesf.system.model.dto.PrayerDistributionResponse;
+import br.com.willianmendesf.system.model.dto.PrayerPersonDTO;
+import br.com.willianmendesf.system.model.dto.PrayerTemplateDTO;
 import br.com.willianmendesf.system.model.entity.AppointmentEntity;
 import br.com.willianmendesf.system.model.entity.AppointmentExecution;
+import br.com.willianmendesf.system.model.entity.PrayerTemplate;
 import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
+import br.com.willianmendesf.system.model.enums.TaskType;
 import br.com.willianmendesf.system.model.enums.WhatsappMediaType;
 import br.com.willianmendesf.system.repository.AppointmentExecutionRepository;
 import br.com.willianmendesf.system.repository.AppointmentRepository;
@@ -25,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +48,9 @@ public class AppointmentSchedulerService {
     private final AppointmentRepository appointmentsRepository;
     private final AppointmentExecutionRepository executionRepository;
     private final WhatsappMessageService whatsapp;
+    private final PrayerDistributionService prayerDistributionService;
+    private final PrayerConfigService prayerConfigService;
+    private final PrayerTemplateService prayerTemplateService;
 
     // Configuração para janela de tempo máxima (em minutos)
     @Value("${scheduler.max.backlog.minutes:5}")
@@ -267,6 +279,9 @@ public class AppointmentSchedulerService {
                     executeApiCall(appointment);
                     executeMonitoringMessage(appointment);
                     break;
+                case PRAYER360_DISTRIBUTION:
+                    executePrayer360Distribution(appointment);
+                    break;
                 default:
                     log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
                     break;
@@ -460,6 +475,9 @@ public class AppointmentSchedulerService {
                 case API_CALL:
                     executeApiCall(appointment);
                     executeMonitoringMessage(appointment);
+                    break;
+                case PRAYER360_DISTRIBUTION:
+                    executePrayer360Distribution(appointment);
                     break;
                 default:
                     log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
@@ -674,5 +692,109 @@ public class AppointmentSchedulerService {
                 // Continuar com os próximos destinatários mesmo se um falhar
             }
         });
+    }
+
+    /**
+     * Executa a distribuição de orações do Oração360
+     */
+    private void executePrayer360Distribution(AppointmentEntity appointment) {
+        log.info("Executing Prayer360 distribution for appointment: {}", appointment.getName());
+        
+        try {
+            // 1. Verificar modo desenvolvimento
+            boolean modoDesenvolvimento = Boolean.TRUE.equals(appointment.getDevelopment());
+            
+            // 2. Buscar configuração e forçar modo desenvolvimento se necessário
+            PrayerConfigDTO config = prayerConfigService.getConfig();
+            config.setModoDesenvolvimento(modoDesenvolvimento);
+            
+            // 3. Gerar distribuição
+            PrayerDistributionRequest request = new PrayerDistributionRequest();
+            request.setConfig(config);
+            PrayerDistributionResponse response = prayerDistributionService.generateDistribution(request);
+            
+            log.info("Prayer360 distribution generated: {} intercessors, {} total persons", 
+                    response.getDistributions().size(),
+                    response.getStatistics() != null ? response.getStatistics().getTotalDistributed() : 0);
+            
+            // 4. Se NÃO estiver em modo desenvolvimento, enviar mensagens WhatsApp
+            if (!modoDesenvolvimento) {
+                sendPrayer360Messages(response);
+                log.info("Prayer360 messages sent successfully");
+            } else {
+                log.info("Modo desenvolvimento: Distribuições geradas e salvas, mas mensagens NÃO enviadas");
+            }
+        } catch (Exception e) {
+            log.error("Error executing Prayer360 distribution for appointment {}: {}", 
+                    appointment.getId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to execute Prayer360 distribution: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Envia mensagens WhatsApp para os intercessores com suas listas de oração
+     */
+    private void sendPrayer360Messages(PrayerDistributionResponse response) {
+        try {
+            // 1. Buscar template padrão
+            PrayerTemplateDTO templateDTO = prayerTemplateService.getDefault();
+            PrayerTemplate template = convertTemplateDTOToEntity(templateDTO);
+            
+            // 2. Para cada intercessor na distribuição:
+            for (IntercessorDistributionDTO dist : response.getDistributions()) {
+                try {
+                    // 3. Gerar mensagens usando template
+                    List<String> messages = prayerTemplateService.generateMessage(
+                            template,
+                            dist.getIntercessor(),
+                            dist.getPrayerList(),
+                            new HashMap<>()
+                    );
+                    
+                    // 4. Enviar cada mensagem via WhatsApp
+                    for (String message : messages) {
+                        if (dist.getIntercessor().getCelular() == null || dist.getIntercessor().getCelular().trim().isEmpty()) {
+                            log.warn("Intercessor {} não tem celular configurado, pulando envio", 
+                                    dist.getIntercessor().getNome());
+                            continue;
+                        }
+                        
+                        WhatsappSender sender = new WhatsappSender();
+                        sender.setPhone(dist.getIntercessor().getCelular());
+                        sender.setMessage(message);
+                        whatsapp.sendMessage(sender);
+                        
+                        log.debug("Message sent to intercessor: {} ({})", 
+                                dist.getIntercessor().getNome(), 
+                                dist.getIntercessor().getCelular());
+                    }
+                } catch (Exception e) {
+                    log.error("Error sending messages to intercessor {}: {}. Continuing with other intercessors.", 
+                            dist.getIntercessor().getNome(), e.getMessage(), e);
+                    // Continuar com os próximos intercessores mesmo se um falhar
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error in sendPrayer360Messages: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to send Prayer360 messages: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Converte PrayerTemplateDTO para PrayerTemplate entity
+     */
+    private PrayerTemplate convertTemplateDTOToEntity(PrayerTemplateDTO dto) {
+        PrayerTemplate template = new PrayerTemplate();
+        template.setId(dto.getId());
+        template.setName(dto.getName());
+        template.setDescription(dto.getDescription());
+        template.setIsDefault(dto.getIsDefault());
+        template.setActive(dto.getActive());
+        template.setHeader(dto.getHeader());
+        template.setListFormat(dto.getListFormat());
+        template.setBody(dto.getBody());
+        template.setAdditionalMessages(dto.getAdditionalMessages());
+        template.setVariables(dto.getVariables());
+        return template;
     }
 }

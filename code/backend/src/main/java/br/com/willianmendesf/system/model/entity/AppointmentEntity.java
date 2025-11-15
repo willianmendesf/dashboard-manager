@@ -57,6 +57,9 @@ public class AppointmentEntity {
     @Column(name = "last_status")
     private TaskStatus lastStatus; // SUCCESS, FAILURE, PENDING
 
+    @Column(name = "is_system_appointment", nullable = false)
+    private Boolean isSystemAppointment = false;
+
     @Version
     @Column(name = "version")
     private Long version = 0L;
@@ -90,6 +93,7 @@ public class AppointmentEntity {
         if (entity.getEnabled() != null) this.enabled = entity.getEnabled();
         if (entity.getTimeout() != null) this.timeout = entity.getTimeout();
         if (entity.getSendImage() != null) this.sendImage = entity.getSendImage();
+        if (entity.getIsSystemAppointment() != null) this.isSystemAppointment = entity.getIsSystemAppointment();
     }
 
     public AppointmentEntity() { }
@@ -119,6 +123,7 @@ public class AppointmentEntity {
         this.recipientType = entity.getRecipientType();
         this.sendImage = entity.getSendImage();
         this.imageToSend = entity.getImageToSend();
+        this.isSystemAppointment = entity.getIsSystemAppointment();
         this.version = entity.getVersion();
     }
 
@@ -147,6 +152,7 @@ public class AppointmentEntity {
         this.recipientType = entity.getRecipientType();
         this.sendImage = entity.getSendImage();
         this.imageToSend = entity.getImageToSend();
+        this.isSystemAppointment = entity.getIsSystemAppointment();
     }
 
     public AppointmentEntity(
@@ -172,7 +178,8 @@ public class AppointmentEntity {
             List<String> sendToGroups,
             RecipientType recipientType,
             Boolean sendImage,
-            String imageToSend
+            String imageToSend,
+            Boolean isSystemAppointment
     ) {
         this.retries = retries;
         this.name = name;
@@ -197,6 +204,7 @@ public class AppointmentEntity {
         this.recipientType = recipientType;
         this.sendImage = sendImage;
         this.imageToSend = imageToSend;
+        this.isSystemAppointment = isSystemAppointment != null ? isSystemAppointment : false;
     }
 
     @Override

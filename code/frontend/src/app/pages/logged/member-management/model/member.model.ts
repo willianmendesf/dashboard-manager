@@ -7,6 +7,7 @@ export interface Member {
   comungante?: boolean;
   intercessor: boolean;
   child?: boolean;
+  podeReceberOracao?: boolean;
   tipoCadastro?: string;
   nascimento?: string | Date;
   idade?: number;

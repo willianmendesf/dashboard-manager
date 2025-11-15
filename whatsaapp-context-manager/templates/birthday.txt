@@ -1,0 +1,6 @@
+Hoje é um dia especial, é o *aniversário* de {{name}}!
+
+Louvamos a Deus por sua vida e por tudo o que Ele tem realizado em você e através de você. 
+Que esta nova etapa seja repleta de bênçãos, paz, alegria e crescimento na fé. Que o Senhor renove suas forças, guie seus passos e derrame sobre você graça abundante. 
+
+Parabéns *{{name}}*! Você é uma bênção para todos nós! 🎉🙏

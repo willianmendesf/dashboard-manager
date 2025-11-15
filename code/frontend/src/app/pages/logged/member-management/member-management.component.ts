@@ -367,6 +367,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       idade: member.idade || null,
       estadoCivil: estadoCivilBoolean,
       child: member.child !== undefined ? member.child : false,
+      podeReceberOracao: member.podeReceberOracao !== undefined ? member.podeReceberOracao : true,
       cep: member.cep || null,
       logradouro: member.logradouro || null,
       numero: member.numero || null,

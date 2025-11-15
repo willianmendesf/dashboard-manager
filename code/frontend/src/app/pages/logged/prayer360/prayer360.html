@@ -1,0 +1,100 @@
+<div class="page-container">
+  <pagetitle
+    title="Oração360"
+    subtitle="Sistema de distribuição automática de orações"
+  ></pagetitle>
+
+  <!-- Estatísticas -->
+  <div class="stats-grid" *ngIf="!loadingStats">
+    <div class="stat-card">
+      <div class="stat-content">
+        <h3>{{ totalPersons }}</h3>
+        <p>Total de Pessoas</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-content">
+        <h3>{{ totalIntercessors }}</h3>
+        <p>Intercessores</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-content">
+        <h3>{{ totalCandidates }}</h3>
+        <p>Candidatos Ativos</p>
+      </div>
+    </div>
+    <div class="stat-card" *ngIf="statistics">
+      <div class="stat-content">
+        <h3>{{ statistics.distributionRate | percent:'1.0-1' }}</h3>
+        <p>Taxa de Distribuição</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <div class="tabs">
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'distribution'"
+        (click)="switchTab('distribution')">
+        Distribuição
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'persons'"
+        (click)="switchTab('persons')">
+        Pessoas
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'history'"
+        (click)="switchTab('history')">
+        Histórico
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'config'"
+        (click)="switchTab('config')">
+        Configurações
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Distribuição Tab -->
+    <div *ngIf="activeTab === 'distribution'" class="tab-pane">
+      <div class="action-bar">
+        <button class="btn btn-primary" (click)="generateDistribution()" [disabled]="loading">
+          Gerar Distribuição
+        </button>
+      </div>
+      
+      <div class="content-card">
+        <h2>Distribuições Recentes</h2>
+        <p *ngIf="recentDistributions.length === 0">Nenhuma distribuição encontrada.</p>
+        <div *ngIf="recentDistributions.length > 0" class="distribution-list">
+          <!-- Lista de distribuições será implementada -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Pessoas Tab -->
+    <div *ngIf="activeTab === 'persons'" class="tab-pane">
+      <p>Gerenciamento de pessoas será implementado aqui.</p>
+    </div>
+
+    <!-- Histórico Tab -->
+    <div *ngIf="activeTab === 'history'" class="tab-pane">
+      <p>Histórico de distribuições será implementado aqui.</p>
+    </div>
+
+    <!-- Configurações Tab -->
+    <div *ngIf="activeTab === 'config'" class="tab-pane">
+      <p>Configurações do sistema serão implementadas aqui.</p>
+    </div>
+  </div>
+</div>
+

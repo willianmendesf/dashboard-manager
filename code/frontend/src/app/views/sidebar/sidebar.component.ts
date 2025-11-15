@@ -82,6 +82,13 @@ export class SidebarComponent implements OnInit {
       permission: null
     },
     { 
+      path: '/prayer360', 
+      label: 'Oração360', 
+      icon: this.getSafeIcon(() => NavigationIcons.prayer({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: 'ACCESS_PRAYER360'
+    },
+    { 
       path: '/user-management', 
       label: 'Usuários', 
       icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
