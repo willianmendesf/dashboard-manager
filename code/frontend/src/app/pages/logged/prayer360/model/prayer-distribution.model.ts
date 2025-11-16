@@ -1,4 +1,5 @@
 import { PrayerPerson } from './prayer-person.model';
+import { PrayerConfig } from './prayer-config.model';
 
 export interface PrayerDistribution {
   id: number;
