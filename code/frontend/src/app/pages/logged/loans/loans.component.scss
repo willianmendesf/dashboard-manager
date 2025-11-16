@@ -33,6 +33,8 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: 24px;
+  align-items: center;
+  gap: 12px;
 }
 
 .book-image-cell {
@@ -54,33 +56,72 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.whatsapp-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: #25d366;
-  color: white;
-  border-radius: 50%;
-  text-decoration: none;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #20ba5a;
-    transform: scale(1.1);
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
+  
+  .whatsapp-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+    color: #25D366;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    flex-shrink: 0;
+    
+    &:hover {
+      background-color: rgba(37, 211, 102, 0.1);
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+    
+    svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
   }
 }
 
 .no-whatsapp {
-  color: #9ca3af;
+  color: #9CA3AF;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: #3B82F6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+  
+  &:hover {
+    background: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    
+    @media (max-width: 768px) {
+      transform: none;
+    }
+  }
 }
 
 .badge {
