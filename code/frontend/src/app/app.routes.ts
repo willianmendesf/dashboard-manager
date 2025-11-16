@@ -19,6 +19,8 @@ import { AdicionarVisitantesComponent } from './pages/public/adicionar-visitante
 import { VisitorManagementComponent } from './pages/logged/visitor-management/visitor-management.component';
 import { NotFoundComponent } from './pages/logged/not-found/not-found.component';
 import { LandingComponent } from './pages/public/landing/landing.component';
+import { EmprestimoPublicoComponent } from './pages/public/emprestimo-publico/emprestimo-publico.component';
+import { LoansComponent } from './pages/logged/loans/loans.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/landing', pathMatch: 'full' },
@@ -28,6 +30,7 @@ export const routes: Routes = [
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'atualizar-cadastro', component: AtualizarCadastroComponent },
   { path: 'adicionar-visitantes', component: AdicionarVisitantesComponent },
+  { path: 'emprestimo', component: EmprestimoPublicoComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,
@@ -71,6 +74,11 @@ export const routes: Routes = [
   { 
     path: 'visitor-management', 
     component: VisitorManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'loans', 
+    component: LoansComponent,
     canActivate: [AuthGuard]
   },
   { 

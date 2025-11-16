@@ -105,7 +105,7 @@ export class App implements OnInit {
   }
 
   private isPublicRoute(url: string): boolean {
-    const publicRoutes = ['/login', '/esqueci-senha', '/redefinir-senha', '/atualizar-cadastro', '/adicionar-visitantes', '/landing'];
+    const publicRoutes = ['/login', '/esqueci-senha', '/redefinir-senha', '/atualizar-cadastro', '/adicionar-visitantes', '/emprestimo', '/landing'];
     return publicRoutes.some(route => url.startsWith(route));
   }
 
