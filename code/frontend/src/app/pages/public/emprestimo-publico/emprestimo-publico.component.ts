@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -6,7 +6,7 @@ import { BookService, BookDTO } from '../../../shared/service/book.service';
 import { LoanService, CreateLoanDTO } from '../../../shared/service/loan.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
-import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
+import { buildBookImageUrl } from '../../../shared/utils/image-url-builder';
 import { environment } from '../../../../environments/environment';
 
 function cpfValidator(control: AbstractControl): ValidationErrors | null {
@@ -53,7 +53,8 @@ export class EmprestimoPublicoComponent implements OnInit {
     private bookService: BookService,
     private loanService: LoanService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.loanForm = this.fb.group({
       cpf: ['', [Validators.required, cpfValidator]],
@@ -71,11 +72,13 @@ export class EmprestimoPublicoComponent implements OnInit {
       next: (books) => {
         this.availableBooks = books;
         this.isLoadingBooks = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading books:', err);
         this.notificationService.showError('Erro ao carregar livros disponíveis.');
         this.isLoadingBooks = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -85,6 +88,7 @@ export class EmprestimoPublicoComponent implements OnInit {
     this.loanForm.patchValue({ bookId: book.id });
     this.errorMessage = '';
     this.successMessage = '';
+    this.cdr.detectChanges();
   }
 
   onSubmit(): void {
@@ -112,6 +116,7 @@ export class EmprestimoPublicoComponent implements OnInit {
         this.isLoading = false;
         this.loanForm.reset();
         this.selectedBook = null;
+        this.cdr.detectChanges();
         this.loadAvailableBooks();
       },
       error: (err) => {
@@ -125,13 +130,14 @@ export class EmprestimoPublicoComponent implements OnInit {
           this.notificationService.showError(errorMsg);
         }
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   getBookImageUrl(book: BookDTO): string {
-    if (book.fotoUrl) {
-      return buildProfileImageUrl(book.fotoUrl);
+    if (book?.fotoUrl) {
+      return buildBookImageUrl(book.fotoUrl);
     }
     return './img/avatar-default.png';
   }

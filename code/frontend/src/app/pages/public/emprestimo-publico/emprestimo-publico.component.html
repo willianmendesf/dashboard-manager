@@ -49,7 +49,12 @@
                 (click)="selectBook(book)"
               >
                 <div class="book-image">
-                  <img [src]="getBookImageUrl(book)" [alt]="book.titulo" />
+                  <img 
+                    [src]="getBookImageUrl(book)" 
+                    [alt]="book.titulo" 
+                    (error)="$event.target.src='./img/avatar-default.png'"
+                    onerror="this.src='./img/avatar-default.png'"
+                  />
                 </div>
                 <div class="book-info">
                   <h3>{{ book.titulo }}</h3>

@@ -30,6 +30,10 @@ export class BookService {
     return this.http.post<BookDTO>(`${this.apiUrl}books`, book);
   }
 
+  update(id: number, book: BookDTO): Observable<BookDTO> {
+    return this.http.put<BookDTO>(`${this.apiUrl}books/${id}`, book);
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}books/${id}`);
   }
@@ -37,7 +41,9 @@ export class BookService {
   uploadPhoto(id: number, file: File): Observable<BookDTO> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<BookDTO>(`${this.apiUrl}books/${id}/upload-foto`, formData);
+    return this.http.post<BookDTO>(`${this.apiUrl}books/${id}/upload-foto`, formData, {
+      withCredentials: true
+    });
   }
 
   getAvailableBooks(): Observable<BookDTO[]> {

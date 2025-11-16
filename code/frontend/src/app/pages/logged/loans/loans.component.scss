@@ -43,12 +43,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 4px;
+    display: block;
+    min-width: 60px;
+    min-height: 60px;
+  }
+}
+
+.member-image-cell {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
   }
 }
 
@@ -210,6 +233,21 @@
       height: 80px;
       object-fit: cover;
       border-radius: 8px;
+    }
+  }
+
+  .member-info {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+
+    img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #e5e7eb;
     }
   }
 

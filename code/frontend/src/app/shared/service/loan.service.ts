@@ -11,6 +11,7 @@ export interface LoanDTO {
   bookFotoUrl?: string;
   memberCpf?: string;
   memberNome?: string;
+  memberFotoUrl?: string;
   memberCelular?: string;
   memberTelefone?: string;
   dataEmprestimo?: string | Date;

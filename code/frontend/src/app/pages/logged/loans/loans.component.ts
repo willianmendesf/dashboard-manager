@@ -11,7 +11,7 @@ import { BookService, BookDTO } from '../../../shared/service/book.service';
 import { LoanService, LoanDTO } from '../../../shared/service/loan.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { UtilsService } from '../../../shared/services/utils.service';
-import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
+import { buildProfileImageUrl, buildBookImageUrl } from '../../../shared/utils/image-url-builder';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -33,7 +33,7 @@ export class LoansComponent implements OnInit, OnDestroy {
   books: BookDTO[] = [];
   bookTableData: any[] = [];
   bookColumns: TableColumn[] = [
-    { key: 'foto', label: '', width: '80px', align: 'center' },
+    { key: 'fotoUrl', label: '', width: '80px', align: 'center' },
     { key: 'titulo', label: 'Título', sortable: true },
     { key: 'quantidade', label: 'Quantidade', width: '150px', align: 'center', sortable: true }
   ];
@@ -42,6 +42,7 @@ export class LoansComponent implements OnInit, OnDestroy {
   loans: LoanDTO[] = [];
   loanTableData: any[] = [];
   loanColumns: TableColumn[] = [
+    { key: 'memberFoto', label: '', width: '80px', align: 'center' },
     { key: 'memberNome', label: 'Nome', sortable: true },
     { key: 'whatsapp', label: 'WhatsApp', width: '100px', align: 'center' },
     { key: 'bookTitulo', label: 'Livro', sortable: true },
@@ -106,6 +107,7 @@ export class LoansComponent implements OnInit, OnDestroy {
       next: (loans) => {
         this.loans = loans;
         this.updateLoanTableData();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading loans:', err);
@@ -115,21 +117,57 @@ export class LoansComponent implements OnInit, OnDestroy {
   }
 
   updateBookTableData(): void {
-    this.bookTableData = this.books.map(book => ({
-      ...book,
-      _original: book
-    }));
+    this.bookTableData = this.books.map(book => {
+      const row = {
+        ...book,
+        fotoUrl: book.fotoUrl, // Garantir que fotoUrl está presente
+        _original: book
+      };
+      // Debug: verificar se fotoUrl está presente
+      if (book.fotoUrl) {
+        console.log('Book in table data:', book.titulo, 'fotoUrl:', book.fotoUrl);
+      }
+      return row;
+    });
+    console.log('Book table data updated:', this.bookTableData.length, 'books');
+    this.cdr.detectChanges();
   }
 
   updateLoanTableData(): void {
-    this.loanTableData = this.loans.map(loan => ({
-      ...loan,
-      _original: loan
-    }));
+    this.loanTableData = this.loans.map(loan => {
+      const row = {
+        ...loan,
+        memberFotoUrl: loan.memberFotoUrl,
+        status: loan.status || (loan.devolvido ? 'devolvido' : (this.isOverdue(loan.dataDevolucao) ? 'vencido' : 'ativo')),
+        _original: loan
+      };
+      // Debug: log para verificar se memberFotoUrl está presente
+      if (loan.memberFotoUrl) {
+        console.log('Loan with memberFotoUrl:', loan.memberNome, loan.memberFotoUrl);
+      }
+      return row;
+    });
+    this.cdr.detectChanges();
+  }
+
+  private isOverdue(dataDevolucao?: string | Date): boolean {
+    if (!dataDevolucao) return false;
+    const devolucao = new Date(dataDevolucao);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    devolucao.setHours(0, 0, 0, 0);
+    return devolucao < hoje;
   }
 
   getBookTableActions(): TableAction[] {
     return [
+      {
+        label: 'Editar',
+        icon: 'edit',
+        action: (row) => {
+          if (row._original) this.editBook(row._original);
+        }
+      },
       {
         label: 'Excluir',
         icon: 'delete',
@@ -178,60 +216,155 @@ export class LoansComponent implements OnInit, OnDestroy {
   }
 
   onPhotoSelected(event: any): void {
-    const file: File = event.target.files[0];
+    const file: File = event.target?.files?.[0];
     if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        this.notificationService.showError('Por favor, selecione apenas arquivos de imagem.');
+        event.target.value = ''; // Limpar input
+        return;
+      }
+      
+      // Validar tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.notificationService.showError('A imagem deve ter no máximo 5MB.');
+        event.target.value = ''; // Limpar input
+        return;
+      }
+      
       this.selectedPhotoFile = file;
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.photoPreview = e.target.result;
       };
+      reader.onerror = () => {
+        console.error('Error reading file');
+        this.notificationService.showError('Erro ao ler o arquivo selecionado.');
+      };
       reader.readAsDataURL(file);
+    } else {
+      this.selectedPhotoFile = null;
+      this.photoPreview = null;
     }
   }
 
   saveBook(): void {
-    if (!this.currentBook.titulo || !this.currentBook.quantidadeTotal || this.currentBook.quantidadeTotal <= 0) {
-      this.notificationService.showError('Preencha todos os campos obrigatórios.');
+    // Validar campos obrigatórios
+    const titulo = this.currentBook.titulo?.trim();
+    const quantidadeTotal = this.currentBook.quantidadeTotal;
+    
+    if (!titulo || titulo === '') {
+      this.notificationService.showError('O título é obrigatório.');
+      return;
+    }
+    
+    if (!quantidadeTotal || quantidadeTotal <= 0) {
+      this.notificationService.showError('A quantidade total deve ser maior que zero.');
       return;
     }
 
-    const bookData: BookDTO = {
-      titulo: this.currentBook.titulo,
-      quantidadeTotal: this.currentBook.quantidadeTotal
-    };
-
-    this.bookService.create(bookData).pipe(takeUntil(this.unsubscribe$)).subscribe({
-      next: (book) => {
-        if (this.selectedPhotoFile && book.id) {
-          this.uploadBookPhoto(book.id);
-        } else {
-          this.notificationService.showSuccess('Livro criado com sucesso!');
-          this.loadBooks();
-          this.closeBookModal();
+    if (this.isEditingBook && this.currentBook.id) {
+      // Editar livro existente
+      const bookData: BookDTO = {
+        titulo: titulo,
+        quantidadeTotal: quantidadeTotal
+      };
+      
+      // Atualizar dados do livro
+      this.bookService.update(this.currentBook.id, bookData).pipe(takeUntil(this.unsubscribe$)).subscribe({
+        next: (updatedBook) => {
+          // Se tem foto nova, fazer upload
+          if (this.selectedPhotoFile) {
+            this.uploadBookPhoto(this.currentBook.id!);
+          } else {
+            this.notificationService.showSuccess('Livro atualizado com sucesso!');
+            this.loadBooks();
+            this.closeBookModal();
+          }
+        },
+        error: (err) => {
+          console.error('Error updating book:', err);
+          this.notificationService.showError('Erro ao atualizar livro.');
         }
-      },
-      error: (err) => {
-        console.error('Error creating book:', err);
-        this.notificationService.showError('Erro ao criar livro.');
-      }
-    });
+      });
+    } else {
+      // Criar novo livro
+      const bookData: BookDTO = {
+        titulo: titulo,
+        quantidadeTotal: quantidadeTotal
+      };
+
+      this.bookService.create(bookData).pipe(takeUntil(this.unsubscribe$)).subscribe({
+        next: (book) => {
+          if (this.selectedPhotoFile && book.id) {
+            this.uploadBookPhoto(book.id);
+          } else {
+            this.notificationService.showSuccess('Livro criado com sucesso!');
+            this.loadBooks();
+            this.closeBookModal();
+          }
+        },
+        error: (err) => {
+          console.error('Error creating book:', err);
+          this.notificationService.showError('Erro ao criar livro.');
+        }
+      });
+    }
   }
 
   uploadBookPhoto(bookId: number): void {
-    if (!this.selectedPhotoFile) return;
+    if (!this.selectedPhotoFile) {
+      console.warn('No photo file selected for upload');
+      this.uploadingPhoto = false;
+      return;
+    }
 
     this.uploadingPhoto = true;
+    console.log('Uploading photo for book ID:', bookId);
+    console.log('File details:', {
+      name: this.selectedPhotoFile.name,
+      size: this.selectedPhotoFile.size,
+      type: this.selectedPhotoFile.type
+    });
+    
     this.bookService.uploadPhoto(bookId, this.selectedPhotoFile).pipe(takeUntil(this.unsubscribe$)).subscribe({
-      next: () => {
+      next: (result) => {
+        console.log('Photo uploaded successfully:', result);
         this.uploadingPhoto = false;
-        this.notificationService.showSuccess('Livro criado com sucesso!');
+        const message = this.isEditingBook ? 'Livro atualizado com sucesso!' : 'Livro criado com sucesso!';
+        this.notificationService.showSuccess(message);
+        // Limpar arquivo selecionado após sucesso
+        this.selectedPhotoFile = null;
+        this.photoPreview = null;
+        // Recarregar livros para atualizar a tabela com a nova foto
         this.loadBooks();
-        this.closeBookModal();
+        // Aguardar um pouco para garantir que a imagem foi processada
+        setTimeout(() => {
+          this.closeBookModal();
+        }, 500);
       },
       error: (err) => {
         console.error('Error uploading photo:', err);
+        console.error('Error details:', {
+          status: err?.status,
+          statusText: err?.statusText,
+          error: err?.error,
+          message: err?.message
+        });
         this.uploadingPhoto = false;
-        this.notificationService.showError('Erro ao fazer upload da foto.');
+        let errorMessage = 'Erro ao fazer upload da foto.';
+        if (err?.error?.message) {
+          errorMessage = err.error.message;
+        } else if (err?.message) {
+          errorMessage = err.message;
+        } else if (err?.status === 401 || err?.status === 403) {
+          errorMessage = 'Você não tem permissão para fazer upload de fotos.';
+        } else if (err?.status === 400) {
+          errorMessage = 'Arquivo inválido ou muito grande.';
+        } else if (err?.status === 404) {
+          errorMessage = 'Livro não encontrado.';
+        }
+        this.notificationService.showError(errorMessage);
       }
     });
   }
@@ -267,10 +400,18 @@ export class LoansComponent implements OnInit, OnDestroy {
     if (!loan.id) return;
     if (confirm(`Confirmar devolução do livro "${loan.bookTitulo}"?`)) {
       this.loanService.markAsReturned(loan.id).pipe(takeUntil(this.unsubscribe$)).subscribe({
-        next: () => {
+        next: (updatedLoan) => {
+          console.log('Loan marked as returned:', updatedLoan);
           this.notificationService.showSuccess('Empréstimo marcado como devolvido!');
           this.loadLoans();
-          this.closeLoanViewModal();
+          // Se estava visualizando, atualiza o loan sendo visualizado
+          if (this.viewingLoan && this.viewingLoan.id === updatedLoan.id) {
+            this.viewingLoan = {
+              ...updatedLoan,
+              status: updatedLoan.status || 'devolvido',
+              devolvido: true
+            };
+          }
         },
         error: (err) => {
           console.error('Error marking loan as returned:', err);
@@ -280,17 +421,47 @@ export class LoansComponent implements OnInit, OnDestroy {
     }
   }
 
-  getBookImageUrl(book: BookDTO): string {
+  editBook(book: BookDTO): void {
+    this.isEditingBook = true;
+    this.currentBook = { ...book };
+    this.selectedPhotoFile = null;
+    this.photoPreview = null;
+    // Se já tem foto, carregar preview
     if (book.fotoUrl) {
-      return buildProfileImageUrl(book.fotoUrl);
+      this.photoPreview = this.getBookImageUrl(book);
     }
+    this.showBookModal = true;
+  }
+
+  getBookImageUrl(book: BookDTO): string {
+    if (!book) {
+      return './img/avatar-default.png';
+    }
+    
+    if (book.fotoUrl && book.fotoUrl.trim() !== '') {
+      const imageUrl = buildBookImageUrl(book.fotoUrl);
+      console.log('Building book image URL for table:', book.titulo, 'fotoUrl:', book.fotoUrl, '->', imageUrl);
+      return imageUrl;
+    }
+    
+    console.log('No fotoUrl for book:', book.titulo);
     return './img/avatar-default.png';
   }
 
   getLoanImageUrl(loan: LoanDTO): string {
-    if (loan.bookFotoUrl) {
-      return buildProfileImageUrl(loan.bookFotoUrl);
+    if (loan?.bookFotoUrl) {
+      return buildBookImageUrl(loan.bookFotoUrl);
     }
+    return './img/avatar-default.png';
+  }
+
+  getMemberImageUrl(loan: LoanDTO): string {
+    if (loan?.memberFotoUrl) {
+      const imageUrl = buildProfileImageUrl(loan.memberFotoUrl);
+      console.log('Building member image URL:', loan.memberNome, loan.memberFotoUrl, '->', imageUrl);
+      return imageUrl;
+    }
+    console.log('No memberFotoUrl for loan:', loan?.memberNome);
     return './img/avatar-default.png';
   }
 
@@ -307,13 +478,14 @@ export class LoansComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusLabel(status: string): string {
+  getStatusLabel(status: string | null | undefined): string {
+    if (!status) return '-';
     const statusMap: { [key: string]: string } = {
       'ativo': 'Ativo',
       'vencido': 'Vencido',
       'devolvido': 'Devolvido'
     };
-    return statusMap[status] || status;
+    return statusMap[status] || status || '-';
   }
 
   formatDate(date: string | Date | undefined): string {

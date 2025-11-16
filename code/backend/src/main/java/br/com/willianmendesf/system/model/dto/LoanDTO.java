@@ -16,6 +16,7 @@ public class LoanDTO {
     private String bookFotoUrl;
     private String memberCpf;
     private String memberNome;
+    private String memberFotoUrl;
     private String memberCelular;
     private String memberTelefone;
     private LocalDate dataEmprestimo;

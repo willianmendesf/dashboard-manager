@@ -58,6 +58,18 @@ public class BookController {
         }
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
+    public ResponseEntity<BookDTO> update(@PathVariable Long id, @RequestBody BookEntity book) {
+        try {
+            log.info("Updating book with ID: {}", id);
+            return ResponseEntity.ok(bookService.update(id, book));
+        } catch (Exception e) {
+            log.error("Error updating book", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

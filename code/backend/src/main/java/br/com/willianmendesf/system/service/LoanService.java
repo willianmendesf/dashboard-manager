@@ -148,6 +148,7 @@ public class LoanService {
         dto.setBookFotoUrl(loan.getBook().getFotoUrl());
         dto.setMemberCpf(loan.getMemberCpf());
         dto.setMemberNome(member != null ? member.getNome() : null);
+        dto.setMemberFotoUrl(member != null ? member.getFotoUrl() : null);
         dto.setMemberCelular(member != null ? member.getCelular() : null);
         dto.setMemberTelefone(member != null ? member.getTelefone() : null);
         dto.setDataEmprestimo(loan.getDataEmprestimo());
