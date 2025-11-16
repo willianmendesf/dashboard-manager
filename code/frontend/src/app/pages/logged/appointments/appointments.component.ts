@@ -102,6 +102,8 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       return 'API';
     } else if (taskType === 'WHATSAPP_MESSAGE') {
       return 'WhatsApp';
+    } else if (taskType === 'PRAYER360_DISTRIBUTION') {
+      return 'Oração360';
     }
     return taskType || 'N/A';
   }

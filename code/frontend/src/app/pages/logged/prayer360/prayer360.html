@@ -4,6 +4,16 @@
     subtitle="Sistema de distribuição automática de orações"
   ></pagetitle>
 
+  <!-- Loading Indicator -->
+  <div *ngIf="loadingStats" class="loading-container">
+    <p>Carregando dados...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorLoading && !loadingStats" class="error-container" style="background: #fee; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #fcc;">
+    <p style="color: #c33; margin: 0;"><strong>Erro:</strong> {{ errorMessage || 'Erro ao carregar dados' }}</p>
+  </div>
+
   <!-- Estatísticas -->
   <div class="stats-grid" *ngIf="!loadingStats">
     <div class="stat-card">
@@ -29,6 +39,36 @@
         <h3>{{ statistics.distributionRate | percent:'1.0-1' }}</h3>
         <p>Taxa de Distribuição</p>
       </div>
+    </div>
+  </div>
+
+  <!-- Mensagem quando não há dados -->
+  <div *ngIf="!loadingStats && !errorLoading && totalPersons === 0" class="info-container" style="background: #e3f2fd; padding: 1.5rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #90caf9;">
+    <p style="color: #1976d2; margin: 0 0 0.5rem 0;"><strong>Nenhum dado encontrado</strong></p>
+    <p style="color: #1976d2; margin: 0 0 1rem 0; font-size: 0.9rem;">
+      Não há pessoas cadastradas no sistema Oração360.
+    </p>
+    
+    <div *ngIf="availableMembersCount > 0" style="background: #fff; padding: 1rem; border-radius: 4px; border: 1px solid #90caf9; margin-top: 1rem;">
+      <p style="color: #1976d2; margin: 0 0 0.5rem 0; font-weight: 500;">
+        <strong>Encontramos {{ availableMembersCount }} membro(s)</strong> que podem ser sincronizados com o Oração360!
+      </p>
+      <p style="color: #1976d2; margin: 0 0 1rem 0; font-size: 0.9rem;">
+        Membros marcados como <strong>Intercessor</strong> ou com <strong>Pode Receber Oração = Sim</strong> podem ser sincronizados.
+      </p>
+      <button class="btn btn-primary" (click)="onSyncClick()" style="padding: 0.5rem 1rem; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+        Sincronizar Membros Agora
+      </button>
+    </div>
+
+    <div *ngIf="availableMembersCount === 0 && !loadingMembers" style="margin-top: 1rem;">
+      <p style="color: #1976d2; margin: 0 0 0.5rem 0; font-size: 0.9rem;">
+        <strong>Opções para adicionar dados:</strong>
+      </p>
+      <ul style="color: #1976d2; margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+        <li>Acesse a aba <strong>"Pessoas"</strong> para cadastrar pessoas externas manualmente</li>
+        <li>Ou configure membros existentes como <strong>Intercessor</strong> ou <strong>Pode Receber Oração = Sim</strong> na área de Membros</li>
+      </ul>
     </div>
   </div>
 
@@ -83,7 +123,13 @@
 
     <!-- Pessoas Tab -->
     <div *ngIf="activeTab === 'persons'" class="tab-pane">
-      <p>Gerenciamento de pessoas será implementado aqui.</p>
+      <app-persons-list
+        (syncClick)="onSyncClick()"
+        (newPersonClick)="onNewPersonClick()"
+        (viewClick)="onViewPerson($event)"
+        (editClick)="onEditPerson($event)"
+        (deleteClick)="onDeletePerson($event)"
+      ></app-persons-list>
     </div>
 
     <!-- Histórico Tab -->
@@ -96,5 +142,21 @@
       <p>Configurações do sistema serão implementadas aqui.</p>
     </div>
   </div>
+
+  <!-- Modal de Formulário de Pessoa -->
+  <app-person-form
+    [isOpen]="showPersonForm"
+    [person]="currentPerson"
+    [isEditing]="isEditingPerson"
+    (closeEvent)="onPersonFormClose()"
+    (saveEvent)="onPersonFormSave($event)"
+  ></app-person-form>
+
+  <!-- Modal de Sincronização de Membros -->
+  <app-sync-members
+    [isOpen]="showSyncModal"
+    (closeEvent)="onSyncModalClose()"
+    (syncCompleteEvent)="onSyncComplete()"
+  ></app-sync-members>
 </div>
 

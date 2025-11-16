@@ -43,6 +43,10 @@ export class Prayer360Service {
     return this.api.get('prayer360/persons/candidates');
   }
 
+  syncMembers(memberIds: number[]): Observable<PrayerPerson[]> {
+    return this.api.post('prayer360/persons/sync-members', memberIds);
+  }
+
   // PrayerDistribution endpoints
   generateDistribution(request: PrayerDistributionRequest): Observable<PrayerDistributionResponse> {
     return this.api.post('prayer360/distribute', request);

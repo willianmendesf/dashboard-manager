@@ -21,4 +21,5 @@ export class Appointment {
   "taskType": string;
   "sendImage": boolean;
   "imageToSend": string;
+  "isSystemAppointment"?: boolean;
 }
