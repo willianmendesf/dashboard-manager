@@ -1,6 +1,7 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.model.dto.PrayerDistributionDTO;
+import br.com.willianmendesf.system.model.dto.PrayerPersonDTO;
 import br.com.willianmendesf.system.model.entity.PrayerDistribution;
 import br.com.willianmendesf.system.model.entity.PrayerPerson;
 import br.com.willianmendesf.system.repository.PrayerDistributionRepository;

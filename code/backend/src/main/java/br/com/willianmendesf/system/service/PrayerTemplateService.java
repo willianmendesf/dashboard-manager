@@ -1,6 +1,8 @@
 package br.com.willianmendesf.system.service;
 
+import br.com.willianmendesf.system.model.dto.PrayerPersonDTO;
 import br.com.willianmendesf.system.model.dto.PrayerTemplateDTO;
+import br.com.willianmendesf.system.model.entity.PrayerPerson;
 import br.com.willianmendesf.system.model.entity.PrayerTemplate;
 import br.com.willianmendesf.system.repository.PrayerTemplateRepository;
 import lombok.AllArgsConstructor;
