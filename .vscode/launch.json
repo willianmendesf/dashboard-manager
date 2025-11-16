@@ -10,8 +10,11 @@
             "name": "dashboard-api",
             "request": "launch",
             "mainClass": "br.com.willianmendesf.system.Application",
-            "projectName": "system",
-            "envFile": "${workspaceFolder}/code/backend/.env"
+            "cwd": "${workspaceFolder}/code/backend",
+            "envFile": "${workspaceFolder}/code/backend/.env.dev",
+            "vmArgs": "-Dspring.profiles.active=dev",
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "type": "pwa-chrome",
