@@ -33,6 +33,7 @@ public class UpdateMemberDTO {
     private String rg;
     private String conjugueCPF;
     private Boolean child;
+    private Boolean podeReceberOracao;
     private String tipoCadastro;
     private List<Long> groupIds;
 }

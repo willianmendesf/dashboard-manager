@@ -22,5 +22,12 @@ public class PrayerDistributionController {
     public ResponseEntity<PrayerDistributionResponse> generateDistribution(@RequestBody PrayerDistributionRequest request) {
         return ResponseEntity.ok(service.generateDistribution(request));
     }
+
+    @PostMapping("/{distributionId}/resend/{intercessorId}")
+    @PreAuthorize("hasAuthority('WRITE_PRAYER360')")
+    public ResponseEntity<Void> resendMessage(@PathVariable Long distributionId, @PathVariable Long intercessorId) {
+        service.resendMessage(distributionId, intercessorId);
+        return ResponseEntity.noContent().build();
+    }
 }
 

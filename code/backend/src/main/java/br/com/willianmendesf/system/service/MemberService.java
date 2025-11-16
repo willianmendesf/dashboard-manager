@@ -147,6 +147,7 @@ public class MemberService {
             originalMember.setComungante(member.getComungante());
             originalMember.setIntercessor(member.getIntercessor());
             if (member.getChild() != null) originalMember.setChild(member.getChild());
+            if (member.getPodeReceberOracao() != null) originalMember.setPodeReceberOracao(member.getPodeReceberOracao());
             if (member.getTipoCadastro() != null && !member.getTipoCadastro().trim().isEmpty()) {
                 originalMember.setTipoCadastro(member.getTipoCadastro().trim());
             } else {
@@ -328,6 +329,10 @@ public class MemberService {
             
             if (dto.getChild() != null) {
                 existingMember.setChild(dto.getChild());
+            }
+            
+            if (dto.getPodeReceberOracao() != null) {
+                existingMember.setPodeReceberOracao(dto.getPodeReceberOracao());
             }
             
             if (dto.getTipoCadastro() != null) {

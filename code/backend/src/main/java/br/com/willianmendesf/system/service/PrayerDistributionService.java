@@ -1,8 +1,10 @@
 package br.com.willianmendesf.system.service;
 
+import br.com.willianmendesf.system.model.WhatsappSender;
 import br.com.willianmendesf.system.model.dto.*;
 import br.com.willianmendesf.system.model.entity.PrayerDistribution;
 import br.com.willianmendesf.system.model.entity.PrayerPerson;
+import br.com.willianmendesf.system.model.entity.PrayerTemplate;
 import br.com.willianmendesf.system.repository.PrayerDistributionRepository;
 import br.com.willianmendesf.system.repository.PrayerPersonRepository;
 import lombok.AllArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,8 @@ public class PrayerDistributionService {
     private final PrayerConfigService configService;
     private final PrayerDistributionRepository distributionRepository;
     private final PrayerPersonRepository personRepository;
+    private final PrayerTemplateService prayerTemplateService;
+    private final WhatsappMessageService whatsappMessageService;
 
     public PrayerDistributionResponse generateDistribution(PrayerDistributionRequest request) {
         log.info("Generating prayer distribution");
@@ -413,6 +418,93 @@ public class PrayerDistributionService {
             distribution.setDistributedPersons(distributedPersons);
             distributionRepository.save(distribution);
         }
+    }
+
+    @Transactional
+    public void resendMessage(Long distributionId, Long intercessorId) {
+        log.info("Resending message for distribution ID: {} and intercessor ID: {}", distributionId, intercessorId);
+        
+        // Buscar distribuição
+        PrayerDistribution distribution = distributionRepository.findById(distributionId)
+                .orElseThrow(() -> new RuntimeException("Distribution not found: " + distributionId));
+        
+        // Verificar se é do intercessor correto
+        if (!distribution.getIntercessor().getId().equals(intercessorId)) {
+            throw new RuntimeException("Distribution does not belong to intercessor: " + intercessorId);
+        }
+        
+        // Buscar intercessor atualizado
+        PrayerPersonDTO intercessorDTO = personService.getById(intercessorId);
+        
+        // Converter distributedPersons de volta para PrayerPersonDTO
+        List<PrayerPersonDTO> prayerList = distribution.getDistributedPersons().stream()
+                .map(personMap -> {
+                    PrayerPersonDTO dto = new PrayerPersonDTO();
+                    dto.setNome((String) personMap.get("nome"));
+                    String tipoStr = (String) personMap.get("tipo");
+                    if (tipoStr != null) {
+                        dto.setTipo(PrayerPerson.PersonType.valueOf(tipoStr));
+                    }
+                    dto.setCelular((String) personMap.get("celular"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        
+        // Buscar template padrão
+        PrayerTemplateDTO templateDTO = prayerTemplateService.getDefault();
+        PrayerTemplate template = convertTemplateDTOToEntity(templateDTO);
+        
+        try {
+            // Gerar mensagens
+            List<String> messages = prayerTemplateService.generateMessage(
+                    template,
+                    intercessorDTO,
+                    prayerList,
+                    new HashMap<>()
+            );
+            
+            // Enviar cada mensagem via WhatsApp
+            for (String message : messages) {
+                if (intercessorDTO.getCelular() == null || intercessorDTO.getCelular().trim().isEmpty()) {
+                    throw new RuntimeException("Intercessor não tem celular configurado");
+                }
+                
+                WhatsappSender sender = new WhatsappSender();
+                sender.setPhone(intercessorDTO.getCelular());
+                sender.setMessage(message);
+                whatsappMessageService.sendMessage(sender);
+            }
+            
+            // Atualizar status
+            distribution.setStatus(PrayerDistribution.DistributionStatus.SENT);
+            distribution.setSentAt(LocalDateTime.now());
+            distributionRepository.save(distribution);
+            
+            log.info("Message resent successfully for distribution ID: {}", distributionId);
+        } catch (Exception e) {
+            log.error("Error resending message for distribution ID {}: {}", distributionId, e.getMessage(), e);
+            
+            // Atualizar status como FAILED
+            distribution.setStatus(PrayerDistribution.DistributionStatus.FAILED);
+            distributionRepository.save(distribution);
+            
+            throw new RuntimeException("Failed to resend message: " + e.getMessage(), e);
+        }
+    }
+
+    private PrayerTemplate convertTemplateDTOToEntity(PrayerTemplateDTO dto) {
+        PrayerTemplate template = new PrayerTemplate();
+        template.setId(dto.getId());
+        template.setName(dto.getName());
+        template.setDescription(dto.getDescription());
+        template.setIsDefault(dto.getIsDefault());
+        template.setActive(dto.getActive());
+        template.setHeader(dto.getHeader());
+        template.setListFormat(dto.getListFormat());
+        template.setBody(dto.getBody());
+        template.setAdditionalMessages(dto.getAdditionalMessages());
+        template.setVariables(dto.getVariables());
+        return template;
     }
 }
 

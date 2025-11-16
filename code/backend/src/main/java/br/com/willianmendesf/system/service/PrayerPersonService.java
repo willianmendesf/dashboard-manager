@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -90,6 +92,120 @@ public class PrayerPersonService {
                 .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Sincroniza membros com PrayerPerson
+     * Cria ou atualiza PrayerPerson baseado nos membros selecionados
+     * 
+     * Regras:
+     * - Se membro.intercessor = true → criar/atualizar PrayerPerson com isIntercessor = true
+     * - Se membro.podeReceberOracao = true e não for intercessor → criar/atualizar PrayerPerson como candidato
+     * - Determina tipo (CRIANCA/ADULTO) baseado na idade (< 18 = CRIANCA, >= 18 = ADULTO)
+     * - Se já existir pelo memberId, atualiza; senão, cria novo
+     */
+    @Transactional
+    public List<PrayerPersonDTO> syncFromMembers(List<Long> memberIds) {
+        log.info("Syncing {} members to PrayerPerson", memberIds.size());
+        List<PrayerPersonDTO> syncedPersons = new ArrayList<>();
+        
+        for (Long memberId : memberIds) {
+            try {
+                MemberEntity member = memberRepository.findById(memberId)
+                        .orElseThrow(() -> new RuntimeException("Member not found: " + memberId));
+                
+                // Verificar se deve sincronizar este membro
+                boolean shouldSync = false;
+                boolean isIntercessor = Boolean.TRUE.equals(member.getIntercessor());
+                boolean podeReceberOracao = Boolean.TRUE.equals(member.getPodeReceberOracao());
+                
+                if (isIntercessor || podeReceberOracao) {
+                    shouldSync = true;
+                } else {
+                    log.debug("Member {} (ID: {}) skipped: neither intercessor nor podeReceberOracao", 
+                            member.getNome(), memberId);
+                    continue;
+                }
+                
+                if (!shouldSync) {
+                    continue;
+                }
+                
+                // Buscar PrayerPerson existente por memberId
+                Optional<PrayerPerson> existingPersonOpt = personRepository.findByMemberId(memberId);
+                PrayerPerson person;
+                
+                if (existingPersonOpt.isPresent()) {
+                    // Atualizar existente
+                    person = existingPersonOpt.get();
+                    log.debug("Updating existing PrayerPerson for member {} (ID: {})", 
+                            member.getNome(), memberId);
+                } else {
+                    // Criar novo
+                    person = new PrayerPerson();
+                    person.setMemberId(memberId);
+                    person.setIsExternal(false);
+                    log.debug("Creating new PrayerPerson for member {} (ID: {})", 
+                            member.getNome(), memberId);
+                }
+                
+                // Atualizar/criar dados do PrayerPerson
+                person.setNome(member.getNome());
+                
+                // Celular: priorizar celular, senão telefone
+                if (member.getCelular() != null && !member.getCelular().trim().isEmpty()) {
+                    person.setCelular(member.getCelular());
+                } else if (member.getTelefone() != null && !member.getTelefone().trim().isEmpty()) {
+                    person.setCelular(member.getTelefone());
+                }
+                
+                // Determinar tipo (CRIANCA/ADULTO)
+                if (Boolean.TRUE.equals(member.getChild())) {
+                    person.setTipo(PrayerPerson.PersonType.CRIANCA);
+                } else if (member.getIdade() != null) {
+                    person.setTipo(member.getIdade() < 18 ? 
+                            PrayerPerson.PersonType.CRIANCA : PrayerPerson.PersonType.ADULTO);
+                } else if (member.getNascimento() != null) {
+                    LocalDate hoje = LocalDate.now();
+                    int idade = hoje.getYear() - member.getNascimento().getYear();
+                    if (member.getNascimento().plusYears(idade).isAfter(hoje)) {
+                        idade--;
+                    }
+                    person.setTipo(idade < 18 ? 
+                            PrayerPerson.PersonType.CRIANCA : PrayerPerson.PersonType.ADULTO);
+                } else {
+                    // Default: ADULTO se não souber
+                    person.setTipo(PrayerPerson.PersonType.ADULTO);
+                }
+                
+                // Configurar isIntercessor baseado no membro
+                person.setIsIntercessor(isIntercessor);
+                
+                // Se não for intercessor mas pode receber oração, manter como candidato ativo
+                if (!isIntercessor && podeReceberOracao) {
+                    person.setActive(true);
+                } else if (isIntercessor) {
+                    // Intercessor sempre ativo
+                    person.setActive(true);
+                } else {
+                    // Se não pode receber oração e não é intercessor, desativar
+                    person.setActive(false);
+                }
+                
+                person = personRepository.save(person);
+                syncedPersons.add(convertToDTO(person));
+                
+                log.info("Synced member {} (ID: {}) to PrayerPerson {} - Intercessor: {}, Tipo: {}", 
+                        member.getNome(), memberId, person.getId(), isIntercessor, person.getTipo());
+                        
+            } catch (Exception e) {
+                log.error("Error syncing member {}: {}", memberId, e.getMessage(), e);
+                // Continuar com os próximos membros mesmo se um falhar
+            }
+        }
+        
+        log.info("Sync completed: {} PrayerPersons synced", syncedPersons.size());
+        return syncedPersons;
     }
 
     private PrayerPersonDTO convertToDTO(PrayerPerson person) {

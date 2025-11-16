@@ -7,17 +7,17 @@ import br.com.willianmendesf.system.model.dto.IntercessorDistributionDTO;
 import br.com.willianmendesf.system.model.dto.PrayerConfigDTO;
 import br.com.willianmendesf.system.model.dto.PrayerDistributionRequest;
 import br.com.willianmendesf.system.model.dto.PrayerDistributionResponse;
-import br.com.willianmendesf.system.model.dto.PrayerPersonDTO;
 import br.com.willianmendesf.system.model.dto.PrayerTemplateDTO;
 import br.com.willianmendesf.system.model.entity.AppointmentEntity;
 import br.com.willianmendesf.system.model.entity.AppointmentExecution;
 import br.com.willianmendesf.system.model.entity.PrayerTemplate;
 import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
-import br.com.willianmendesf.system.model.enums.TaskType;
 import br.com.willianmendesf.system.model.enums.WhatsappMediaType;
+import br.com.willianmendesf.system.model.entity.PrayerDistribution;
 import br.com.willianmendesf.system.repository.AppointmentExecutionRepository;
 import br.com.willianmendesf.system.repository.AppointmentRepository;
+import br.com.willianmendesf.system.repository.PrayerDistributionRepository;
 import br.com.willianmendesf.system.service.utils.ApiRequest;
 import br.com.willianmendesf.system.service.utils.MessagesUtils;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +51,7 @@ public class AppointmentSchedulerService {
     private final PrayerDistributionService prayerDistributionService;
     private final PrayerConfigService prayerConfigService;
     private final PrayerTemplateService prayerTemplateService;
+    private final PrayerDistributionRepository prayerDistributionRepository;
 
     // Configuração para janela de tempo máxima (em minutos)
     @Value("${scheduler.max.backlog.minutes:5}")
@@ -734,15 +735,28 @@ public class AppointmentSchedulerService {
     /**
      * Envia mensagens WhatsApp para os intercessores com suas listas de oração
      */
+    @Transactional
     private void sendPrayer360Messages(PrayerDistributionResponse response) {
         try {
+            LocalDate today = LocalDate.now();
+            
             // 1. Buscar template padrão
             PrayerTemplateDTO templateDTO = prayerTemplateService.getDefault();
             PrayerTemplate template = convertTemplateDTOToEntity(templateDTO);
             
             // 2. Para cada intercessor na distribuição:
             for (IntercessorDistributionDTO dist : response.getDistributions()) {
+                PrayerDistribution distribution = null;
                 try {
+                    // Buscar distribuição salva pela data e intercessor
+                    List<PrayerDistribution> distributions = prayerDistributionRepository.findByIntercessorAndDateRange(
+                            dist.getIntercessor().getId(), today, today);
+                    distribution = distributions.stream()
+                            .filter(d -> d.getIntercessor().getId().equals(dist.getIntercessor().getId()))
+                            .filter(d -> d.getDistributionDate().equals(today))
+                            .findFirst()
+                            .orElse(null);
+                    
                     // 3. Gerar mensagens usando template
                     List<String> messages = prayerTemplateService.generateMessage(
                             template,
@@ -752,25 +766,51 @@ public class AppointmentSchedulerService {
                     );
                     
                     // 4. Enviar cada mensagem via WhatsApp
+                    boolean allSent = true;
                     for (String message : messages) {
                         if (dist.getIntercessor().getCelular() == null || dist.getIntercessor().getCelular().trim().isEmpty()) {
                             log.warn("Intercessor {} não tem celular configurado, pulando envio", 
                                     dist.getIntercessor().getNome());
+                            allSent = false;
                             continue;
                         }
                         
-                        WhatsappSender sender = new WhatsappSender();
-                        sender.setPhone(dist.getIntercessor().getCelular());
-                        sender.setMessage(message);
-                        whatsapp.sendMessage(sender);
-                        
-                        log.debug("Message sent to intercessor: {} ({})", 
-                                dist.getIntercessor().getNome(), 
-                                dist.getIntercessor().getCelular());
+                        try {
+                            WhatsappSender sender = new WhatsappSender();
+                            sender.setPhone(dist.getIntercessor().getCelular());
+                            sender.setMessage(message);
+                            whatsapp.sendMessage(sender);
+                            
+                            log.debug("Message sent to intercessor: {} ({})", 
+                                    dist.getIntercessor().getNome(), 
+                                    dist.getIntercessor().getCelular());
+                        } catch (Exception e) {
+                            log.error("Error sending message to intercessor {}: {}", 
+                                    dist.getIntercessor().getNome(), e.getMessage());
+                            allSent = false;
+                            throw e; // Relançar para marcar como FAILED
+                        }
+                    }
+                    
+                    // 5. Atualizar status da distribuição
+                    if (distribution != null && allSent) {
+                        distribution.setStatus(PrayerDistribution.DistributionStatus.SENT);
+                        distribution.setSentAt(LocalDateTime.now());
+                        prayerDistributionRepository.save(distribution);
+                        log.debug("Distribution status updated to SENT for intercessor: {}", 
+                                dist.getIntercessor().getNome());
                     }
                 } catch (Exception e) {
                     log.error("Error sending messages to intercessor {}: {}. Continuing with other intercessors.", 
                             dist.getIntercessor().getNome(), e.getMessage(), e);
+                    
+                    // Atualizar status como FAILED se houver distribuição
+                    if (distribution != null) {
+                        distribution.setStatus(PrayerDistribution.DistributionStatus.FAILED);
+                        prayerDistributionRepository.save(distribution);
+                        log.debug("Distribution status updated to FAILED for intercessor: {}", 
+                                dist.getIntercessor().getNome());
+                    }
                     // Continuar com os próximos intercessores mesmo se um falhar
                 }
             }

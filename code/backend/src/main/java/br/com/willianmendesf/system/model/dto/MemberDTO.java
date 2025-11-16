@@ -27,6 +27,7 @@ public class MemberDTO {
     private String conjugueCPF;
     private Boolean comungante;
     private Boolean child;
+    private Boolean podeReceberOracao;
     private String tipoCadastro;
     private String fotoUrl;
     private Boolean intercessor;
@@ -56,6 +57,7 @@ public class MemberDTO {
         this.conjugueCPF = member.getConjugueCPF();
         this.comungante = member.getComungante();
         this.child = member.getChild();
+        this.podeReceberOracao = member.getPodeReceberOracao();
         this.tipoCadastro = member.getTipoCadastro();
         this.fotoUrl = member.getFotoUrl();
         this.intercessor = member.getIntercessor();

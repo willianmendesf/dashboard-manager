@@ -60,5 +60,11 @@ public class PrayerPersonController {
     public ResponseEntity<List<PrayerPersonDTO>> getCandidates() {
         return ResponseEntity.ok(service.getCandidates());
     }
+
+    @PostMapping("/sync-members")
+    @PreAuthorize("hasAuthority('WRITE_PRAYER360')")
+    public ResponseEntity<List<PrayerPersonDTO>> syncMembers(@RequestBody List<Long> memberIds) {
+        return ResponseEntity.ok(service.syncFromMembers(memberIds));
+    }
 }
 
