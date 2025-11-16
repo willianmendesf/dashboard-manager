@@ -69,6 +69,23 @@
           </select>
         </div>
 
+        @if (jaFrequentaIgreja === 'Sim') {
+          <div class="form-group">
+            <label for="nomeIgreja">Nome da Igreja *</label>
+            <input
+              id="nomeIgreja"
+              type="text"
+              formControlName="nomeIgreja"
+              class="form-control"
+              placeholder="Digite o nome da igreja"
+              [disabled]="isLoading"
+            />
+            @if (visitorForm.get('nomeIgreja')?.invalid && visitorForm.get('nomeIgreja')?.touched) {
+              <small class="error-text">Nome da igreja é obrigatório</small>
+            }
+          </div>
+        }
+
         <div class="form-group">
           <label for="procuraIgreja">Está à Procura de uma Igreja?</label>
           <select

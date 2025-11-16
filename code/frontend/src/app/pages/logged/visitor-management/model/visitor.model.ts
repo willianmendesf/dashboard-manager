@@ -4,6 +4,7 @@ export interface Visitor {
   dataVisita: string; // ISO date string
   telefone?: string;
   jaFrequentaIgreja?: string;
+  nomeIgreja?: string;
   procuraIgreja?: string;
   eDeSP?: boolean;
   estado?: string;

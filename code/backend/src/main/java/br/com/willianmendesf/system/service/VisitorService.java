@@ -42,6 +42,7 @@ public class VisitorService {
             entity.setDataVisita(dto.getDataVisita() != null ? dto.getDataVisita() : LocalDate.now());
             entity.setTelefone(dto.getTelefone());
             entity.setJaFrequentaIgreja(dto.getJaFrequentaIgreja());
+            entity.setNomeIgreja(dto.getNomeIgreja());
             entity.setProcuraIgreja(dto.getProcuraIgreja());
             
             // SEMPRE salvar eDeSP (mesmo se null, usar default true)
@@ -127,6 +128,12 @@ public class VisitorService {
             
             if (dto.getJaFrequentaIgreja() != null) {
                 entity.setJaFrequentaIgreja(dto.getJaFrequentaIgreja());
+            }
+            
+            if (dto.getNomeIgreja() != null) {
+                entity.setNomeIgreja(dto.getNomeIgreja().trim());
+            } else {
+                entity.setNomeIgreja(null);
             }
             
             if (dto.getProcuraIgreja() != null) {

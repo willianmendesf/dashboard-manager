@@ -224,6 +224,20 @@
         </select>
       </div>
 
+      @if (jaFrequentaIgreja === 'Sim') {
+        <div class="form-group">
+          <label for="nomeIgreja">Nome da Igreja</label>
+          <input
+            id="nomeIgreja"
+            type="text"
+            [(ngModel)]="currentVisitor.nomeIgreja"
+            name="nomeIgreja"
+            class="form-control"
+            placeholder="Digite o nome da igreja"
+          />
+        </div>
+      }
+
       <div class="form-group">
         <label for="procuraIgreja">Está à Procura de Igreja?</label>
         <select
