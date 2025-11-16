@@ -37,6 +37,7 @@ export class AdicionarVisitantesComponent implements OnInit {
       dataVisita: [todayStr, [Validators.required]],
       telefone: [''],
       jaFrequentaIgreja: [''],
+      nomeIgreja: [''],
       procuraIgreja: [''],
       eDeSP: [true],
       estado: ['SP']
@@ -61,10 +62,25 @@ export class AdicionarVisitantesComponent implements OnInit {
       }
       estadoControl?.updateValueAndValidity();
     });
+
+    this.visitorForm.get('jaFrequentaIgreja')?.valueChanges.subscribe(value => {
+      const nomeIgrejaControl = this.visitorForm.get('nomeIgreja');
+      if (value === 'Sim') {
+        nomeIgrejaControl?.setValidators([Validators.required]);
+      } else {
+        nomeIgrejaControl?.clearValidators();
+        nomeIgrejaControl?.setValue('');
+      }
+      nomeIgrejaControl?.updateValueAndValidity();
+    });
   }
 
   get eDeSP(): boolean {
     return this.visitorForm.get('eDeSP')?.value === true;
+  }
+
+  get jaFrequentaIgreja(): string {
+    return this.visitorForm.get('jaFrequentaIgreja')?.value || '';
   }
 
   onSubmit(): void {
@@ -87,6 +103,7 @@ export class AdicionarVisitantesComponent implements OnInit {
       dataVisita: formValue.dataVisita,
       telefone: formValue.telefone || undefined,
       jaFrequentaIgreja: formValue.jaFrequentaIgreja || undefined,
+      nomeIgreja: formValue.nomeIgreja ? formValue.nomeIgreja.trim() : undefined,
       procuraIgreja: formValue.procuraIgreja || undefined,
       eDeSP: eDeSPValue,
       estado: estadoValue

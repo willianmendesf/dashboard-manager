@@ -33,6 +33,9 @@ public class VisitorEntity {
     @Column(name = "ja_frequenta_igreja", length = 10)
     private String jaFrequentaIgreja; // "Sim" ou "Não"
 
+    @Column(name = "nome_igreja", length = 255)
+    private String nomeIgreja; // Nome da igreja quando jaFrequentaIgreja = "Sim"
+
     @Column(name = "procura_igreja", length = 10)
     private String procuraIgreja; // "Sim" ou "Não"
 

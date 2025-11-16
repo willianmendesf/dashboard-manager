@@ -117,6 +117,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
     { key: 'dataVisita', label: 'Data Visita', sortable: true },
     { key: 'telefone', label: 'Telefone', sortable: false },
     { key: 'jaFrequentaIgreja', label: 'Frequenta?', sortable: false },
+    { key: 'nomeIgreja', label: 'Nome da Igreja', sortable: false },
     { key: 'procuraIgreja', label: 'Procura Igreja?', sortable: false },
     { key: 'eDeSP', label: 'É de SP?', sortable: false },
     { key: 'estado', label: 'Estado', sortable: false }
@@ -372,6 +373,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       dataVisita: new Date().toISOString().split('T')[0],
       telefone: '',
       jaFrequentaIgreja: '',
+      nomeIgreja: '',
       procuraIgreja: '',
       eDeSP: true,
       estado: 'SP'
@@ -430,6 +432,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       dataVisita: this.currentVisitor.dataVisita,
       telefone: this.currentVisitor.telefone || undefined,
       jaFrequentaIgreja: this.currentVisitor.jaFrequentaIgreja || undefined,
+      nomeIgreja: this.currentVisitor.nomeIgreja ? this.currentVisitor.nomeIgreja.trim() : undefined,
       procuraIgreja: this.currentVisitor.procuraIgreja || undefined,
       eDeSP: eDeSPValue,
       estado: estadoValue
@@ -731,6 +734,10 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
 
   get eDeSP(): boolean {
     return this.currentVisitor.eDeSP === true;
+  }
+
+  get jaFrequentaIgreja(): string {
+    return this.currentVisitor.jaFrequentaIgreja || '';
   }
 
   onEDeSPChange(value: any): void {

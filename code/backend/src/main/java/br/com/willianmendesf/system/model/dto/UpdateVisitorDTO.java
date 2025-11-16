@@ -15,6 +15,7 @@ public class UpdateVisitorDTO {
     private LocalDate dataVisita;
     private String telefone;
     private String jaFrequentaIgreja;
+    private String nomeIgreja;
     private String procuraIgreja;
     @JsonProperty("eDeSP")
     private Boolean eDeSP;
