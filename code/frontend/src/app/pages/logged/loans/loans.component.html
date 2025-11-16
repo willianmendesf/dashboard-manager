@@ -1,0 +1,258 @@
+<div class="page-container">
+  <pagetitle title="Empréstimos" subtitle="Gerencie livros e empréstimos"></pagetitle>
+
+  <!-- Tabs -->
+  <div class="filter-tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'books'"
+      (click)="switchTab('books')"
+    >
+      Livros
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'loans'"
+      (click)="switchTab('loans')"
+    >
+      Empréstimos
+    </button>
+  </div>
+
+  <!-- Aba Livros -->
+  @if (activeTab === 'books') {
+    <div class="actions-bar">
+      <button class="btn-primary" (click)="openBookModal()">+ Novo Livro</button>
+    </div>
+
+    <app-data-table
+      [columns]="bookColumns"
+      [data]="bookTableData"
+      [actions]="getBookTableActions()"
+      [loading]="false"
+      emptyMessage="Nenhum livro encontrado"
+      [striped]="true"
+      [hoverable]="true"
+      [enablePagination]="true"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'fotoUrl') {
+          <div class="book-image-cell">
+            <img 
+              [src]="getBookImageUrl(row._original || row)" 
+              [alt]="(row._original?.titulo || row.titulo) || 'Livro'" 
+              (error)="$event.target.src='./img/avatar-default.png'"
+              onerror="this.src='./img/avatar-default.png'"
+              [style.display]="'block'"
+            />
+          </div>
+        } @else if (column.key === 'quantidade') {
+          <span>{{ row.quantidadeDisponivel }} / {{ row.quantidadeTotal }}</span>
+        } @else {
+          {{ row[column.key] || '-' }}
+        }
+      </ng-template>
+    </app-data-table>
+  }
+
+  <!-- Aba Empréstimos -->
+  @if (activeTab === 'loans') {
+    <app-data-table
+      [columns]="loanColumns"
+      [data]="loanTableData"
+      [actions]="getLoanTableActions()"
+      [loading]="false"
+      emptyMessage="Nenhum empréstimo encontrado"
+      [striped]="true"
+      [hoverable]="true"
+      [enablePagination]="true"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'memberFoto') {
+          <div class="member-image-cell">
+            <img 
+              [src]="getMemberImageUrl(row._original || row)" 
+              [alt]="(row._original?.memberNome || row.memberNome) || 'Membro'"
+              (error)="$event.target.src='./img/avatar-default.png'"
+              onerror="this.src='./img/avatar-default.png'"
+            />
+          </div>
+        } @else if (column.key === 'whatsapp') {
+          <div class="whatsapp-cell">
+            @if (row.memberCelular && utilsService.getWhatsAppLink(row.memberCelular)) {
+              <a 
+                [href]="utilsService.getWhatsAppLink(row.memberCelular)" 
+                target="_blank" 
+                class="whatsapp-icon-button"
+                title="Abrir no WhatsApp"
+                (click)="$event.stopPropagation()"
+                [innerHTML]="getWhatsAppIcon()"
+              ></a>
+            } @else if (row.memberTelefone && utilsService.getWhatsAppLink(row.memberTelefone)) {
+              <a 
+                [href]="utilsService.getWhatsAppLink(row.memberTelefone)" 
+                target="_blank" 
+                class="whatsapp-icon-button"
+                title="Abrir no WhatsApp"
+                (click)="$event.stopPropagation()"
+                [innerHTML]="getWhatsAppIcon()"
+              ></a>
+            } @else {
+              <span class="no-whatsapp">-</span>
+            }
+          </div>
+        } @else if (column.key === 'status') {
+          <span class="badge" [class]="getStatusBadgeClass(row.status || row._original?.status || '')">
+            {{ getStatusLabel(row.status || row._original?.status) }}
+          </span>
+        } @else if (column.key === 'dataEmprestimo' || column.key === 'dataDevolucao') {
+          {{ formatDate(row[column.key]) }}
+        } @else {
+          {{ row[column.key] || '-' }}
+        }
+      </ng-template>
+    </app-data-table>
+  }
+
+  <!-- Modal Criar/Editar Livro -->
+  <app-modal
+    [title]="isEditingBook ? 'Editar Livro' : 'Novo Livro'"
+    [isOpen]="showBookModal"
+    [size]="'medium'"
+    [footerButtons]="getBookModalButtons()"
+    (close)="closeBookModal()"
+  >
+    <form (ngSubmit)="saveBook()">
+      <div class="form-group">
+        <label>Título *</label>
+        <input
+          type="text"
+          [(ngModel)]="currentBook.titulo"
+          name="titulo"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Quantidade Total *</label>
+        <input
+          type="number"
+          [(ngModel)]="currentBook.quantidadeTotal"
+          name="quantidadeTotal"
+          class="form-control"
+          min="1"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Foto do Livro (opcional)</label>
+        <input
+          type="file"
+          id="bookPhotoInput"
+          accept="image/*"
+          (change)="onPhotoSelected($event)"
+          class="form-control"
+        />
+        @if (photoPreview) {
+          <div class="photo-preview">
+            <img [src]="photoPreview" alt="Preview" />
+          </div>
+        }
+        @if (isEditingBook && currentBook.fotoUrl && !photoPreview) {
+          <div class="photo-preview">
+            <img [src]="getBookImageUrl(currentBook)" alt="Foto atual" />
+            <small class="form-text">Foto atual do livro</small>
+          </div>
+        }
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- Modal Visualizar Empréstimo -->
+  <app-modal
+    title="Detalhes do Empréstimo"
+    [isOpen]="showLoanViewModal"
+    [size]="'medium'"
+    [footerButtons]="getLoanViewModalButtons()"
+    (close)="closeLoanViewModal()"
+  >
+    @if (viewingLoan) {
+      <div class="loan-details">
+        <div class="detail-section">
+          <h4>Informações do Livro</h4>
+          <div class="book-info">
+            @if (viewingLoan.bookFotoUrl) {
+              <img [src]="getLoanImageUrl(viewingLoan)" [alt]="viewingLoan.bookTitulo" />
+            }
+            <div>
+              <strong>{{ viewingLoan.bookTitulo }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Informações do Membro</h4>
+          <div class="member-info">
+            @if (viewingLoan.memberFotoUrl) {
+              <img [src]="getMemberImageUrl(viewingLoan)" [alt]="viewingLoan.memberNome || 'Membro'" />
+            }
+          </div>
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Nome</label>
+              <span>{{ viewingLoan.memberNome || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>CPF</label>
+              <span>{{ viewingLoan.memberCpf || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Celular</label>
+              <div class="phone-display">
+                @if (viewingLoan.memberCelular && utilsService.getWhatsAppLink(viewingLoan.memberCelular)) {
+                  <a 
+                    [href]="utilsService.getWhatsAppLink(viewingLoan.memberCelular)" 
+                    target="_blank" 
+                    class="whatsapp-icon-button"
+                    title="Abrir no WhatsApp"
+                    [innerHTML]="getWhatsAppIcon()"
+                  ></a>
+                }
+                <span>{{ viewingLoan.memberCelular || '-' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Informações do Empréstimo</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Data do Empréstimo</label>
+              <span>{{ formatDate(viewingLoan.dataEmprestimo) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Data de Devolução</label>
+              <span>{{ formatDate(viewingLoan.dataDevolucao) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Status</label>
+              <span class="badge" [class]="getStatusBadgeClass(viewingLoan.status || '')">
+                {{ getStatusLabel(viewingLoan.status || '') }}
+              </span>
+            </div>
+            @if (viewingLoan.devolvido && viewingLoan.dataDevolucaoReal) {
+              <div class="detail-item">
+                <label>Data de Devolução Real</label>
+                <span>{{ formatDate(viewingLoan.dataDevolucaoReal) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </app-modal>
+</div>
+

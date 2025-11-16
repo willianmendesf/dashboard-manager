@@ -1,0 +1,98 @@
+<div class="public-update-container">
+  <div class="public-update-card">
+    <div class="header">
+      <h1>Empréstimo de Livros</h1>
+      <p class="subtitle">Realize o empréstimo de um livro informando seu CPF</p>
+      <div class="header-actions">
+        <button type="button" class="btn-link" (click)="goToLanding()">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="loanForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="cpf">CPF *</label>
+        <input
+          id="cpf"
+          type="text"
+          formControlName="cpf"
+          class="form-control"
+          placeholder="000.000.000-00"
+          [mask]="'000.000.000-00'"
+          [dropSpecialCharacters]="false"
+          [disabled]="isLoading"
+        />
+        @if (loanForm.get('cpf')?.invalid && loanForm.get('cpf')?.touched) {
+          <small class="error-text">
+            @if (loanForm.get('cpf')?.hasError('required')) {
+              CPF é obrigatório
+            } @else if (loanForm.get('cpf')?.hasError('invalidCpf')) {
+              CPF inválido. Deve conter 11 dígitos no formato 000.000.000-00
+            }
+          </small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Selecione um livro disponível *</label>
+        @if (isLoadingBooks) {
+          <div class="loading-books">Carregando livros...</div>
+        } @else if (availableBooks.length === 0) {
+          <div class="no-books">Nenhum livro disponível no momento.</div>
+        } @else {
+          <div class="books-grid">
+            @for (book of availableBooks; track book.id) {
+              <div 
+                class="book-card"
+                [class.selected]="selectedBook?.id === book.id"
+                (click)="selectBook(book)"
+              >
+                <div class="book-image">
+                  <img 
+                    [src]="getBookImageUrl(book)" 
+                    [alt]="book.titulo" 
+                    (error)="$event.target.src='./img/avatar-default.png'"
+                    onerror="this.src='./img/avatar-default.png'"
+                  />
+                </div>
+                <div class="book-info">
+                  <h3>{{ book.titulo }}</h3>
+                  <p class="book-quantity">Disponível: {{ book.quantidadeDisponivel }} de {{ book.quantidadeTotal }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        @if (loanForm.get('bookId')?.invalid && loanForm.get('bookId')?.touched) {
+          <small class="error-text">Selecione um livro</small>
+        }
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert-error">
+          {{ errorMessage }}
+        </div>
+      }
+
+      @if (successMessage) {
+        <div class="alert alert-success">
+          {{ successMessage }}
+        </div>
+      }
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="loanForm.invalid || isLoading || isLoadingBooks"
+      >
+        @if (isLoading) {
+          Registrando empréstimo...
+        } @else {
+          Registrar Empréstimo
+        }
+      </button>
+    </form>
+  </div>
+</div>
+
