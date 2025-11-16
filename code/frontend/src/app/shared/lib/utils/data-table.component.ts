@@ -15,7 +15,7 @@ export interface TableColumn {
 
 export interface TableAction {
   label: string;
-  icon: 'view' | 'edit' | 'delete' | 'duplicate' | 'save' | 'copy';
+  icon: 'view' | 'edit' | 'delete' | 'duplicate' | 'save' | 'copy' | 'check';
   action: (row: any) => void;
   condition?: (row: any) => boolean;
   class?: string;
@@ -62,7 +62,8 @@ export class DataTableComponent implements OnChanges, OnInit, AfterContentInit {
       delete: ActionIcons.delete({ size: 16, color: 'currentColor' }),
       duplicate: ActionIcons.duplicate({ size: 16, color: 'currentColor' }),
       save: ActionIcons.save({ size: 16, color: 'currentColor' }),
-      copy: ActionIcons.duplicate({ size: 16, color: 'currentColor' })
+      copy: ActionIcons.duplicate({ size: 16, color: 'currentColor' }),
+      check: ActionIcons.check({ size: 16, color: 'currentColor' })
     };
     const html = icons[iconName] || '';
     return this.sanitizer.bypassSecurityTrustHtml(html);

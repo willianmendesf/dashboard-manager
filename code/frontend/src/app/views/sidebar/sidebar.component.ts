@@ -54,6 +54,13 @@ export class SidebarComponent implements OnInit {
       permission: 'READ_VISITORS'
     },
     { 
+      path: '/loans', 
+      label: 'Empréstimos', 
+      icon: this.getSafeIcon(() => NavigationIcons.book({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: 'READ_MEMBERS'
+    },
+    { 
       path: '/appointments', 
       label: 'Agendamentos', 
       icon: this.getSafeIcon(() => NavigationIcons.appointments({ size: 20, color: 'currentColor' })),

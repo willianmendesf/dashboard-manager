@@ -26,6 +26,7 @@ public class VisitorDTO {
     private LocalDate dataVisita;
     private String telefone;
     private String jaFrequentaIgreja;
+    private String nomeIgreja;
     private String procuraIgreja;
     
     @Getter(AccessLevel.NONE)
@@ -54,6 +55,7 @@ public class VisitorDTO {
         this.dataVisita = visitor.getDataVisita();
         this.telefone = visitor.getTelefone();
         this.jaFrequentaIgreja = visitor.getJaFrequentaIgreja();
+        this.nomeIgreja = visitor.getNomeIgreja();
         this.procuraIgreja = visitor.getProcuraIgreja();
         this.eDeSP = visitor.getEDeSP();
         this.estado = visitor.getEstado();

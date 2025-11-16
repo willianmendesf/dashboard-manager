@@ -85,3 +85,10 @@ export function buildFaviconImageUrl(filename: string | null | undefined): strin
   return buildFileImageUrl(filename, 'favicons');
 }
 
+/**
+ * Helper for book images
+ */
+export function buildBookImageUrl(filename: string | null | undefined): string {
+  return buildFileImageUrl(filename, 'books');
+}
+

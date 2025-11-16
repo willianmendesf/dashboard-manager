@@ -8,6 +8,7 @@ export interface CreateVisitorDTO {
   dataVisita?: string; // ISO date string
   telefone?: string;
   jaFrequentaIgreja?: string;
+  nomeIgreja?: string;
   procuraIgreja?: string;
   eDeSP?: boolean;
   estado?: string;
@@ -19,6 +20,7 @@ export interface VisitorDTO {
   dataVisita: string;
   telefone?: string;
   jaFrequentaIgreja?: string;
+  nomeIgreja?: string;
   procuraIgreja?: string;
   eDeSP?: boolean;
   estado?: string;
