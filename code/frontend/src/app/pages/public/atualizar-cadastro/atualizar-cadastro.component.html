@@ -332,7 +332,7 @@
                         @if (group.descricao) {
                           <small class="text-muted"> - {{ group.descricao }}</small>
                         }
-                        <small class="status-text">✗ Solicitação rejeitada. Você poderá solicitar novamente em {{ getRejectionDate(group.id!) }}</small>
+                        <small class="status-text">✗ Solicitação rejeitada. Você poderá solicitar novamente a partir de {{ getRejectionDate(group.id!) }}</small>
                         @if (getRejectionReason(group.id!)) {
                           <small class="rejection-reason">Motivo: {{ getRejectionReason(group.id!) }}</small>
                         }

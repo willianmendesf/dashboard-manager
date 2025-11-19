@@ -36,9 +36,13 @@ public class GroupEnrollmentController {
 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
-    public ResponseEntity<GroupEnrollmentDTO> approveEnrollment(@PathVariable Long id) {
+    public ResponseEntity<GroupEnrollmentDTO> approveEnrollment(
+            @PathVariable Long id,
+            org.springframework.security.core.Authentication authentication) {
         try {
-            GroupEnrollmentDTO enrollment = enrollmentService.approveEnrollment(id);
+            br.com.willianmendesf.system.model.entity.User user = (br.com.willianmendesf.system.model.entity.User) authentication.getPrincipal();
+            String processedBy = user.getName() != null ? user.getName() : user.getUsername();
+            GroupEnrollmentDTO enrollment = enrollmentService.approveEnrollment(id, processedBy);
             return ResponseEntity.ok(enrollment);
         } catch (Exception e) {
             log.error("Error approving enrollment", e);
@@ -50,9 +54,12 @@ public class GroupEnrollmentController {
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<GroupEnrollmentDTO> rejectEnrollment(
             @PathVariable Long id,
-            @RequestBody RejectEnrollmentDTO dto) {
+            @RequestBody RejectEnrollmentDTO dto,
+            org.springframework.security.core.Authentication authentication) {
         try {
-            GroupEnrollmentDTO enrollment = enrollmentService.rejectEnrollment(id, dto);
+            br.com.willianmendesf.system.model.entity.User user = (br.com.willianmendesf.system.model.entity.User) authentication.getPrincipal();
+            String rejectedBy = user.getName() != null ? user.getName() : user.getUsername();
+            GroupEnrollmentDTO enrollment = enrollmentService.rejectEnrollment(id, dto, rejectedBy);
             return ResponseEntity.ok(enrollment);
         } catch (Exception e) {
             log.error("Error rejecting enrollment", e);
@@ -89,6 +96,23 @@ public class GroupEnrollmentController {
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             log.error("Error getting pending enrollments", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/history")
+    @PreAuthorize("hasAuthority('READ_MEMBERS')")
+    public ResponseEntity<List<GroupEnrollmentDTO>> getEnrollmentHistory() {
+        try {
+            log.info("GET /history - Request received");
+            List<GroupEnrollmentDTO> enrollments = enrollmentService.getAllProcessedEnrollments();
+            log.info("GET /history - Returning {} enrollments", enrollments.size());
+            return ResponseEntity.ok(enrollments);
+        } catch (MembersException e) {
+            log.error("Error getting enrollment history: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error getting enrollment history", e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -133,9 +157,12 @@ public class GroupEnrollmentController {
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<GroupEnrollmentDTO> createDirectApproval(
             @RequestParam Long memberId,
-            @RequestParam Long groupId) {
+            @RequestParam Long groupId,
+            org.springframework.security.core.Authentication authentication) {
         try {
-            GroupEnrollmentDTO enrollment = enrollmentService.createDirectApproval(memberId, groupId);
+            br.com.willianmendesf.system.model.entity.User user = (br.com.willianmendesf.system.model.entity.User) authentication.getPrincipal();
+            String processedBy = user.getName() != null ? user.getName() : user.getUsername();
+            GroupEnrollmentDTO enrollment = enrollmentService.createDirectApproval(memberId, groupId, processedBy);
             return ResponseEntity.ok(enrollment);
         } catch (Exception e) {
             log.error("Error creating direct approval", e);

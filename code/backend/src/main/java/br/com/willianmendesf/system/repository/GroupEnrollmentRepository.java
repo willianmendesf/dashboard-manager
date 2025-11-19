@@ -32,5 +32,8 @@ public interface GroupEnrollmentRepository extends JpaRepository<GroupEnrollment
     
     @Query("SELECT ge FROM GroupEnrollment ge WHERE ge.member.id = :memberId AND ge.group.id = :groupId AND ge.status = 'REJECTED' ORDER BY ge.rejectedAt DESC")
     Optional<GroupEnrollment> findLastRejected(@Param("memberId") Long memberId, @Param("groupId") Long groupId);
+    
+    @Query("SELECT ge FROM GroupEnrollment ge WHERE ge.status != 'PENDING' ORDER BY ge.processedAt DESC, ge.rejectedAt DESC, ge.requestedAt DESC")
+    List<GroupEnrollment> findAllProcessedEnrollments();
 }
 

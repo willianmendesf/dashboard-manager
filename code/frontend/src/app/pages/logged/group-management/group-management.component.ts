@@ -36,7 +36,10 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
 
   // Approvals tab
   pendingEnrollments: GroupEnrollmentDTO[] = [];
+  enrollmentHistory: GroupEnrollmentDTO[] = [];
+  approvalSubTab: 'pending' | 'history' = 'pending';
   isLoadingApprovals = false;
+  isLoadingHistory = false;
   showRejectModal = false;
   selectedEnrollment: GroupEnrollmentDTO | null = null;
   rejectJustify = false;
@@ -69,6 +72,20 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'memberName', label: 'Nome', sortable: true },
     { key: 'groupName', label: 'Grupo', sortable: true },
+    { key: 'whatsapp', label: 'WhatsApp', width: '80px', align: 'center' }
+  ];
+
+  historyColumns: TableColumn[] = [
+    { key: 'foto', label: '', width: '60px', align: 'center' },
+    { key: 'memberName', label: 'Nome', sortable: true },
+    { key: 'groupName', label: 'Grupo', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'requestedAt', label: 'Data Solicitação', sortable: true },
+    { key: 'processedAt', label: 'Data Processamento', sortable: true },
+    { key: 'rejectedAt', label: 'Data Rejeição', sortable: true },
+    { key: 'rejectionReason', label: 'Motivo', sortable: false },
+    { key: 'processedBy', label: 'Aprovado por', sortable: true },
+    { key: 'rejectedBy', label: 'Rejeitado por', sortable: true },
     { key: 'whatsapp', label: 'WhatsApp', width: '80px', align: 'center' }
   ];
 
@@ -114,6 +131,10 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
       queryParamsHandling: 'merge'
     });
     this.loadTabData();
+    // Reset sub-tab when switching to approvals
+    if (tab === 'approvals') {
+      this.approvalSubTab = 'pending';
+    }
   }
 
   loadTabData(): void {
@@ -292,6 +313,15 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   }
 
   // Approvals tab methods
+  switchApprovalSubTab(subTab: 'pending' | 'history'): void {
+    this.approvalSubTab = subTab;
+    if (subTab === 'pending') {
+      this.loadPendingEnrollments();
+    } else {
+      this.loadEnrollmentHistory();
+    }
+  }
+
   loadPendingEnrollments(): void {
     this.isLoadingApprovals = true;
     this.enrollmentService.getPendingEnrollments()
@@ -314,6 +344,27 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
       });
   }
 
+  loadEnrollmentHistory(): void {
+    this.isLoadingHistory = true;
+    this.enrollmentService.getEnrollmentHistory()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (enrollments) => {
+          this.enrollmentHistory = enrollments;
+          this.isLoadingHistory = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error loading enrollment history:', err);
+          const errorMessage = err?.error?.message || err?.error || 'Erro ao carregar histórico';
+          this.notificationService.showError(errorMessage);
+          this.enrollmentHistory = [];
+          this.isLoadingHistory = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
   approveEnrollment(enrollmentId: number): void {
     this.enrollmentService.approveEnrollment(enrollmentId)
       .pipe(takeUntil(this.unsubscribe$))
@@ -321,6 +372,9 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
         next: () => {
           this.notificationService.showSuccess('Solicitação aprovada com sucesso!');
           this.loadPendingEnrollments();
+          if (this.approvalSubTab === 'history') {
+            this.loadEnrollmentHistory();
+          }
           this.loadGroups(); // Atualizar contagem
         },
         error: (err) => {
@@ -365,6 +419,9 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
           this.notificationService.showSuccess('Solicitação rejeitada');
           this.closeRejectModal();
           this.loadPendingEnrollments();
+          if (this.approvalSubTab === 'history') {
+            this.loadEnrollmentHistory();
+          }
         },
         error: (err) => {
           console.error('Error rejecting enrollment:', err);
@@ -414,6 +471,54 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
         class: 'text-danger'
       }
     ];
+  }
+
+  getHistoryTableData(): any[] {
+    return this.enrollmentHistory.map(enrollment => ({
+      foto: enrollment.memberFotoUrl,
+      memberName: enrollment.memberName,
+      groupName: enrollment.groupName,
+      status: enrollment.status === 'APPROVED' ? 'Aprovado' : 'Rejeitado',
+      requestedAt: enrollment.requestedAt ? new Date(enrollment.requestedAt).toLocaleDateString('pt-BR') : '-',
+      processedAt: enrollment.processedAt ? new Date(enrollment.processedAt).toLocaleDateString('pt-BR') : '-',
+      rejectedAt: enrollment.rejectedAt ? new Date(enrollment.rejectedAt).toLocaleDateString('pt-BR') : '-',
+      rejectionReason: enrollment.rejectionReason || '-',
+      processedBy: enrollment.processedBy || '-',
+      rejectedBy: enrollment.rejectedBy || '-',
+      whatsapp: enrollment.memberCelular,
+      _original: enrollment
+    }));
+  }
+
+  getHistoryTableActions(): TableAction[] {
+    return [
+      {
+        label: 'Excluir',
+        icon: 'delete',
+        action: (row) => this.deleteHistoryEnrollment(row._original),
+        class: 'text-danger'
+      }
+    ];
+  }
+
+  deleteHistoryEnrollment(enrollment: GroupEnrollmentDTO): void {
+    if (!confirm(`Tem certeza que deseja excluir este registro? Isso permitirá que o usuário solicite novamente.`)) {
+      return;
+    }
+
+    this.enrollmentService.removeEnrollment(enrollment.id)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Registro excluído com sucesso!');
+          this.loadEnrollmentHistory();
+        },
+        error: (err) => {
+          console.error('Error deleting enrollment:', err);
+          const errorMessage = err?.error?.message || err?.error || 'Erro ao excluir registro';
+          this.notificationService.showError(errorMessage);
+        }
+      });
   }
 
   // Members tab methods

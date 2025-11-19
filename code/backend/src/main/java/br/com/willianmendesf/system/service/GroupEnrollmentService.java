@@ -85,9 +85,9 @@ public class GroupEnrollmentService {
     }
 
     @Transactional
-    public GroupEnrollmentDTO approveEnrollment(Long enrollmentId) {
+    public GroupEnrollmentDTO approveEnrollment(Long enrollmentId, String processedBy) {
         try {
-            log.info("Approving enrollment ID: {}", enrollmentId);
+            log.info("Approving enrollment ID: {} by user: {}", enrollmentId, processedBy);
             
             GroupEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
                     .orElseThrow(() -> new MembersException("Enrollment not found with ID: " + enrollmentId));
@@ -98,6 +98,7 @@ public class GroupEnrollmentService {
             
             enrollment.setStatus(EnrollmentStatus.APPROVED);
             enrollment.setProcessedAt(LocalDateTime.now());
+            enrollment.setProcessedBy(processedBy);
             
             GroupEnrollment saved = enrollmentRepository.save(enrollment);
             log.info("Enrollment approved: {}", enrollmentId);
@@ -111,9 +112,9 @@ public class GroupEnrollmentService {
     }
 
     @Transactional
-    public GroupEnrollmentDTO rejectEnrollment(Long enrollmentId, RejectEnrollmentDTO dto) {
+    public GroupEnrollmentDTO rejectEnrollment(Long enrollmentId, RejectEnrollmentDTO dto, String rejectedBy) {
         try {
-            log.info("Rejecting enrollment ID: {}", enrollmentId);
+            log.info("Rejecting enrollment ID: {} by user: {}", enrollmentId, rejectedBy);
             
             GroupEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
                     .orElseThrow(() -> new MembersException("Enrollment not found with ID: " + enrollmentId));
@@ -125,6 +126,7 @@ public class GroupEnrollmentService {
             enrollment.setStatus(EnrollmentStatus.REJECTED);
             enrollment.setRejectedAt(LocalDateTime.now());
             enrollment.setProcessedAt(LocalDateTime.now());
+            enrollment.setRejectedBy(rejectedBy);
             
             if (dto.getJustifyRejection() != null && dto.getJustifyRejection() && dto.getRejectionReason() != null) {
                 enrollment.setRejectionReason(dto.getRejectionReason().trim());
@@ -188,6 +190,20 @@ public class GroupEnrollmentService {
         }
     }
 
+    public List<GroupEnrollmentDTO> getAllProcessedEnrollments() {
+        try {
+            log.info("Getting all processed enrollments (history)");
+            List<GroupEnrollment> enrollments = enrollmentRepository.findAllProcessedEnrollments();
+            log.info("Found {} processed enrollments", enrollments.size());
+            return enrollments.stream()
+                    .map(GroupEnrollmentDTO::new)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting processed enrollments", e);
+            throw new MembersException("Erro ao buscar histórico de aprovações: " + e.getMessage(), e);
+        }
+    }
+
     public List<MemberDTO> getGroupMembers(Long groupId) {
         try {
             log.info("Getting members for group ID: {}", groupId);
@@ -223,7 +239,7 @@ public class GroupEnrollmentService {
     }
 
     @Transactional
-    public GroupEnrollmentDTO createDirectApproval(Long memberId, Long groupId) {
+    public GroupEnrollmentDTO createDirectApproval(Long memberId, Long groupId, String processedBy) {
         try {
             log.info("Creating direct approval for member ID: {} in group ID: {}", memberId, groupId);
             
@@ -268,6 +284,7 @@ public class GroupEnrollmentService {
                 enrollment.setProcessedAt(LocalDateTime.now());
                 enrollment.setRejectedAt(null);
                 enrollment.setRejectionReason(null);
+                enrollment.setProcessedBy(processedBy);
                 GroupEnrollment saved = enrollmentRepository.save(enrollment);
                 log.info("Updated existing enrollment to APPROVED: {}", saved.getId());
                 return new GroupEnrollmentDTO(saved);
@@ -280,6 +297,7 @@ public class GroupEnrollmentService {
                 LocalDateTime now = LocalDateTime.now();
                 enrollment.setRequestedAt(now);
                 enrollment.setProcessedAt(now);
+                enrollment.setProcessedBy(processedBy);
                 
                 GroupEnrollment saved = enrollmentRepository.save(enrollment);
                 log.info("Direct approval created with ID: {}", saved.getId());

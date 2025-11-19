@@ -21,6 +21,8 @@ public class GroupEnrollmentDTO {
     private LocalDateTime processedAt;
     private String rejectionReason;
     private LocalDateTime rejectedAt;
+    private String processedBy;
+    private String rejectedBy;
 
     public GroupEnrollmentDTO(GroupEnrollment enrollment) {
         this.id = enrollment.getId();
@@ -35,6 +37,8 @@ public class GroupEnrollmentDTO {
         this.processedAt = enrollment.getProcessedAt();
         this.rejectionReason = enrollment.getRejectionReason();
         this.rejectedAt = enrollment.getRejectedAt();
+        this.processedBy = enrollment.getProcessedBy();
+        this.rejectedBy = enrollment.getRejectedBy();
     }
 }
 

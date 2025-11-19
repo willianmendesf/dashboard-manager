@@ -17,6 +17,8 @@ export interface GroupEnrollmentDTO {
   processedAt?: string;
   rejectionReason?: string;
   rejectedAt?: string;
+  processedBy?: string;
+  rejectedBy?: string;
 }
 
 export interface RejectEnrollmentDTO {
@@ -54,6 +56,10 @@ export class EnrollmentService {
 
   getPendingEnrollments(): Observable<GroupEnrollmentDTO[]> {
     return this.api.get('enrollments/pending');
+  }
+
+  getEnrollmentHistory(): Observable<GroupEnrollmentDTO[]> {
+    return this.api.get('enrollments/history');
   }
 
   getMemberEnrollments(memberId: number, isPublic: boolean = false): Observable<GroupEnrollmentDTO[]> {

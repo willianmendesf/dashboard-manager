@@ -133,6 +133,60 @@
   line-height: 1;
 }
 
+// Sub-tabs
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sub-tab-button {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-tab-button:hover {
+  color: #1f2937;
+  background: #f9fafb;
+}
+
+.sub-tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  font-weight: 600;
+}
+
+// Status Badge
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  
+  &.approved {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  
+  &.rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+}
+
 // Avatar
 .avatar-small {
   width: 40px;

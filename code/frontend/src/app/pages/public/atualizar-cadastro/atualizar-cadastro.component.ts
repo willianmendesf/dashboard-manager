@@ -418,7 +418,7 @@ export class AtualizarCadastroComponent implements OnInit {
 
     if (status === 'REJECTED' && !this.canRequestGroup(groupId)) {
       const date = this.getRejectionDate(groupId);
-      this.notificationService.showError(`Você poderá solicitar novamente em ${date}`);
+      this.notificationService.showError(`Você poderá solicitar novamente a partir de ${date}`);
       return;
     }
 

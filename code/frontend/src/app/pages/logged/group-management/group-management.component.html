@@ -59,38 +59,106 @@
 <!-- Aba Aprovações -->
 @if (activeTab === 'approvals') {
   <div class="content-card">
-    <app-data-table
-      [columns]="approvalsColumns"
-      [data]="getApprovalsTableData()"
-      [actions]="getApprovalsTableActions()"
-      [loading]="isLoadingApprovals"
-      emptyMessage="Nenhuma solicitação pendente"
-    >
-      <ng-template #rowTemplate let-row let-column="column">
-        @if (column.key === 'foto') {
-          <img 
-            [src]="getEnrollmentImageUrl(row._original)" 
-            class="avatar-small"
-            alt="Foto"
-            onerror="this.src='./img/avatar-default.png'"
-          />
-        } @else if (column.key === 'whatsapp') {
-          @if (getEnrollmentWhatsAppLink(row._original)) {
-            <a 
-              [href]="getEnrollmentWhatsAppLink(row._original)!" 
-              target="_blank" 
-              class="whatsapp-link"
-              [innerHTML]="getWhatsAppIcon()"
-              title="Abrir no WhatsApp"
-            ></a>
-          } @else {
-            <span class="text-muted">-</span>
-          }
-        } @else {
-          {{ row[column.key] || '-' }}
+    <!-- Sub-tabs -->
+    <div class="sub-tabs">
+      <button 
+        class="sub-tab-button" 
+        [class.active]="approvalSubTab === 'pending'"
+        (click)="switchApprovalSubTab('pending')"
+      >
+        Pendentes
+        @if (pendingEnrollments.length > 0) {
+          <span class="badge-count">{{ pendingEnrollments.length }}</span>
         }
-      </ng-template>
-    </app-data-table>
+      </button>
+      <button 
+        class="sub-tab-button" 
+        [class.active]="approvalSubTab === 'history'"
+        (click)="switchApprovalSubTab('history')"
+      >
+        Histórico
+      </button>
+    </div>
+
+    <!-- Tabela Pendentes -->
+    @if (approvalSubTab === 'pending') {
+      <app-data-table
+        [columns]="approvalsColumns"
+        [data]="getApprovalsTableData()"
+        [actions]="getApprovalsTableActions()"
+        [loading]="isLoadingApprovals"
+        emptyMessage="Nenhuma solicitação pendente"
+      >
+        <ng-template #rowTemplate let-row let-column="column">
+          @if (column.key === 'foto') {
+            <img 
+              [src]="getEnrollmentImageUrl(row._original)" 
+              class="avatar-small"
+              alt="Foto"
+              onerror="this.src='./img/avatar-default.png'"
+            />
+          } @else if (column.key === 'whatsapp') {
+            @if (getEnrollmentWhatsAppLink(row._original)) {
+              <a 
+                [href]="getEnrollmentWhatsAppLink(row._original)!" 
+                target="_blank" 
+                class="whatsapp-link"
+                [innerHTML]="getWhatsAppIcon()"
+                title="Abrir no WhatsApp"
+              ></a>
+            } @else {
+              <span class="text-muted">-</span>
+            }
+          } @else {
+            {{ row[column.key] || '-' }}
+          }
+        </ng-template>
+      </app-data-table>
+    }
+
+    <!-- Tabela Histórico -->
+    @if (approvalSubTab === 'history') {
+      <app-data-table
+        [columns]="historyColumns"
+        [data]="getHistoryTableData()"
+        [actions]="getHistoryTableActions()"
+        [loading]="isLoadingHistory"
+        emptyMessage="Nenhum registro no histórico"
+      >
+        <ng-template #rowTemplate let-row let-column="column">
+          @if (column.key === 'foto') {
+            <img 
+              [src]="getEnrollmentImageUrl(row._original)" 
+              class="avatar-small"
+              alt="Foto"
+              onerror="this.src='./img/avatar-default.png'"
+            />
+          } @else if (column.key === 'status') {
+            <span 
+              class="status-badge" 
+              [class.approved]="row._original.status === 'APPROVED'"
+              [class.rejected]="row._original.status === 'REJECTED'"
+            >
+              {{ row.status }}
+            </span>
+          } @else if (column.key === 'whatsapp') {
+            @if (getEnrollmentWhatsAppLink(row._original)) {
+              <a 
+                [href]="getEnrollmentWhatsAppLink(row._original)!" 
+                target="_blank" 
+                class="whatsapp-link"
+                [innerHTML]="getWhatsAppIcon()"
+                title="Abrir no WhatsApp"
+              ></a>
+            } @else {
+              <span class="text-muted">-</span>
+            }
+          } @else {
+            {{ row[column.key] || '-' }}
+          }
+        </ng-template>
+      </app-data-table>
+    }
   </div>
 }
 

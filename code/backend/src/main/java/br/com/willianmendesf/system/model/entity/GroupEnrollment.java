@@ -48,6 +48,12 @@ public class GroupEnrollment {
     @Column(name = "rejected_at")
     private LocalDateTime rejectedAt;
 
+    @Column(name = "processed_by")
+    private String processedBy;
+
+    @Column(name = "rejected_by")
+    private String rejectedBy;
+
     @PrePersist
     protected void onCreate() {
         if (requestedAt == null) {
