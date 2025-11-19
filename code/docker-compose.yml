@@ -9,7 +9,7 @@ services:
     environment:
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Sao_Paulo
     ports:
-      - "8080:8080"
+      - "7000:7000"
     restart: always
     networks:
       - app-network

@@ -81,7 +81,7 @@ LOAD_SCHEDULE=0 */5 * * * *
 CATCHUP_RECURRENCE_THRESHOLD_MINUTES=60
 
 API_WTZ_URL=http://192.168.15.17
-APP_BASE_URL=http://localhost:8080
+APP_BASE_URL=http://localhost:7000
 ```
 
 ## 🔄 Comportamento
