@@ -84,7 +84,7 @@
     @if (approvalSubTab === 'pending') {
       <app-data-table
         [columns]="approvalsColumns"
-        [data]="getApprovalsTableData()"
+        [data]="filteredApprovalsData"
         [actions]="getApprovalsTableActions()"
         [loading]="isLoadingApprovals"
         emptyMessage="Nenhuma solicitação pendente"
@@ -120,7 +120,7 @@
     @if (approvalSubTab === 'history') {
       <app-data-table
         [columns]="historyColumns"
-        [data]="getHistoryTableData()"
+        [data]="filteredHistoryData"
         [actions]="getHistoryTableActions()"
         [loading]="isLoadingHistory"
         emptyMessage="Nenhum registro no histórico"
@@ -189,7 +189,7 @@
 
     <app-data-table
       [columns]="membersColumns"
-      [data]="getMembersTableData()"
+      [data]="filteredMembersData"
       [actions]="getMembersTableActions()"
       [loading]="isLoadingMembers"
       emptyMessage="Nenhum membro encontrado"

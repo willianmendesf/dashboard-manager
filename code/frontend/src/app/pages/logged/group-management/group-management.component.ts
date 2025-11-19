@@ -50,6 +50,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   // Members tab
   members: MemberDTO[] = [];
   filteredMembers: MemberDTO[] = [];
+  filteredMembersData: any[] = [];
   memberSearchTerm = '';
   groupFilter: number | null = null;
   isLoadingMembers = false;
@@ -562,6 +563,9 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Error loading members:', err);
           this.notificationService.showError('Erro ao carregar membros');
+          this.members = [];
+          this.filteredMembers = [];
+          this.filteredMembersData = [];
           this.isLoadingMembers = false;
           this.cdr.detectChanges();
         }
@@ -592,6 +596,17 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
     }
 
     this.filteredMembers = filtered;
+    this.updateMembersTableData();
+  }
+
+  updateMembersTableData(): void {
+    this.filteredMembersData = this.filteredMembers.map(member => ({
+      foto: member.fotoUrl,
+      nome: member.nome,
+      grupos: this.getApprovedEnrollments(member),
+      whatsapp: member.celular,
+      _original: member
+    }));
   }
 
   removeFromGroup(member: MemberDTO): void {
@@ -666,13 +681,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   }
 
   getMembersTableData(): any[] {
-    return this.filteredMembers.map(member => ({
-      foto: member.fotoUrl,
-      nome: member.nome,
-      grupos: this.getApprovedEnrollments(member),
-      whatsapp: member.celular,
-      _original: member
-    }));
+    return this.filteredMembersData;
   }
 
   getMembersTableActions(): TableAction[] {
