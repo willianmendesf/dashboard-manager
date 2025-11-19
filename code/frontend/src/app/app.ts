@@ -6,6 +6,7 @@ import { NotificationComponent } from './shared/components/notification/notifica
 import { NavigationIcons } from './shared/lib/utils/icons';
 import { AuthService } from './shared/service/auth.service';
 import { ConfigService } from './shared/service/config.service';
+import { InactivityService } from './shared/services/inactivity.service';
 import { filter, catchError, of } from 'rxjs';
 
 @Component({
@@ -28,6 +29,8 @@ export class App implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
   private configService = inject(ConfigService);
+  // Inicializa o monitoramento de inatividade automaticamente
+  private inactivityService = inject(InactivityService);
   
   public readonly menuIcon: SafeHtml = this.sanitizer.bypassSecurityTrustHtml(
     NavigationIcons.menu({ size: 24, color: 'white' })
