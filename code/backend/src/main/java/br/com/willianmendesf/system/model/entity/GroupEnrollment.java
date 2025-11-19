@@ -36,7 +36,7 @@ public class GroupEnrollment {
     @Column(name = "status", nullable = false)
     private EnrollmentStatus status;
 
-    @Column(name = "requested_at")
+    @Column(name = "request_date")
     private LocalDateTime requestedAt;
 
     @Column(name = "processed_at")
@@ -50,7 +50,7 @@ public class GroupEnrollment {
 
     @PrePersist
     protected void onCreate() {
-        if (status == EnrollmentStatus.PENDING && requestedAt == null) {
+        if (requestedAt == null) {
             requestedAt = LocalDateTime.now();
         }
     }

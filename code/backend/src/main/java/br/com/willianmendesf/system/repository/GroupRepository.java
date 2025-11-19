@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     Optional<GroupEntity> findByNome(String nome);
     
-    @Query("SELECT COUNT(m) FROM MemberEntity m JOIN m.groups g WHERE g.id = :groupId")
+    @Query("SELECT COUNT(ge) FROM GroupEnrollment ge WHERE ge.group.id = :groupId AND ge.status = 'APPROVED'")
     Long countMembersByGroupId(@Param("groupId") Long groupId);
 }
 

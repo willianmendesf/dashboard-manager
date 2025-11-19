@@ -233,20 +233,43 @@ public class GroupEnrollmentService {
             GroupEntity group = groupRepository.findById(groupId)
                     .orElseThrow(() -> new MembersException("Group not found with ID: " + groupId));
 
-            // Verificar se já existe
-            var existing = enrollmentRepository.findByMemberIdAndGroupId(memberId, groupId);
-            if (existing.isPresent()) {
-                GroupEnrollment enrollment = existing.get();
-                if (enrollment.getStatus() == EnrollmentStatus.APPROVED) {
+            // Verificar se já existe (pode haver duplicatas)
+            List<GroupEnrollment> existingList = enrollmentRepository.findByMemberIdAndGroupIdList(memberId, groupId);
+            
+            // Se houver duplicatas, limpar e manter apenas uma
+            if (!existingList.isEmpty()) {
+                // Verificar se já existe um APPROVED
+                GroupEnrollment approvedEnrollment = existingList.stream()
+                        .filter(e -> e.getStatus() == EnrollmentStatus.APPROVED)
+                        .findFirst()
+                        .orElse(null);
+                
+                if (approvedEnrollment != null) {
                     throw new MembersException("Membro já faz parte deste grupo.");
                 }
-                // Atualizar para APPROVED
+                
+                // Se houver múltiplos registros, deletar duplicatas e manter apenas o mais recente
+                if (existingList.size() > 1) {
+                    log.warn("Found {} duplicate enrollments for member {} and group {}. Cleaning up...", 
+                            existingList.size(), memberId, groupId);
+                    // Ordenar por ID (mais recente primeiro) e manter apenas o primeiro
+                    existingList.sort((a, b) -> Long.compare(b.getId(), a.getId()));
+                    // Deletar todos exceto o primeiro
+                    for (int i = 1; i < existingList.size(); i++) {
+                        enrollmentRepository.delete(existingList.get(i));
+                        log.info("Deleted duplicate enrollment ID: {}", existingList.get(i).getId());
+                    }
+                }
+                
+                // Atualizar o registro restante para APPROVED
+                GroupEnrollment enrollment = existingList.get(0);
                 enrollment.setStatus(EnrollmentStatus.APPROVED);
                 enrollment.setRequestedAt(LocalDateTime.now());
                 enrollment.setProcessedAt(LocalDateTime.now());
                 enrollment.setRejectedAt(null);
                 enrollment.setRejectionReason(null);
                 GroupEnrollment saved = enrollmentRepository.save(enrollment);
+                log.info("Updated existing enrollment to APPROVED: {}", saved.getId());
                 return new GroupEnrollmentDTO(saved);
             } else {
                 // Criar novo APPROVED

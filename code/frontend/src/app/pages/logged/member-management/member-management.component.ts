@@ -289,13 +289,25 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
                 estadoCivilBoolean = false; // default para Solteiro
               }
               
+              // Extrair groupIds de groupEnrollments (apenas APPROVED)
+              const groupIds = (member.groupEnrollments || [])
+                .filter((e: GroupEnrollmentDTO) => e.status === 'APPROVED')
+                .map((e: GroupEnrollmentDTO) => e.groupId);
+              
               return {
                 ...member,
                 fotoUrl: member.fotoUrl || null,
-                groupIds: member.groupIds || [],
+                groupIds: groupIds, // Usar groupIds extraídos de groupEnrollments para compatibilidade
+                groupEnrollments: member.groupEnrollments || [],
                 estadoCivil: estadoCivilBoolean,
                 child: member.child !== undefined ? member.child : false
               };
+            });
+            // Carregar enrollments para todos os membros
+            this.members.forEach(member => {
+              if (member.id) {
+                this.loadMemberEnrollments(member.id);
+              }
             });
             this.filterMembers();
             setTimeout(() => {
@@ -639,11 +651,21 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       // Carregar grupos aprovados dos enrollments
       if (member?.id) {
         const enrollments = this.memberEnrollments.get(member.id) || [];
-        this.selectedGroupIds = enrollments
-          .filter(e => e.status === 'APPROVED')
-          .map(e => e.groupId);
+        // Se não há enrollments carregados, usar groupEnrollments do objeto member
+        if (enrollments.length === 0 && member.groupEnrollments) {
+          this.selectedGroupIds = member.groupEnrollments
+            .filter(e => e.status === 'APPROVED')
+            .map(e => e.groupId);
+        } else {
+          this.selectedGroupIds = enrollments
+            .filter(e => e.status === 'APPROVED')
+            .map(e => e.groupId);
+        }
       } else {
-        this.selectedGroupIds = member?.groupIds ? [...member.groupIds] : [];
+        // Fallback apenas se não houver id e não houver groupEnrollments
+        this.selectedGroupIds = (member?.groupEnrollments || [])
+          .filter((e: GroupEnrollmentDTO) => e.status === 'APPROVED')
+          .map((e: GroupEnrollmentDTO) => e.groupId);
       }
       this.photoPreview = (member as any)?.fotoUrl || null;
       this.selectedPhotoFile = null;

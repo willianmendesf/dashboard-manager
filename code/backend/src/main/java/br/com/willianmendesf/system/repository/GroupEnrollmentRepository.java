@@ -21,6 +21,9 @@ public interface GroupEnrollmentRepository extends JpaRepository<GroupEnrollment
     
     Optional<GroupEnrollment> findByMemberIdAndGroupId(Long memberId, Long groupId);
     
+    @Query("SELECT ge FROM GroupEnrollment ge WHERE ge.member.id = :memberId AND ge.group.id = :groupId")
+    List<GroupEnrollment> findByMemberIdAndGroupIdList(@Param("memberId") Long memberId, @Param("groupId") Long groupId);
+    
     @Query("SELECT ge FROM GroupEnrollment ge WHERE ge.status = :status ORDER BY ge.requestedAt DESC")
     List<GroupEnrollment> findPendingEnrollments(@Param("status") EnrollmentStatus status);
     
