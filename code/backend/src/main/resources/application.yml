@@ -2,6 +2,13 @@ spring:
   application:
     name: system
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+      file-size-threshold: 2KB
+
   sql:
     init:
       mode: never
