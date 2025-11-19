@@ -22,7 +22,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
 server:
-    port: 8080
+    port: 7000
     servlet:
       context-path: /api/v1
 

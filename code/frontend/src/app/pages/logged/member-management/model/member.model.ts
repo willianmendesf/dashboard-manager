@@ -1,3 +1,5 @@
+import { GroupEnrollmentDTO } from '../../../../shared/service/enrollment.service';
+
 export interface Member {
   id: number;
   nome: string;
@@ -25,6 +27,7 @@ export interface Member {
   contato?: string;
   email: string;
   groupIds?: number[];
+  groupEnrollments?: GroupEnrollmentDTO[];
   lgpd?: string;
   lgpdAceitoEm?: string | Date;
   rede?: string;

@@ -39,7 +39,11 @@ public class MemberDTO {
     private String estado;
     private Boolean lgpd;
     private LocalDate lgpdAceitoEm;
+    
+    @Deprecated
     private List<Long> groupIds;
+    
+    private List<GroupEnrollmentDTO> groupEnrollments = new ArrayList<>();
 
     public MemberDTO(MemberEntity member) {
         this.id = member.getId();
@@ -68,8 +72,18 @@ public class MemberDTO {
         this.estado = member.getEstado();
         this.lgpd = member.getLgpd();
         this.lgpdAceitoEm = member.getLgpdAceitoEm();
+        
+        // Manter groupIds para compatibilidade (deprecated)
         this.groupIds = member.getGroups() != null && !member.getGroups().isEmpty()
             ? member.getGroups().stream().map(GroupEntity::getId).collect(Collectors.toList())
             : new ArrayList<>();
+        
+        // groupEnrollments será populado pelo MemberService após buscar do repository
+        this.groupEnrollments = new ArrayList<>();
+    }
+    
+    public MemberDTO(MemberEntity member, List<GroupEnrollmentDTO> enrollments) {
+        this(member);
+        this.groupEnrollments = enrollments != null ? enrollments : new ArrayList<>();
     }
 }
