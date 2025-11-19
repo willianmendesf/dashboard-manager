@@ -43,14 +43,14 @@
         }
       </select>
     </div>
-    <div class="action-buttons">
-      <button class="btn-secondary" (click)="getMembers()" type="button">Atualizar</button>
-      <button class="btn-secondary" (click)="openImportModal()" type="button">
-        <span class="btn-icon" [innerHTML]="getImportIcon()" [attr.aria-hidden]="true"></span>
-        Importar Planilha
-      </button>
-      <button class="btn-primary" (click)="openMemberModal()" type="button">+ Novo Membro</button>
-    </div>
+  </div>
+  <div class="action-buttons">
+    <button class="btn-secondary" (click)="getMembers()" type="button">Atualizar</button>
+    <button class="btn-secondary" (click)="openImportModal()" type="button">
+      <span class="btn-icon" [innerHTML]="getImportIcon()" [attr.aria-hidden]="true"></span>
+      Importar Planilha
+    </button>
+    <button class="btn-primary" (click)="openMemberModal()" type="button">+ Novo Membro</button>
   </div>
 
   <app-data-table
