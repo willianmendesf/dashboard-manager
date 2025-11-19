@@ -36,7 +36,9 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
 
   // Approvals tab
   pendingEnrollments: GroupEnrollmentDTO[] = [];
+  filteredApprovalsData: any[] = [];
   enrollmentHistory: GroupEnrollmentDTO[] = [];
+  filteredHistoryData: any[] = [];
   approvalSubTab: 'pending' | 'history' = 'pending';
   isLoadingApprovals = false;
   isLoadingHistory = false;
@@ -109,6 +111,9 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Carrega contagem de aprovações pendentes sempre (para exibir badge)
+    this.loadPendingEnrollments();
+    
     this.route.queryParams.pipe(takeUntil(this.unsubscribe$)).subscribe(params => {
       const tab = params['tab'] as 'groups' | 'approvals' | 'members';
       if (tab && ['groups', 'approvals', 'members'].includes(tab)) {
@@ -140,9 +145,15 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   loadTabData(): void {
     if (this.activeTab === 'groups') {
       this.loadGroups();
+      // Atualiza contagem de aprovações quando entrar na aba Grupos
+      this.loadPendingEnrollments();
     } else if (this.activeTab === 'approvals') {
       this.loadPendingEnrollments();
     } else if (this.activeTab === 'members') {
+      // Carrega grupos primeiro para o filtro funcionar
+      if (this.groups.length === 0) {
+        this.loadGroups();
+      }
       this.loadMembers();
     }
   }
@@ -329,6 +340,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (enrollments) => {
           this.pendingEnrollments = enrollments;
+          this.updateApprovalsTableData();
           this.isLoadingApprovals = false;
           this.cdr.detectChanges();
         },
@@ -338,10 +350,21 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
           const errorMessage = err?.error?.message || err?.error || 'Erro ao carregar solicitações pendentes';
           this.notificationService.showError(errorMessage);
           this.pendingEnrollments = [];
+          this.filteredApprovalsData = [];
           this.isLoadingApprovals = false;
           this.cdr.detectChanges();
         }
       });
+  }
+
+  updateApprovalsTableData(): void {
+    this.filteredApprovalsData = this.pendingEnrollments.map(enrollment => ({
+      foto: enrollment.memberFotoUrl,
+      memberName: enrollment.memberName,
+      groupName: enrollment.groupName,
+      whatsapp: enrollment.memberCelular,
+      _original: enrollment
+    }));
   }
 
   loadEnrollmentHistory(): void {
@@ -351,6 +374,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (enrollments) => {
           this.enrollmentHistory = enrollments;
+          this.updateHistoryTableData();
           this.isLoadingHistory = false;
           this.cdr.detectChanges();
         },
@@ -359,10 +383,28 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
           const errorMessage = err?.error?.message || err?.error || 'Erro ao carregar histórico';
           this.notificationService.showError(errorMessage);
           this.enrollmentHistory = [];
+          this.filteredHistoryData = [];
           this.isLoadingHistory = false;
           this.cdr.detectChanges();
         }
       });
+  }
+
+  updateHistoryTableData(): void {
+    this.filteredHistoryData = this.enrollmentHistory.map(enrollment => ({
+      foto: enrollment.memberFotoUrl,
+      memberName: enrollment.memberName,
+      groupName: enrollment.groupName,
+      status: enrollment.status === 'APPROVED' ? 'Aprovado' : 'Rejeitado',
+      requestedAt: enrollment.requestedAt ? new Date(enrollment.requestedAt).toLocaleDateString('pt-BR') : '-',
+      processedAt: enrollment.processedAt ? new Date(enrollment.processedAt).toLocaleDateString('pt-BR') : '-',
+      rejectedAt: enrollment.rejectedAt ? new Date(enrollment.rejectedAt).toLocaleDateString('pt-BR') : '-',
+      rejectionReason: enrollment.rejectionReason || '-',
+      processedBy: enrollment.processedBy || '-',
+      rejectedBy: enrollment.rejectedBy || '-',
+      whatsapp: enrollment.memberCelular,
+      _original: enrollment
+    }));
   }
 
   approveEnrollment(enrollmentId: number): void {
@@ -447,13 +489,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   }
 
   getApprovalsTableData(): any[] {
-    return this.pendingEnrollments.map(enrollment => ({
-      foto: enrollment.memberFotoUrl,
-      memberName: enrollment.memberName,
-      groupName: enrollment.groupName,
-      whatsapp: enrollment.memberCelular,
-      _original: enrollment
-    }));
+    return this.filteredApprovalsData;
   }
 
   getApprovalsTableActions(): TableAction[] {
@@ -474,20 +510,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   }
 
   getHistoryTableData(): any[] {
-    return this.enrollmentHistory.map(enrollment => ({
-      foto: enrollment.memberFotoUrl,
-      memberName: enrollment.memberName,
-      groupName: enrollment.groupName,
-      status: enrollment.status === 'APPROVED' ? 'Aprovado' : 'Rejeitado',
-      requestedAt: enrollment.requestedAt ? new Date(enrollment.requestedAt).toLocaleDateString('pt-BR') : '-',
-      processedAt: enrollment.processedAt ? new Date(enrollment.processedAt).toLocaleDateString('pt-BR') : '-',
-      rejectedAt: enrollment.rejectedAt ? new Date(enrollment.rejectedAt).toLocaleDateString('pt-BR') : '-',
-      rejectionReason: enrollment.rejectionReason || '-',
-      processedBy: enrollment.processedBy || '-',
-      rejectedBy: enrollment.rejectedBy || '-',
-      whatsapp: enrollment.memberCelular,
-      _original: enrollment
-    }));
+    return this.filteredHistoryData;
   }
 
   getHistoryTableActions(): TableAction[] {
@@ -545,6 +568,11 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
       });
   }
 
+  onGroupFilterChange(value: number | null): void {
+    this.groupFilter = value;
+    this.filterMembers();
+  }
+
   filterMembers(): void {
     let filtered = [...this.members];
 
@@ -555,7 +583,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
       );
     }
 
-    if (this.groupFilter) {
+    if (this.groupFilter !== null && this.groupFilter !== undefined) {
       filtered = filtered.filter(member =>
         member.groupEnrollments?.some(e => 
           e.groupId === this.groupFilter && e.status === 'APPROVED'

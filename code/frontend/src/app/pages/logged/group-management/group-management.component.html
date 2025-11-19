@@ -177,12 +177,12 @@
       </div>
       <select 
         class="form-control filter-select" 
-        [(ngModel)]="groupFilter"
-        (change)="filterMembers()"
+        [ngModel]="groupFilter"
+        (ngModelChange)="onGroupFilterChange($event)"
       >
-        <option [value]="null">Todos os Grupos</option>
+        <option [ngValue]="null">Todos os Grupos</option>
         @for (group of groups; track group.id) {
-          <option [value]="group.id">{{ group.nome }}</option>
+          <option [ngValue]="group.id">{{ group.nome }}</option>
         }
       </select>
     </div>
