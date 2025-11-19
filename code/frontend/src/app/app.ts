@@ -7,6 +7,7 @@ import { NavigationIcons } from './shared/lib/utils/icons';
 import { AuthService } from './shared/service/auth.service';
 import { ConfigService } from './shared/service/config.service';
 import { InactivityService } from './shared/services/inactivity.service';
+import { isPublicFrontendRoute } from './shared/utils/route-utils';
 import { filter, catchError, of } from 'rxjs';
 
 @Component({
@@ -108,17 +109,7 @@ export class App implements OnInit {
   }
 
   private isPublicRoute(url: string): boolean {
-    const publicRoutes = [
-      '/login', 
-      '/esqueci-senha', 
-      '/redefinir-senha', 
-      '/landing',
-      '/mural', 
-      '/adicionar-visitantes', 
-      '/emprestimo', 
-      '/atualizar-cadastro', 
-    ];
-    return publicRoutes.some(route => url.startsWith(route));
+    return isPublicFrontendRoute(url);
   }
 
   @HostListener('window:resize')

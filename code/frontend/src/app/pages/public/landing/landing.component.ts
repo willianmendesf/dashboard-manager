@@ -28,7 +28,9 @@ export class LandingComponent implements OnInit {
     
     // Carregar logo do banco de dados (mesma lógica da área logada)
     this.configService.getLogoUrl().pipe(
-      catchError(() => of(null))
+      catchError(() => {
+        return of(null);
+      })
     ).subscribe(url => {
       if (url && url.trim() !== '') {
         this.logoUrl.set(url);

@@ -2,6 +2,7 @@ import { Injectable, NgZone, inject, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../service/auth.service';
 import { NotificationService } from './notification.service';
+import { isPublicFrontendRoute } from '../utils/route-utils';
 import { filter, Subscription } from 'rxjs';
 
 /**
@@ -25,17 +26,6 @@ export class InactivityService implements OnDestroy {
   // Isso evita que o usuário tente fazer requisições após a sessão expirar
   private readonly TIMEOUT_MS = 29 * 60 * 1000;
 
-  // Rotas públicas onde o monitoramento não deve ocorrer
-  private readonly PUBLIC_ROUTES = [
-    '/login',
-    '/esqueci-senha',
-    '/redefinir-senha',
-    '/landing',
-    '/mural',
-    '/adicionar-visitantes',
-    '/emprestimo',
-    '/atualizar-cadastro'
-  ];
 
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -102,7 +92,7 @@ export class InactivityService implements OnDestroy {
    * Verifica se a rota atual é pública
    */
   private isPublicRoute(url: string): boolean {
-    return this.PUBLIC_ROUTES.some(route => url.startsWith(route));
+    return isPublicFrontendRoute(url);
   }
 
   /**
