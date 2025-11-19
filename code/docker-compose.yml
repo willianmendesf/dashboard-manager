@@ -5,7 +5,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
-      - ./backend/.env.dev
+      - ./backend/.env
     environment:
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Sao_Paulo
     ports:

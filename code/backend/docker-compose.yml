@@ -3,7 +3,7 @@ services:
   backend-app:
     build: .
     env_file:
-      - ./.env.dev
+      - ./.env
     ports:
       - "7000:7000"
     restart: always
