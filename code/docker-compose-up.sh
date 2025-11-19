@@ -17,6 +17,91 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$SCRIPT_DIR/backend"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 
+# Função para exibir ajuda
+show_help() {
+    echo -e "${YELLOW}=== Como usar este script ===${NC}"
+    echo ""
+    echo -e "${GREEN}MÉTODO 1: Passar como primeiro argumento${NC}"
+    echo "  ./docker-compose-up.sh dev    # Ambiente de desenvolvimento"
+    echo "  ./docker-compose-up.sh prod   # Ambiente de produção"
+    echo ""
+    echo -e "${GREEN}MÉTODO 2: Usar variável de ambiente ENV${NC}"
+    echo "  ENV=dev ./docker-compose-up.sh"
+    echo "  ENV=prod ./docker-compose-up.sh"
+    echo ""
+    echo -e "${GREEN}MÉTODO 3: Exportar variável antes de executar${NC}"
+    echo "  export ENV=dev"
+    echo "  ./docker-compose-up.sh"
+    echo ""
+    echo -e "${GREEN}Com argumentos adicionais do docker-compose:${NC}"
+    echo "  ./docker-compose-up.sh dev --build"
+    echo "  ./docker-compose-up.sh prod -d"
+    echo ""
+    echo -e "${YELLOW}Valores aceitos: dev ou prod${NC}"
+    echo ""
+}
+
+# Detectar ambiente (dev ou prod) - OBRIGATÓRIO
+# Aceita como primeiro argumento ou variável de ambiente ENV
+# Salvar argumentos originais
+ORIGINAL_ARGS=("$@")
+
+# Verificar se foi solicitada ajuda
+if [ $# -gt 0 ] && ([ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ]); then
+    show_help
+    exit 0
+fi
+
+# Verificar se o primeiro argumento é dev ou prod
+if [ $# -gt 0 ] && ([ "$1" = "dev" ] || [ "$1" = "prod" ]); then
+    ENV="$1"
+    shift  # Remove o primeiro argumento
+elif [ -n "$ENV" ]; then
+    # Usar variável de ambiente ENV se definida
+    ENV="$ENV"
+else
+    # Ambiente não especificado - ERRO com ajuda detalhada
+    echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${RED}  ERRO: Ambiente não especificado!${NC}"
+    echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}Você DEVE especificar o ambiente explicitamente.${NC}"
+    echo ""
+    show_help
+    exit 1
+fi
+
+if [ "$ENV" != "dev" ] && [ "$ENV" != "prod" ]; then
+    echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${RED}  ERRO: Ambiente inválido: '$ENV'${NC}"
+    echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}Valores aceitos: dev ou prod${NC}"
+    echo ""
+    show_help
+    exit 1
+fi
+
+# Configurar arquivo .env baseado no ambiente
+ENV_FILE="$BACKEND_DIR/.env.$ENV"
+TARGET_ENV_FILE="$BACKEND_DIR/.env"
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo -e "${RED}ERRO: Arquivo de ambiente não encontrado: $ENV_FILE${NC}"
+    exit 1
+fi
+
+# Copiar arquivo de ambiente para .env
+echo -e "${BLUE}=== Dashboard Manager - Inicialização ===${NC}"
+echo -e "${YELLOW}Ambiente: $ENV${NC}"
+if [ "$ENV" = "prod" ]; then
+    echo -e "${RED}⚠ ATENÇÃO: Ambiente de PRODUÇÃO${NC}"
+fi
+echo -e "  Arquivo de configuração: $ENV_FILE"
+cp "$ENV_FILE" "$TARGET_ENV_FILE"
+echo -e "${GREEN}✓ Arquivo .env configurado para ambiente $ENV${NC}"
+echo ""
+
 # Função para detectar o sistema operacional
 detect_os() {
     # Detectar Windows (Git Bash, MSYS, Cygwin)
@@ -108,9 +193,18 @@ echo ""
 echo -e "${GREEN}Subindo containers Docker...${NC}"
 echo ""
 
-# Se não houver argumentos, usar -d (detached mode)
+HAS_DETACH=false
+for arg in "$@"; do
+    if [ "$arg" = "-d" ] || [ "$arg" = "--detach" ]; then
+        HAS_DETACH=true
+        break
+    fi
+done
+
 if [ $# -eq 0 ]; then
     docker-compose up -d
+elif [ "$HAS_DETACH" = false ]; then
+    docker-compose up "$@" -d
 else
     docker-compose up "$@"
 fi
