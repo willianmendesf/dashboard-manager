@@ -33,6 +33,12 @@ public class LocalStorageService implements StorageService {
     @Value("${image.quality:0.75}")
     private float imageQuality = 0.75f; // 75% quality by default
 
+    @Value("${image.banner.quality:0.95}")
+    private float bannerImageQuality = 0.95f; // 95% quality for banners (TV display)
+
+    @Value("${image.banner.max-dimension:1920}")
+    private int bannerMaxDimension = 1920; // Max 1920px for banners (Full HD)
+
     @Override
     public String uploadFile(MultipartFile file, String folder, String entityType, String entityId) {
         if (file == null || file.isEmpty()) {
@@ -60,8 +66,11 @@ public class LocalStorageService implements StorageService {
             // Also try to delete with other extensions
             deleteOldFiles(uploadDir, entityType, entityId);
 
+            // Determine if this is a banner image (needs high quality for TV display)
+            boolean isBannerImage = isBannerImageEntity(entityType);
+            
             // Process image: resize and convert/keep format
-            byte[] processedImage = processImage(file, keepPngFormat);
+            byte[] processedImage = processImage(file, keepPngFormat, isBannerImage);
             
             // Save processed image
             Files.write(filePath, processedImage);
@@ -78,12 +87,13 @@ public class LocalStorageService implements StorageService {
     }
 
     /**
-     * Processes image: resizes to max 350px and converts to JPG or keeps PNG
+     * Processes image: resizes and converts to JPG or keeps PNG
      * @param file Original image file
      * @param keepPngFormat If true, keeps PNG format; if false, converts to JPG
+     * @param isBannerImage If true, uses high quality and larger size for TV display
      * @return Processed image as byte array
      */
-    private byte[] processImage(MultipartFile file, boolean keepPngFormat) throws IOException {
+    private byte[] processImage(MultipartFile file, boolean keepPngFormat, boolean isBannerImage) throws IOException {
         try (InputStream inputStream = file.getInputStream()) {
             // Read original image
             BufferedImage originalImage = ImageIO.read(inputStream);
@@ -92,8 +102,12 @@ public class LocalStorageService implements StorageService {
                 throw new IOException("Unable to read image from file");
             }
 
-            // Resize image to max 350px (width or height) maintaining aspect ratio
-            BufferedImage resizedImage = resizeImage(originalImage, 350);
+            // Determine max dimension and quality based on image type
+            int maxDimension = isBannerImage ? bannerMaxDimension : 350;
+            float quality = isBannerImage ? bannerImageQuality : imageQuality;
+
+            // Resize image maintaining aspect ratio
+            BufferedImage resizedImage = resizeImage(originalImage, maxDimension);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             
@@ -133,7 +147,7 @@ public class LocalStorageService implements StorageService {
                 javax.imageio.ImageWriteParam param = writer.getDefaultWriteParam();
                 if (param.canWriteCompressed()) {
                     param.setCompressionMode(javax.imageio.ImageWriteParam.MODE_EXPLICIT);
-                    param.setCompressionQuality(imageQuality);
+                    param.setCompressionQuality(quality);
                 }
                 
                 // Write image
@@ -194,6 +208,17 @@ public class LocalStorageService implements StorageService {
         String normalizedType = entityType.toLowerCase().trim();
         return "logo".equals(normalizedType) || "logos".equals(normalizedType) 
             || "favicon".equals(normalizedType) || "favicons".equals(normalizedType);
+    }
+
+    /**
+     * Checks if entity type is a banner image (needs high quality for TV display)
+     * @param entityType Entity type (banner_image, etc.)
+     * @return true if is banner image, false otherwise
+     */
+    private boolean isBannerImageEntity(String entityType) {
+        String normalizedType = entityType.toLowerCase().trim();
+        return "banner_image".equals(normalizedType) || "banner".equals(normalizedType)
+            || "banners".equals(normalizedType);
     }
 
     /**

@@ -1,0 +1,314 @@
+<div class="banner-management-container">
+  <pagetitle title="Gerenciamento do Mural Digital"></pagetitle>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      [class.active]="activeTab === 'images'"
+      (click)="activeTab = 'images'"
+      class="tab-button">
+      Imagens
+    </button>
+    <button 
+      [class.active]="activeTab === 'schedules'"
+      (click)="activeTab = 'schedules'"
+      class="tab-button">
+      Programação
+    </button>
+  </div>
+
+  <!-- Images Tab -->
+  <div *ngIf="activeTab === 'images'" class="tab-content">
+    <div class="section-header">
+      <h2>Imagens do Slide</h2>
+      <button (click)="openImageModal()" class="btn btn-primary">
+        Adicionar Imagem
+      </button>
+    </div>
+
+    <div *ngIf="isLoadingImages" class="loading">Carregando...</div>
+
+    <div *ngIf="!isLoadingImages && images.length === 0" class="empty-state">
+      <p>Nenhuma imagem cadastrada</p>
+    </div>
+
+    <div *ngIf="!isLoadingImages && images.length > 0" class="images-grid">
+      <div *ngFor="let image of images" class="image-card">
+        <img [src]="getImageUrl(image.imageUrl)" [alt]="image.title || 'Imagem'" />
+        <div class="image-actions">
+          <button (click)="openImageModal(image)" class="btn btn-sm">Editar</button>
+          <button (click)="deleteImage(image.id!)" class="btn btn-sm btn-danger">Excluir</button>
+        </div>
+        <div class="image-info">
+          <p><strong>{{ image.title || 'Sem título' }}</strong></p>
+          <p>Ordem: {{ image.displayOrder }}</p>
+          <p class="transition-info">
+            Tempo de Transição: {{ image.transitionDurationSeconds || 10 }}s
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedules Tab -->
+  <div *ngIf="activeTab === 'schedules'" class="tab-content">
+    <div class="section-header">
+      <h2>Programação de Horários</h2>
+      <button (click)="openConfigModal()" class="btn btn-primary">
+        Adicionar Horário
+      </button>
+    </div>
+
+    <div *ngIf="isLoadingConfigs" class="loading">Carregando...</div>
+
+    <div *ngIf="!isLoadingConfigs && configs.length === 0" class="empty-state">
+      <p>Nenhuma configuração cadastrada</p>
+    </div>
+
+    <div *ngIf="!isLoadingConfigs && configs.length > 0" class="configs-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Tipo</th>
+            <th>Início</th>
+            <th>Fim</th>
+            <th>URL/Config</th>
+            <th>Áudio</th>
+            <th>Ativo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let config of configs">
+            <td>{{ config.title || '-' }}</td>
+            <td>{{ getConfigTypeLabel(config.type) }}</td>
+            <td>{{ config.startTime }}</td>
+            <td>{{ config.endTime }}</td>
+            <td>
+              <span *ngIf="config.type === 'VIDEO_YOUTUBE'">{{ config.youtubeUrl }}</span>
+              <span *ngIf="config.type === 'IMAGE_SLIDE'">-</span>
+            </td>
+            <td>{{ config.muted ? 'Mudo' : 'Ativo' }}</td>
+            <td>
+              <span [class]="config.isActive ? 'badge-active' : 'badge-inactive'">
+                {{ config.isActive ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
+            <td>
+              <button (click)="openConfigModal(config)" class="btn btn-sm">Editar</button>
+              <button 
+                (click)="toggleConfigActive(config)" 
+                [class]="config.isActive ? 'btn btn-sm btn-warning' : 'btn btn-sm btn-success'"
+                [title]="config.isActive ? 'Desativar' : 'Ativar'">
+                {{ config.isActive ? 'Desativar' : 'Ativar' }}
+              </button>
+              <button (click)="deleteConfig(config.id!)" class="btn btn-sm btn-danger">Excluir</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <app-modal 
+    [isOpen]="showImageModal"
+    [title]="isEditingImage ? 'Editar Imagem' : 'Adicionar Imagem'"
+    (close)="closeImageModal()">
+    <div class="modal-content">
+      <!-- Upload de Imagem -->
+      <div class="form-group">
+        <label>Imagem {{ isEditingImage ? '(opcional - deixe em branco para manter)' : '*' }}</label>
+        
+        <!-- Preview da Imagem (quando há preview ou imagem existente) -->
+        <div *ngIf="imagePreview || (isEditingImage && currentImage.imageUrl)" class="image-upload-container">
+          <div class="image-preview-wrapper">
+            <img 
+              [src]="imagePreview || getImageUrl(currentImage.imageUrl)" 
+              alt="Preview da imagem"
+              class="image-preview-large"
+              (error)="$event.target.src = ''"
+            />
+          </div>
+          <div class="image-upload-actions">
+            <input
+              type="file"
+              id="bannerImageInput"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              (change)="onFileSelected($event)"
+              class="file-input-hidden"
+            />
+            <label for="bannerImageInput" class="btn-upload-image">
+              {{ imagePreview ? 'Alterar Imagem' : (isEditingImage ? 'Alterar Imagem' : 'Selecionar Nova Imagem') }}
+            </label>
+            <button 
+              *ngIf="imagePreview"
+              type="button"
+              class="btn-remove-preview"
+              (click)="removeImagePreview()">
+              Remover Preview
+            </button>
+          </div>
+          <div *ngIf="selectedFile" class="file-info">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">({{ getFileSize(selectedFile.size) }})</span>
+          </div>
+        </div>
+
+        <!-- Área de Upload (quando não há preview nem imagem existente) -->
+        <div *ngIf="!imagePreview && (!isEditingImage || !currentImage.imageUrl)" class="upload-area">
+          <input
+            type="file"
+            id="bannerImageInputEmpty"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            (change)="onFileSelected($event)"
+            class="file-input-hidden"
+          />
+          <label for="bannerImageInputEmpty" class="upload-area-label">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Clique para selecionar uma imagem</span>
+            <small>Formatos aceitos: JPEG, PNG, GIF, WEBP (máx. 100MB)</small>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Título</label>
+        <input 
+          type="text" 
+          [(ngModel)]="currentImage.title"
+          placeholder="Título da imagem (opcional)"
+          class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label>Ordem de Exibição</label>
+        <input 
+          type="number" 
+          [(ngModel)]="currentImage.displayOrder"
+          min="0"
+          class="form-control" />
+        <small class="form-text">Imagens são exibidas em ordem crescente</small>
+      </div>
+
+      <div class="form-group">
+        <label>Tempo de Transição (segundos)</label>
+        <input 
+          type="number" 
+          [(ngModel)]="currentImage.transitionDurationSeconds"
+          min="1"
+          max="300"
+          class="form-control" />
+        <small class="form-text">Tempo que a imagem ficará exibida antes de mudar para a próxima (padrão: 10 segundos)</small>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="currentImage.active" />
+          <span>Ativo (imagem será exibida no mural)</span>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="closeImageModal()" class="btn btn-secondary">Cancelar</button>
+        <button (click)="saveImage()" class="btn btn-primary" [disabled]="!imagePreview && !isEditingImage">
+          {{ isEditingImage ? 'Salvar Alterações' : 'Adicionar Imagem' }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- Config Modal -->
+  <app-modal 
+    [isOpen]="showConfigModal"
+    [title]="isEditingConfig ? 'Editar Configuração' : 'Nova Configuração'"
+    (close)="closeConfigModal()">
+    <div class="modal-content">
+      <div class="form-group">
+        <label>Tipo *</label>
+        <select [(ngModel)]="currentConfig.type" class="form-control">
+          <option value="IMAGE_SLIDE">Slide de Imagens</option>
+          <option value="VIDEO_YOUTUBE">Vídeo YouTube</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Título</label>
+        <input 
+          type="text" 
+          [(ngModel)]="currentConfig.title"
+          placeholder="Título para identificar esta programação (opcional)"
+          class="form-control" />
+        <small class="form-text">Ex: "Culto Matutino", "Vídeo de Abertura", etc.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Horário de Início *</label>
+        <input 
+          type="time" 
+          [(ngModel)]="currentConfig.startTime"
+          class="form-control"
+          required />
+      </div>
+
+      <div class="form-group">
+        <label>Horário de Fim *</label>
+        <input 
+          type="time" 
+          [(ngModel)]="currentConfig.endTime"
+          class="form-control"
+          required />
+      </div>
+
+      <div class="form-group" *ngIf="currentConfig.type === 'VIDEO_YOUTUBE'">
+        <label>URL do YouTube *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="currentConfig.youtubeUrl"
+          class="form-control"
+          placeholder="https://www.youtube.com/watch?v=..." />
+      </div>
+
+      <div class="form-group" *ngIf="currentConfig.type === 'VIDEO_YOUTUBE'">
+        <label>
+          <input 
+            type="checkbox" 
+            [(ngModel)]="currentConfig.muted" />
+          Iniciar com áudio mudo
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Ordem de Prioridade</label>
+        <input 
+          type="number" 
+          [(ngModel)]="currentConfig.order"
+          class="form-control"
+          min="0" />
+        <small class="form-text">Em caso de horários sobrepostos, menor número tem prioridade</small>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="currentConfig.isActive" />
+          <span>Ativo (configuração será aplicada)</span>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="closeConfigModal()" class="btn btn-secondary">Cancelar</button>
+        <button (click)="saveConfig()" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </app-modal>
+</div>
+

@@ -86,6 +86,12 @@ export const NavigationIcons = {
   search: (options?: IconOptions) => createSVG([
     'M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z'
   ], options),
+
+  monitor: (options?: IconOptions) => createSVG([
+    'M5 3H19C20.1046 3 21 3.89543 21 5V15C21 16.1046 20.1046 17 19 17H5C3.89543 17 3 16.1046 3 15V5C3 3.89543 3.89543 3 5 3Z',
+    'M8 21H16',
+    'M12 17V21'
+  ], options),
 };
 
 /**

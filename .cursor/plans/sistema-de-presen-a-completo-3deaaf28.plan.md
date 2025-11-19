@@ -121,12 +121,13 @@
 - Localização: `code/frontend/src/app/shared/service/attendance.service.ts`
 - Métodos: `toggleAttendance(memberId, eventId)`, `getMembersByEvent(eventId)`, `getStats(startDate, endDate)`, `getReport(params)`
 
-### 7. Tela Pública - Check-in
+### 7. Tela Pública
 
 #### 7.1 AttendanceCheckinComponent
 
-- Localização: `code/frontend/src/app/pages/public/attendance-checkin/`
+- Localização: `code/frontend/src/app/pages/public/lista-presenca/`
 - Rota: `/lista-presenca`
+- Adicionar button da tela publica na pagina de /landing 
 - Estrutura:
 - **Sticky Header:**
 - Date Picker (default: hoje)
