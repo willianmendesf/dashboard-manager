@@ -40,7 +40,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
   tipoCadastroFilter = '';
   estadoCivilFilter = '';
   intercessorFilter = '';
-  groupFilter = '';
+  groupFilter: number | null = null;
   currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
   
   availableGroups: GroupDTO[] = [];
@@ -270,11 +270,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   public getMembers() {
-    const url = this.groupFilter 
-      ? `members?groupId=${this.groupFilter}` 
-      : "members";
-    
-    this.api.get(url)
+    // Sempre buscar todos os membros - filtro por grupo será aplicado localmente via groupEnrollments
+    this.api.get("members")
       .pipe(takeUntil(this.unsubscribe$))
         .subscribe({
           next: res => {
@@ -289,15 +286,9 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
                 estadoCivilBoolean = false; // default para Solteiro
               }
               
-              // Extrair groupIds de groupEnrollments (apenas APPROVED)
-              const groupIds = (member.groupEnrollments || [])
-                .filter((e: GroupEnrollmentDTO) => e.status === 'APPROVED')
-                .map((e: GroupEnrollmentDTO) => e.groupId);
-              
               return {
                 ...member,
                 fotoUrl: member.fotoUrl || null,
-                groupIds: groupIds, // Usar groupIds extraídos de groupEnrollments para compatibilidade
                 groupEnrollments: member.groupEnrollments || [],
                 estadoCivil: estadoCivilBoolean,
                 child: member.child !== undefined ? member.child : false
@@ -606,7 +597,15 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
         }
       }
 
-      return matchesSearch && matchesEstadoCivil && matchesTipoCadastro && matchesIntercessor;
+      // Filtro por grupo usando groupEnrollments (apenas APPROVED)
+      let matchesGroup = true;
+      if (this.groupFilter !== null && this.groupFilter !== undefined) {
+        matchesGroup = member.groupEnrollments?.some(e => 
+          e.groupId === this.groupFilter && e.status === 'APPROVED'
+        ) || false;
+      }
+
+      return matchesSearch && matchesEstadoCivil && matchesTipoCadastro && matchesIntercessor && matchesGroup;
     });
 
     this.getTableData();
@@ -642,7 +641,6 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
         comercial: '',
         celular: '',
         email: '',
-        groupIds: [],
         lgpd: null,
         lgpdAceitoEm: null,
         rede: '',
@@ -698,8 +696,9 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     return this.selectedGroupIds.includes(groupId);
   }
 
-  onGroupFilterChange(): void {
-    this.getMembers();
+  onGroupFilterChange(value: number | null): void {
+    this.groupFilter = value;
+    this.filterMembers();
   }
 
   onPhotoSelected(event: Event): void {

@@ -33,7 +33,6 @@ export interface MemberDTO {
   bairro?: string;
   cidade?: string;
   estado?: string;
-  groupIds?: number[];
   groupEnrollments?: GroupEnrollmentDTO[];
 }
 
@@ -60,7 +59,6 @@ export interface UpdateMemberDTO {
   rede?: string;
   operadora?: string;
   contato?: string;
-  groupIds?: number[];
 }
 
 @Injectable({

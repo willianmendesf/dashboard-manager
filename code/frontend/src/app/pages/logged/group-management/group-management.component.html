@@ -11,6 +11,13 @@
   </button>
   <button 
     class="tab-button" 
+    [class.active]="activeTab === 'members'"
+    (click)="switchTab('members')"
+  >
+    Membros por Grupo
+  </button>
+  <button 
+    class="tab-button" 
     [class.active]="activeTab === 'approvals'"
     (click)="switchTab('approvals')"
   >
@@ -18,13 +25,6 @@
     @if (pendingEnrollments.length > 0) {
       <span class="badge-count">{{ pendingEnrollments.length }}</span>
     }
-  </button>
-  <button 
-    class="tab-button" 
-    [class.active]="activeTab === 'members'"
-    (click)="switchTab('members')"
-  >
-    Membros por Grupo
   </button>
 </div>
 
@@ -48,7 +48,7 @@
 
     <app-data-table
       [columns]="tableColumns"
-      [data]="getTableData()"
+      [data]="filteredGroupsData"
       [actions]="getTableActions()"
       [loading]="isLoading"
       emptyMessage="Nenhum grupo encontrado"
@@ -84,7 +84,7 @@
     @if (approvalSubTab === 'pending') {
       <app-data-table
         [columns]="approvalsColumns"
-        [data]="getApprovalsTableData()"
+        [data]="filteredApprovalsData"
         [actions]="getApprovalsTableActions()"
         [loading]="isLoadingApprovals"
         emptyMessage="Nenhuma solicitação pendente"
@@ -120,7 +120,7 @@
     @if (approvalSubTab === 'history') {
       <app-data-table
         [columns]="historyColumns"
-        [data]="getHistoryTableData()"
+        [data]="filteredHistoryData"
         [actions]="getHistoryTableActions()"
         [loading]="isLoadingHistory"
         emptyMessage="Nenhum registro no histórico"
@@ -177,19 +177,19 @@
       </div>
       <select 
         class="form-control filter-select" 
-        [(ngModel)]="groupFilter"
-        (change)="filterMembers()"
+        [ngModel]="groupFilter"
+        (ngModelChange)="onGroupFilterChange($event)"
       >
-        <option [value]="null">Todos os Grupos</option>
+        <option [ngValue]="null">Todos os Grupos</option>
         @for (group of groups; track group.id) {
-          <option [value]="group.id">{{ group.nome }}</option>
+          <option [ngValue]="group.id">{{ group.nome }}</option>
         }
       </select>
     </div>
 
     <app-data-table
       [columns]="membersColumns"
-      [data]="getMembersTableData()"
+      [data]="filteredMembersData"
       [actions]="getMembersTableActions()"
       [loading]="isLoadingMembers"
       emptyMessage="Nenhum membro encontrado"
