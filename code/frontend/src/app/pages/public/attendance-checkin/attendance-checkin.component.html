@@ -1,6 +1,13 @@
 <div class="attendance-checkin-container">
   <div class="header-section">
-    <h1>Lista de Presença</h1>
+    <div class="header">
+      <h1>Lista de Presença</h1>
+      <div class="header-actions">
+        <button type="button" class="btn-link" (click)="goToLanding()">
+          ← Voltar
+        </button>
+      </div>
+    </div>
     
     <div class="controls">
       <div class="control-group">
@@ -75,67 +82,62 @@
   </div>
 
   <div class="members-section">
-    @if (loading) {
-      <div class="loading-message">Carregando...</div>
-    } @else if (filteredMembers.length === 0 && selectedEventId) {
-      <div class="empty-message">Nenhum membro encontrado</div>
-    } @else {
-      <div class="members-list">
-        <cdk-virtual-scroll-viewport itemSize="80" class="virtual-scroll-viewport">
-          <div 
-            *cdkVirtualFor="let memberItem of filteredMembers; trackBy: trackByMemberId"
-            class="member-card" 
-            [class.present]="memberItem.isPresent"
-          >
-            <div class="member-avatar">
-              @if (memberItem.member.fotoUrl) {
-                <img 
-                  [src]="getNormalizedPhotoUrl(memberItem.member.fotoUrl)" 
-                  [alt]="memberItem.member.nome"
-                  onerror="this.src='./img/avatar-default.png'"
-                />
-              } @else {
-                <div class="avatar-initials">{{ getInitials(memberItem.member.nome) }}</div>
-              }
-            </div>
-            
-            <div class="member-info">
-              <div class="member-name">{{ memberItem.member.nome }}</div>
-              @if (memberItem.isPresent) {
-                <div class="present-badge">✓ Presente</div>
-              }
-            </div>
-
-            <div class="member-actions">
-              @if (utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone)) {
-                <a 
-                  [href]="utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone)!"
-                  target="_blank"
-                  class="whatsapp-button"
-                  [innerHTML]="getWhatsAppIcon()"
-                  title="Abrir WhatsApp"
-                ></a>
-              }
-              
-              <label class="checkbox-container">
-                <input 
-                  type="checkbox" 
-                  [checked]="memberItem.isPresent"
-                  [disabled]="memberItem.isLoading || !selectedEventId"
-                  (change)="toggleAttendance(memberItem)"
-                />
-                <span class="checkmark"></span>
-                <span class="checkbox-label">Presente</span>
-              </label>
-              
-              @if (memberItem.isLoading) {
-                <div class="loading-spinner-small"></div>
-              }
-            </div>
-          </div>
-        </cdk-virtual-scroll-viewport>
-      </div>
+    @if (error) {
+      <div class="error-message">{{ error }}</div>
     }
+
+    <app-data-table
+      [columns]="tableColumns"
+      [data]="tableData"
+      [loading]="loading"
+      emptyMessage="Nenhum membro encontrado"
+      [striped]="true"
+      [hoverable]="true"
+      [enablePagination]="true"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'foto') {
+          <div class="photo-cell">
+            @if (row.foto) {
+              <img 
+                [src]="getNormalizedPhotoUrl(row.foto)" 
+                alt="Foto" 
+                class="member-photo"
+                onerror="this.src='./img/avatar-default.png'"
+              />
+            } @else {
+              <div class="photo-placeholder">{{ getInitials(row.nome) }}</div>
+            }
+          </div>
+        } @else if (column.key === 'status') {
+          <span [class.status-present]="row.presenca" [class.status-absent]="!row.presenca">
+            {{ row.status }}
+          </span>
+        } @else if (column.key === 'whatsapp') {
+          @if (row.whatsapp) {
+            <a 
+              [href]="row.whatsapp"
+              target="_blank"
+              class="whatsapp-link"
+              [innerHTML]="getWhatsAppIcon()"
+              title="Abrir WhatsApp"
+            ></a>
+          }
+        } @else if (column.key === 'presenca') {
+          <label class="checkbox-container">
+            <input 
+              type="checkbox" 
+              [checked]="row.presenca"
+              [disabled]="row.isLoading || !selectedEventId"
+              (change)="toggleAttendance(row._original)"
+            />
+            <span class="checkbox-label">{{ row.presenca ? 'Presente' : 'Ausente' }}</span>
+          </label>
+        } @else {
+          {{ row[column.key] || '-' }}
+        }
+      </ng-template>
+    </app-data-table>
   </div>
 </div>
 

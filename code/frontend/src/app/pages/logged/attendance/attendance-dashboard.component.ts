@@ -14,6 +14,7 @@ import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
 import { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { VisitorManagementComponent } from './visitor-tab/visitor-management.component';
+import { DataTableComponent, TableColumn, TableAction } from '../../../shared/lib/utils/data-table.component';
 
 interface MemberWithAttendance {
   member: any;
@@ -31,7 +32,8 @@ interface MemberWithAttendance {
     FormsModule, 
     PageTitleComponent, 
     BaseChartDirective,
-    VisitorManagementComponent
+    VisitorManagementComponent,
+    DataTableComponent
   ]
 })
 export class AttendanceDashboardComponent implements OnInit, OnDestroy {
@@ -48,9 +50,18 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   selectedEventId: number | null = null;
   members: MemberWithAttendance[] = [];
   filteredMembers: MemberWithAttendance[] = [];
+  tableData: any[] = [];
   searchTerm: string = '';
   loading: boolean = false;
   error: string | null = null;
+
+  tableColumns: TableColumn[] = [
+    { key: 'foto', label: '', width: '60px', align: 'center' },
+    { key: 'nome', label: 'Nome', sortable: true },
+    { key: 'status', label: 'Status', sortable: false, width: '120px' },
+    { key: 'whatsapp', label: '', width: '50px', align: 'center' },
+    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' }
+  ];
 
   // Chart
   lineChartType = 'line' as const;
@@ -280,6 +291,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
             isLoading: false
           }));
           this.applyFilters();
+          this.updateTableData();
           this.loading = false;
           this.cdr.markForCheck();
         },
@@ -305,7 +317,24 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       );
     }
     this.filteredMembers = filtered;
+    this.updateTableData();
     this.cdr.markForCheck();
+  }
+
+  updateTableData() {
+    this.tableData = this.filteredMembers.map(memberItem => ({
+      _original: memberItem,
+      foto: memberItem.member.fotoUrl || null,
+      nome: memberItem.member.nome || '-',
+      status: memberItem.isPresent ? 'Presente' : 'Ausente',
+      whatsapp: this.utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone),
+      presenca: memberItem.isPresent,
+      isLoading: memberItem.isLoading || false
+    }));
+  }
+
+  getTableActions(): TableAction[] {
+    return [];
   }
 
   toggleAttendance(member: MemberWithAttendance) {
@@ -325,6 +354,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
         next: (response) => {
           member.isPresent = response.isPresent;
           member.isLoading = false;
+          this.updateTableData();
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -332,6 +362,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
           member.isPresent = previousState;
           member.isLoading = false;
           this.error = 'Erro ao atualizar presença. Tente novamente.';
+          this.updateTableData();
           this.cdr.markForCheck();
         }
       });
@@ -352,6 +383,12 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     const parts = nome.trim().split(' ');
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  getSearchIcon(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 14L11.1 11.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    );
   }
 }
 

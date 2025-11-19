@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { EventService, Event } from '../../../shared/service/event.service';
 import { AttendanceService, MemberAttendance } from '../../../shared/service/attendance.service';
 import { ApiService } from '../../../shared/service/api.service';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { MessageIcons } from '../../../shared/lib/utils/icons';
 import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
+import { DataTableComponent, TableColumn } from '../../../shared/lib/utils/data-table.component';
 
 interface MemberWithAttendance {
   member: any;
@@ -23,7 +24,7 @@ interface MemberWithAttendance {
   standalone: true,
   templateUrl: './attendance-checkin.component.html',
   styleUrl: './attendance-checkin.component.scss',
-  imports: [CommonModule, FormsModule, ScrollingModule]
+  imports: [CommonModule, FormsModule, DataTableComponent]
 })
 export class AttendanceCheckinComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
@@ -36,15 +37,25 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
   selectedEventId: number | null = null;
   members: MemberWithAttendance[] = [];
   filteredMembers: MemberWithAttendance[] = [];
+  tableData: any[] = [];
   searchTerm: string = '';
   memberTypeFilter: 'adultos' | 'criancas' = 'adultos';
   loading: boolean = false;
   error: string | null = null;
 
+  tableColumns: TableColumn[] = [
+    { key: 'foto', label: '', width: '60px', align: 'center' },
+    { key: 'nome', label: 'Nome', sortable: true },
+    { key: 'status', label: 'Status', sortable: false, width: '120px' },
+    { key: 'whatsapp', label: '', width: '50px', align: 'center' },
+    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' }
+  ];
+
   constructor(
     private eventService: EventService,
     private attendanceService: AttendanceService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -127,6 +138,7 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
             isLoading: false
           }));
           this.applyFilters();
+          this.updateTableData();
           this.loading = false;
           this.cdr.markForCheck();
         },
@@ -166,7 +178,20 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
     }
 
     this.filteredMembers = filtered;
+    this.updateTableData();
     this.cdr.markForCheck();
+  }
+
+  updateTableData() {
+    this.tableData = this.filteredMembers.map(memberItem => ({
+      _original: memberItem,
+      foto: memberItem.member.fotoUrl || null,
+      nome: memberItem.member.nome || '-',
+      status: memberItem.isPresent ? 'Presente' : 'Ausente',
+      whatsapp: this.utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone),
+      presenca: memberItem.isPresent,
+      isLoading: memberItem.isLoading || false
+    }));
   }
 
   toggleAttendance(member: MemberWithAttendance) {
@@ -188,6 +213,7 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
         next: (response) => {
           member.isPresent = response.isPresent;
           member.isLoading = false;
+          this.updateTableData();
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -196,6 +222,7 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
           member.isPresent = previousState;
           member.isLoading = false;
           this.error = 'Erro ao atualizar presença. Tente novamente.';
+          this.updateTableData();
           this.cdr.markForCheck();
         }
       });
@@ -224,6 +251,16 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
 
   trackByMemberId(index: number, item: MemberWithAttendance): any {
     return item.member.id;
+  }
+
+  getSearchIcon(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 14L11.1 11.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    );
+  }
+
+  goToLanding(): void {
+    this.router.navigate(['/landing']);
   }
 }
 
