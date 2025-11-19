@@ -32,6 +32,7 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   previousState: BannerCurrentStateDTO | null = null;
   isTransitioning: boolean = false;
   isImageTransitioning: boolean = false; // Transição entre imagens
+  videoIframeKey: string = ''; // Key para forçar recriação do iframe
 
   slideTransitionDuration: number = 10000; // Default 10 segundos
   currentSlideProgress: number = 0; // Progresso da transição atual (0-100)
@@ -91,11 +92,14 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
     this.previousState = {
       mode: state.mode,
       videoUrl: state.videoUrl,
-      muted: state.muted || false,
+      muted: state.muted ?? false,
       images: state.images ? [...state.images] : []
     };
     
-    this.cdr.detectChanges();
+    // Aguardar um frame para garantir que o DOM foi atualizado
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   private handleStateChange(newState: BannerCurrentStateDTO): void {
@@ -138,10 +142,10 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
           muted: newState.muted || false,
           images: newState.images ? [...newState.images] : []
         };
-        // Forçar detecção de mudanças
+        // Forçar detecção de mudanças após transição
         this.cdr.detectChanges();
-      }, 50);
-    }, 250); // Meio da transição
+      }, 300);
+    }, 300); // Tempo de fade out
   }
 
   private updateImagesOnly(state: BannerCurrentStateDTO): void {
@@ -196,13 +200,26 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
 
   private switchToVideo(state: BannerCurrentStateDTO): void {
     this.currentMode = 'VIDEO';
-    this.currentVideoUrl = state.videoUrl ?? null;
-    this.currentMuted = state.muted || false;
+    this.currentMuted = state.muted ?? false;
     this.currentImages = [];
     this.currentImageIndex = 0;
+    this.currentVideoId = null;
+    this.currentVideoUrl = state.videoUrl ?? null;
 
+    // Extrair ID do YouTube
     if (this.currentVideoUrl) {
       this.currentVideoId = this.extractYouTubeId(this.currentVideoUrl);
+      if (!this.currentVideoId) {
+        console.error('Não foi possível extrair o ID do YouTube da URL:', this.currentVideoUrl);
+      } else {
+        // Gerar nova key para forçar recriação do iframe
+        this.videoIframeKey = `${this.currentVideoId}-${Date.now()}`;
+        console.log('Vídeo configurado:', {
+          videoId: this.currentVideoId,
+          muted: this.currentMuted,
+          url: this.currentVideoUrl
+        });
+      }
     }
 
     // Parar carrossel de slides
@@ -214,12 +231,16 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
       clearInterval(this.progressInterval);
       this.progressInterval = null;
     }
+
+    // Forçar detecção de mudanças para atualizar o iframe
+    this.cdr.detectChanges();
   }
 
   private switchToSlide(state: BannerCurrentStateDTO): void {
     this.currentMode = 'SLIDE';
     this.currentVideoUrl = null;
     this.currentVideoId = null;
+    this.videoIframeKey = ''; // Limpar key do vídeo
     
     // Criar nova referência do array para garantir detecção de mudanças
     this.currentImages = state.images ? [...state.images] : [];
@@ -361,29 +382,65 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
 
   getYouTubeEmbedUrl(): SafeResourceUrl | null {
     if (!this.currentVideoId) {
+      console.debug('getYouTubeEmbedUrl: currentVideoId is null', {
+        currentVideoUrl: this.currentVideoUrl,
+        currentMode: this.currentMode
+      });
       return null;
     }
+    
     const muteParam = this.currentMuted ? '1' : '0';
-    const url = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&controls=0&mute=${muteParam}&loop=1&playlist=${this.currentVideoId}`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    // Adicionar parâmetros adicionais para garantir autoplay e loop
+    const url = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&controls=0&mute=${muteParam}&loop=1&playlist=${this.currentVideoId}&enablejsapi=1&rel=0&modestbranding=1`;
+    
+    const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    console.debug('getYouTubeEmbedUrl: URL criada', {
+      videoId: this.currentVideoId,
+      muted: this.currentMuted,
+      url: url.substring(0, 100) + '...'
+    });
+    
+    return safeUrl;
   }
 
   private extractYouTubeId(url: string): string | null {
-    if (!url) return null;
+    if (!url || typeof url !== 'string') return null;
 
+    // Remover espaços e normalizar
+    const normalizedUrl = url.trim();
+
+    // Padrões de URL do YouTube
     const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+      // youtube.com/watch?v=VIDEO_ID
+      /(?:youtube\.com\/watch\?v=|youtube\.com\/watch\?.*&v=)([^&\n?#]+)/,
+      // youtu.be/VIDEO_ID
+      /youtu\.be\/([^&\n?#]+)/,
+      // youtube.com/embed/VIDEO_ID
       /youtube\.com\/embed\/([^&\n?#]+)/,
-      /youtube\.com\/v\/([^&\n?#]+)/
+      // youtube.com/v/VIDEO_ID
+      /youtube\.com\/v\/([^&\n?#]+)/,
+      // youtube.com/VIDEO_ID (formato curto)
+      /youtube\.com\/([a-zA-Z0-9_-]{11})(?:\?|$|&)/
     ];
 
     for (const pattern of patterns) {
-      const match = url.match(pattern);
+      const match = normalizedUrl.match(pattern);
       if (match && match[1]) {
-        return match[1];
+        const videoId = match[1];
+        // Validar que o ID tem 11 caracteres (formato padrão do YouTube)
+        if (videoId.length === 11) {
+          return videoId;
+        }
       }
     }
 
+    // Se nenhum padrão funcionou, tentar extrair diretamente se a URL contém um ID de 11 caracteres
+    const directMatch = normalizedUrl.match(/([a-zA-Z0-9_-]{11})/);
+    if (directMatch && directMatch[1]) {
+      return directMatch[1];
+    }
+
+    console.warn('Não foi possível extrair ID do YouTube da URL:', normalizedUrl);
     return null;
   }
 

@@ -73,11 +73,21 @@
   opacity: 0;
 }
 
+.video-container {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .youtube-iframe {
   width: 100%;
   height: 100%;
   border: none;
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .slide-content {

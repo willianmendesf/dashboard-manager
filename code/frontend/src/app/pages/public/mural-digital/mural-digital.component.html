@@ -14,16 +14,23 @@
   </button>
 
   <!-- Modo Vídeo -->
-  <div *ngIf="currentMode === 'VIDEO' && getYouTubeEmbedUrl()" 
+  <div *ngIf="currentMode === 'VIDEO'" 
        class="video-container"
        [class.fade-out]="isTransitioning">
     <iframe 
+      *ngIf="getYouTubeEmbedUrl() && videoIframeKey"
       [src]="getYouTubeEmbedUrl()!"
+      [attr.data-video-key]="videoIframeKey"
       frameborder="0"
-      allow="autoplay; encrypted-media"
+      allow="autoplay; encrypted-media; fullscreen"
       allowfullscreen
       class="youtube-iframe">
     </iframe>
+    <div *ngIf="!getYouTubeEmbedUrl() || !videoIframeKey" class="no-content">
+      <p>Erro ao carregar vídeo. Verifique a URL do YouTube.</p>
+      <p *ngIf="currentVideoUrl" class="error-detail">URL: {{ currentVideoUrl }}</p>
+      <p *ngIf="!currentVideoId && currentVideoUrl" class="error-detail">ID extraído: {{ currentVideoId || 'Nenhum' }}</p>
+    </div>
   </div>
 
   <!-- Modo Slide -->
