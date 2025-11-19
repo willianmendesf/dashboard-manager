@@ -42,6 +42,9 @@
         <div class="image-info">
           <p><strong>{{ image.title || 'Sem título' }}</strong></p>
           <p>Ordem: {{ image.displayOrder }}</p>
+          <p class="transition-info">
+            Tempo de Transição: {{ image.transitionDurationSeconds || 10 }}s
+          </p>
         </div>
       </div>
     </div>
