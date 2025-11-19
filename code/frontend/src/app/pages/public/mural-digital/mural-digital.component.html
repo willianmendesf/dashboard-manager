@@ -46,7 +46,7 @@
           class="slide-image"
           [class.fade-transition]="isImageTransitioning"
           (error)="$event.target.src = ''"
-          [attr.data-image-id]="currentImages[currentImageIndex]?.id"
+          [attr.data-image-id]="currentImages[currentImageIndex] && currentImages[currentImageIndex].id"
           [attr.data-image-index]="currentImageIndex"
         />
       </div>

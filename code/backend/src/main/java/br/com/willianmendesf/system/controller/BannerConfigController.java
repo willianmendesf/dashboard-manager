@@ -67,6 +67,18 @@ public class BannerConfigController {
         }
     }
 
+    @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
+    public ResponseEntity<BannerConfigDTO> toggleActive(@PathVariable Long id) {
+        try {
+            log.info("Toggling active status for banner config with ID: {}", id);
+            return ResponseEntity.ok(bannerService.toggleConfigActive(id));
+        } catch (Exception e) {
+            log.error("Error toggling active status for banner config with ID: {}", id, e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

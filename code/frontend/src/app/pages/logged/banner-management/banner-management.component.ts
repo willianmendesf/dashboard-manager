@@ -359,8 +359,37 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleConfigActive(config: BannerConfigDTO): void {
+    if (!config.id) return;
+    
+    const action = config.isActive ? 'desativar' : 'ativar';
+    if (confirm(`Tem certeza que deseja ${action} esta configuração?`)) {
+      this.bannerService.toggleConfigActive(config.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (updatedConfig) => {
+            this.notificationService.showSuccess(`Configuração ${action === 'ativar' ? 'ativada' : 'desativada'} com sucesso`);
+            // Atualizar na lista imediatamente
+            const index = this.configs.findIndex(c => c.id === config.id);
+            if (index !== -1) {
+              this.configs[index] = updatedConfig;
+              this.cdr.detectChanges();
+            }
+            // Recarregar para garantir sincronização
+            setTimeout(() => {
+              this.loadConfigs();
+            }, 100);
+          },
+          error: (error) => {
+            console.error(`Erro ao ${action} configuração:`, error);
+            this.notificationService.showError(`Erro ao ${action} configuração`);
+          }
+        });
+    }
+  }
+
   deleteConfig(id: number): void {
-    if (confirm('Tem certeza que deseja excluir esta configuração?')) {
+    if (confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE esta configuração? Esta ação não pode ser desfeita.')) {
       this.bannerService.deleteConfig(id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({

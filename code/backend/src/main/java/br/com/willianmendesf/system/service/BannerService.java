@@ -68,7 +68,17 @@ public class BannerService {
     public List<BannerConfigDTO> getAllConfigs() {
         try {
             log.info("Getting all banner configs");
-            return configRepository.findByIsActiveTrueOrderByOrderAsc().stream()
+            // Retornar TODAS as configurações (ativas e inativas) ordenadas
+            return configRepository.findAll().stream()
+                    .sorted((a, b) -> {
+                        // Ordenar por: ativo primeiro, depois por order, depois por startTime
+                        int activeCompare = Boolean.compare(b.getIsActive(), a.getIsActive());
+                        if (activeCompare != 0) return activeCompare;
+                        int orderCompare = Integer.compare(a.getOrder() != null ? a.getOrder() : 0, 
+                                                          b.getOrder() != null ? b.getOrder() : 0);
+                        if (orderCompare != 0) return orderCompare;
+                        return a.getStartTime().compareTo(b.getStartTime());
+                    })
                     .map(BannerConfigDTO::new)
                     .collect(Collectors.toList());
         } catch (Exception e) {
@@ -156,6 +166,27 @@ public class BannerService {
         } catch (Exception e) {
             log.error("Error updating banner config with ID: {}", id, e);
             throw new BannerException("Erro ao atualizar configuração", e);
+        }
+    }
+
+    @Transactional
+    public BannerConfigDTO toggleConfigActive(Long id) {
+        try {
+            log.info("Toggling active status for banner config with ID: {}", id);
+            BannerConfig config = configRepository.findById(id)
+                    .orElseThrow(() -> new BannerException("Configuração não encontrada com ID: " + id));
+            
+            // Alternar status ativo/inativo
+            config.setIsActive(!config.getIsActive());
+            
+            BannerConfig saved = configRepository.save(config);
+            log.info("Config {} is now {}", id, saved.getIsActive() ? "active" : "inactive");
+            return new BannerConfigDTO(saved);
+        } catch (BannerException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error toggling active status for banner config with ID: {}", id, e);
+            throw new BannerException("Erro ao alterar status da configuração", e);
         }
     }
 

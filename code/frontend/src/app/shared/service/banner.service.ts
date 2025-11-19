@@ -65,6 +65,10 @@ export class BannerService {
     return this.http.put<BannerConfigDTO>(`${this.apiUrl}banners/configs/${id}`, config);
   }
 
+  toggleConfigActive(id: number): Observable<BannerConfigDTO> {
+    return this.http.patch<BannerConfigDTO>(`${this.apiUrl}banners/configs/${id}/toggle-active`, {});
+  }
+
   deleteConfig(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}banners/configs/${id}`);
   }

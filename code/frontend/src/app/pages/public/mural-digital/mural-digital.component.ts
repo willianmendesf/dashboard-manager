@@ -105,24 +105,67 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   private handleStateChange(newState: BannerCurrentStateDTO): void {
     // Verificar se houve mudança real
     const hasModeChanged = !this.previousState || this.previousState.mode !== newState.mode;
-    const hasVideoUrlChanged = !this.previousState || this.previousState.videoUrl !== newState.videoUrl;
+    const hasVideoUrlChanged = !this.previousState || 
+      (this.previousState.videoUrl !== newState.videoUrl);
     const hasImagesChanged = this.hasImagesChanged(this.previousState?.images || [], newState.images || []);
+    const hasMutedChanged = !this.previousState || 
+      ((this.previousState.muted ?? false) !== (newState.muted ?? false));
 
-    // Se não houve mudanças, retornar
-    if (!hasModeChanged && !hasVideoUrlChanged && !hasImagesChanged) {
-      return; // Sem mudanças
+    // Se não houve mudanças, retornar SEM ATUALIZAR NADA
+    if (!hasModeChanged && !hasVideoUrlChanged && !hasImagesChanged && !hasMutedChanged) {
+      return; // Sem mudanças - não fazer nada
     }
 
-    // Se apenas as imagens mudaram e o modo continua SLIDE, atualizar sem transição completa
+    // Se apenas o muted mudou e estamos em modo VIDEO, atualizar sem recriar iframe
+    // (YouTube permite mudar muted via API sem recriar)
+    if (!hasModeChanged && !hasVideoUrlChanged && !hasImagesChanged && hasMutedChanged && newState.mode === 'VIDEO') {
+      this.currentMuted = newState.muted ?? false;
+      // Atualizar previousState mas NÃO recriar iframe
+      this.previousState = { 
+        mode: newState.mode,
+        videoUrl: newState.videoUrl,
+        muted: newState.muted ?? false,
+        images: newState.images ? [...newState.images] : []
+      };
+      return; // Não recriar iframe, apenas atualizar estado interno
+    }
+
+    // Se apenas as imagens mudaram e o modo continua SLIDE, atualizar sem reiniciar carrossel
     if (!hasModeChanged && !hasVideoUrlChanged && hasImagesChanged && newState.mode === 'SLIDE') {
       this.updateImagesOnly(newState);
+      // Atualizar previousState apenas se realmente houve mudança
+      this.previousState = { 
+        mode: newState.mode,
+        videoUrl: newState.videoUrl,
+        muted: newState.muted ?? false,
+        images: newState.images ? [...newState.images] : []
+      };
       return;
+    }
+
+    // Se estamos em modo VIDEO e a URL mudou (mesmo modo), atualizar vídeo sem transição
+    if (!hasModeChanged && hasVideoUrlChanged && newState.mode === 'VIDEO' && this.currentMode === 'VIDEO') {
+      this.switchToVideo(newState);
+      this.previousState = { 
+        mode: newState.mode,
+        videoUrl: newState.videoUrl,
+        muted: newState.muted ?? false,
+        images: newState.images ? [...newState.images] : []
+      };
+      return;
+    }
+
+    // Se estamos em modo VIDEO e NADA mudou, não fazer nada (não recriar iframe)
+    if (!hasModeChanged && !hasVideoUrlChanged && !hasImagesChanged && !hasMutedChanged && 
+        newState.mode === 'VIDEO' && this.currentMode === 'VIDEO') {
+      return; // Vídeo já está rodando, não fazer nada
     }
 
     if (this.isTransitioning) {
       return; // Já está em transição
     }
 
+    // Apenas fazer transição completa se o modo mudou
     this.isTransitioning = true;
 
     // Fade out
@@ -139,7 +182,7 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
         this.previousState = { 
           mode: newState.mode,
           videoUrl: newState.videoUrl,
-          muted: newState.muted || false,
+          muted: newState.muted ?? false,
           images: newState.images ? [...newState.images] : []
         };
         // Forçar detecção de mudanças após transição
@@ -149,27 +192,30 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   }
 
   private updateImagesOnly(state: BannerCurrentStateDTO): void {
-    // Atualizar apenas as imagens sem transição completa
-    this.currentImages = state.images ? [...state.images] : [];
+    const newImages = state.images ? [...state.images] : [];
     
-    // Resetar índice se necessário
-    if (this.currentImageIndex >= this.currentImages.length) {
-      this.currentImageIndex = 0;
+    // Verificar se as imagens realmente mudaram
+    const imagesChanged = this.hasImagesChanged(this.currentImages, newImages);
+    
+    if (!imagesChanged) {
+      // Se as imagens não mudaram, não fazer nada - deixar o carrossel continuar normalmente
+      return;
     }
     
-    // Atualizar URL da imagem atual
-    this.updateCurrentImageUrl();
+    // Atualizar apenas as imagens sem transição completa
+    this.currentImages = newImages;
     
-    // Reiniciar carrossel
-    this.startSlideCarousel();
-    
-    // Atualizar estado anterior
-    this.previousState = {
-      mode: state.mode,
-      videoUrl: state.videoUrl,
-      muted: state.muted || false,
-      images: state.images ? [...state.images] : []
-    };
+    // Resetar índice apenas se necessário (imagem atual não existe mais)
+    if (this.currentImageIndex >= this.currentImages.length) {
+      this.currentImageIndex = 0;
+      this.updateCurrentImageUrl();
+      // Reiniciar carrossel apenas se o índice foi resetado
+      this.startSlideCarousel();
+    } else {
+      // Se o índice ainda é válido, apenas atualizar a URL da imagem atual
+      // mas NÃO reiniciar o carrossel para não interromper a transição atual
+      this.updateCurrentImageUrl();
+    }
     
     // Forçar detecção de mudanças
     this.cdr.detectChanges();
@@ -199,27 +245,42 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   }
 
   private switchToVideo(state: BannerCurrentStateDTO): void {
+    const newVideoUrl = state.videoUrl ?? null;
+    const newVideoId = newVideoUrl ? this.extractYouTubeId(newVideoUrl) : null;
+    const newMuted = state.muted ?? false;
+
+    // Verificar se o vídeo realmente mudou
+    const videoChanged = this.currentVideoId !== newVideoId || 
+                       this.currentVideoUrl !== newVideoUrl ||
+                       this.currentMuted !== newMuted;
+
     this.currentMode = 'VIDEO';
-    this.currentMuted = state.muted ?? false;
+    this.currentMuted = newMuted;
     this.currentImages = [];
     this.currentImageIndex = 0;
-    this.currentVideoId = null;
-    this.currentVideoUrl = state.videoUrl ?? null;
+    this.currentVideoUrl = newVideoUrl;
 
     // Extrair ID do YouTube
     if (this.currentVideoUrl) {
-      this.currentVideoId = this.extractYouTubeId(this.currentVideoUrl);
+      this.currentVideoId = newVideoId;
       if (!this.currentVideoId) {
         console.error('Não foi possível extrair o ID do YouTube da URL:', this.currentVideoUrl);
+        this.videoIframeKey = '';
       } else {
-        // Gerar nova key para forçar recriação do iframe
-        this.videoIframeKey = `${this.currentVideoId}-${Date.now()}`;
-        console.log('Vídeo configurado:', {
-          videoId: this.currentVideoId,
-          muted: this.currentMuted,
-          url: this.currentVideoUrl
-        });
+        // APENAS gerar nova key se o vídeo realmente mudou
+        if (videoChanged) {
+          this.videoIframeKey = `${this.currentVideoId}-${Date.now()}`;
+          console.log('Vídeo configurado:', {
+            videoId: this.currentVideoId,
+            muted: this.currentMuted,
+            url: this.currentVideoUrl
+          });
+        }
+        // Se o vídeo não mudou, manter a key atual para não recriar o iframe
       }
+    } else {
+      this.currentVideoId = null;
+      this.videoIframeKey = '';
     }
 
     // Parar carrossel de slides
@@ -232,8 +293,10 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
       this.progressInterval = null;
     }
 
-    // Forçar detecção de mudanças para atualizar o iframe
-    this.cdr.detectChanges();
+    // Forçar detecção de mudanças apenas se necessário
+    if (videoChanged) {
+      this.cdr.detectChanges();
+    }
   }
 
   private switchToSlide(state: BannerCurrentStateDTO): void {

@@ -1,5 +1,5 @@
 <div class="banner-management-container">
-  <pagetitle title="Gerenciamento de Banners"></pagetitle>
+  <pagetitle title="Gerenciamento do Mural Digital"></pagetitle>
 
   <!-- Tabs -->
   <div class="tabs">
@@ -85,9 +85,19 @@
               <span *ngIf="config.type === 'IMAGE_SLIDE'">-</span>
             </td>
             <td>{{ config.muted ? 'Mudo' : 'Ativo' }}</td>
-            <td>{{ config.isActive ? 'Sim' : 'Não' }}</td>
+            <td>
+              <span [class]="config.isActive ? 'badge-active' : 'badge-inactive'">
+                {{ config.isActive ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
             <td>
               <button (click)="openConfigModal(config)" class="btn btn-sm">Editar</button>
+              <button 
+                (click)="toggleConfigActive(config)" 
+                [class]="config.isActive ? 'btn btn-sm btn-warning' : 'btn btn-sm btn-success'"
+                [title]="config.isActive ? 'Desativar' : 'Ativar'">
+                {{ config.isActive ? 'Desativar' : 'Ativar' }}
+              </button>
               <button (click)="deleteConfig(config.id!)" class="btn btn-sm btn-danger">Excluir</button>
             </td>
           </tr>
