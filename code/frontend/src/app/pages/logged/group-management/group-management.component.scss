@@ -91,6 +91,10 @@
 }
 
 .tab-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 24px;
   background: transparent;
   border: none;
@@ -112,6 +116,21 @@
   color: #007bff;
   border-bottom-color: #007bff;
   font-weight: 600;
+}
+
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background-color: #ff9800;
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 // Avatar

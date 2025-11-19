@@ -15,6 +15,9 @@
     (click)="switchTab('approvals')"
   >
     Aprovações
+    @if (pendingEnrollments.length > 0) {
+      <span class="badge-count">{{ pendingEnrollments.length }}</span>
+    }
   </button>
   <button 
     class="tab-button" 

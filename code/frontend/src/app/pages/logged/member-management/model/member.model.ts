@@ -1,4 +1,4 @@
-import { GroupEnrollmentDTO } from '../../../shared/service/enrollment.service';
+import { GroupEnrollmentDTO } from '../../../../shared/service/enrollment.service';
 
 export interface Member {
   id: number;

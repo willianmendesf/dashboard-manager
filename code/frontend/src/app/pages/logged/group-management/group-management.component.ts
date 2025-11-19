@@ -403,7 +403,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
     return [
       {
         label: 'Aprovar',
-        icon: 'save',
+        icon: 'check',
         action: (row) => this.approveEnrollment(row._original.id),
         class: 'text-success'
       },
