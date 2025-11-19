@@ -19,7 +19,7 @@ Você está sem acesso ao sistema porque a senha do usuário `root` não está f
 
 **Exemplo com cURL:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/emergency/reset-root-password \
+curl -X POST http://localhost:7000/api/v1/emergency/reset-root-password \
   -H "Content-Type: application/json" \
   -d '{
     "secret": "EMERGENCY_RESET_2024",
@@ -34,7 +34,7 @@ $body = @{
     newPassword = "minhaNovaSenha123"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:8080/api/v1/emergency/reset-root-password" `
+Invoke-RestMethod -Uri "http://localhost:7000/api/v1/emergency/reset-root-password" `
   -Method POST `
   -ContentType "application/json" `
   -Body $body

@@ -9,8 +9,85 @@ $BACKEND_DIR = Join-Path $SCRIPT_DIR "backend"
 $COMPOSE_FILE = Join-Path $SCRIPT_DIR "docker-compose.yml"
 $OVERRIDE_FILE = Join-Path $SCRIPT_DIR "docker-compose.override.yml"
 
+# Função para exibir ajuda
+function Show-Help {
+    Write-Host "=== Como usar este script ===" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "MÉTODO 1: Passar como primeiro argumento" -ForegroundColor Green
+    Write-Host "  .\docker-compose-up.ps1 dev    # Ambiente de desenvolvimento"
+    Write-Host "  .\docker-compose-up.ps1 prod   # Ambiente de produção"
+    Write-Host ""
+    Write-Host "MÉTODO 2: Usar variável de ambiente ENV" -ForegroundColor Green
+    Write-Host "  `$env:ENV='dev'; .\docker-compose-up.ps1"
+    Write-Host "  `$env:ENV='prod'; .\docker-compose-up.ps1"
+    Write-Host ""
+    Write-Host "MÉTODO 3: Exportar variável antes de executar" -ForegroundColor Green
+    Write-Host "  `$env:ENV='dev'"
+    Write-Host "  .\docker-compose-up.ps1"
+    Write-Host ""
+    Write-Host "Com argumentos adicionais do docker-compose:" -ForegroundColor Green
+    Write-Host "  .\docker-compose-up.ps1 dev --build"
+    Write-Host "  .\docker-compose-up.ps1 prod -d"
+    Write-Host ""
+    Write-Host "Valores aceitos: dev ou prod" -ForegroundColor Yellow
+    Write-Host ""
+}
+
+# Detectar ambiente (dev ou prod) - OBRIGATÓRIO
+# Aceita como primeiro argumento ou variável de ambiente ENV
+
+# Verificar se foi solicitada ajuda
+if ($args.Count -gt 0 -and ($args[0] -eq "--help" -or $args[0] -eq "-h" -or $args[0] -eq "help")) {
+    Show-Help
+    exit 0
+}
+
+if ($args.Count -gt 0 -and ($args[0] -eq "dev" -or $args[0] -eq "prod")) {
+    $ENV = $args[0]
+} elseif ($env:ENV) {
+    $ENV = $env:ENV
+} else {
+    # Ambiente não especificado - ERRO com ajuda detalhada
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Red
+    Write-Host "  ERRO: Ambiente não especificado!" -ForegroundColor Red
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Você DEVE especificar o ambiente explicitamente." -ForegroundColor Yellow
+    Write-Host ""
+    Show-Help
+    exit 1
+}
+
+if ($ENV -ne "dev" -and $ENV -ne "prod") {
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Red
+    Write-Host "  ERRO: Ambiente inválido: '$ENV'" -ForegroundColor Red
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Valores aceitos: dev ou prod" -ForegroundColor Yellow
+    Write-Host ""
+    Show-Help
+    exit 1
+}
+
+# Configurar arquivo .env baseado no ambiente
+$ENV_FILE = Join-Path $BACKEND_DIR ".env.$ENV"
+$TARGET_ENV_FILE = Join-Path $BACKEND_DIR ".env"
+
+if (-not (Test-Path $ENV_FILE)) {
+    Write-Host "ERRO: Arquivo de ambiente não encontrado: $ENV_FILE" -ForegroundColor Red
+    exit 1
+}
+
+# Copiar arquivo de ambiente para .env
 Write-Host "=== Dashboard Manager - Inicialização ===" -ForegroundColor Cyan
 Write-Host "OS detectado: Windows" -ForegroundColor Yellow
+Write-Host "Ambiente: $ENV" -ForegroundColor Yellow
+if ($ENV -eq "prod") {
+    Write-Host "⚠ ATENÇÃO: Ambiente de PRODUÇÃO" -ForegroundColor Red
+}
+Write-Host "  Arquivo de configuração: $ENV_FILE"
+Copy-Item -Path $ENV_FILE -Destination $TARGET_ENV_FILE -Force
+Write-Host "✓ Arquivo .env configurado para ambiente $ENV" -ForegroundColor Green
 Write-Host ""
 
 # Verificar se o script setup-storage.sh existe
@@ -78,11 +155,27 @@ Write-Host ""
 Write-Host "Subindo containers Docker..." -ForegroundColor Green
 Write-Host ""
 
-# Se não houver argumentos, usar -d (detached mode)
-if ($args.Count -eq 0) {
-    docker-compose up -d
+# Se o primeiro argumento foi ENV, remover e passar os demais para docker-compose
+$dockerArgs = if ($args.Count -gt 0 -and ($args[0] -eq "dev" -or $args[0] -eq "prod")) {
+    $args[1..($args.Count - 1)]
 } else {
-    docker-compose up $args
+    $args
+}
+
+$hasDetach = $false
+foreach ($arg in $dockerArgs) {
+    if ($arg -eq "-d" -or $arg -eq "--detach") {
+        $hasDetach = $true
+        break
+    }
+}
+
+if ($dockerArgs.Count -eq 0) {
+    docker-compose up -d
+} elseif (-not $hasDetach) {
+    docker-compose up $dockerArgs -d
+} else {
+    docker-compose up $dockerArgs
 }
 
 Write-Host ""

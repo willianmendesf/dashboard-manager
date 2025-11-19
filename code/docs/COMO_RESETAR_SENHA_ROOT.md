@@ -24,7 +24,7 @@ Se você está sem acesso ao sistema porque a senha do usuário `root` não est�
 
 #### 1.1. Usando cURL (Linux/Mac/Git Bash)
 ```bash
-curl -X POST http://localhost:8080/api/v1/emergency/reset-root-password \
+curl -X POST http://localhost:7000/api/v1/emergency/reset-root-password \
   -H "Content-Type: application/json" \
   -d '{
     "secret": "EMERGENCY_RESET_2024",
@@ -39,7 +39,7 @@ $body = @{
     newPassword = "suaNovaSenha123"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:8080/api/v1/emergency/reset-root-password" `
+Invoke-RestMethod -Uri "http://localhost:7000/api/v1/emergency/reset-root-password" `
   -Method POST `
   -ContentType "application/json" `
   -Body $body
@@ -47,7 +47,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/v1/emergency/reset-root-passwo
 
 #### 1.3. Usando Postman
 1. Método: `POST`
-2. URL: `http://localhost:8080/api/v1/emergency/reset-root-password`
+2. URL: `http://localhost:7000/api/v1/emergency/reset-root-password`
 3. Headers: `Content-Type: application/json`
 4. Body (raw JSON):
 ```json
@@ -67,7 +67,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/v1/emergency/reset-root-passwo
 
 ### Verificação
 Após resetar, teste o login:
-- **URL:** `http://localhost:8080/api/v1/auth/login`
+- **URL:** `http://localhost:7000/api/v1/auth/login`
 - **Username:** `root`
 - **Password:** A senha que você definiu
 
@@ -180,7 +180,7 @@ $body = @{
     newPassword = $novaSenha
 } | ConvertTo-Json
 
-$response = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/emergency/reset-root-password" `
+$response = Invoke-RestMethod -Uri "http://localhost:7000/api/v1/emergency/reset-root-password" `
   -Method POST `
   -ContentType "application/json" `
   -Body $body
@@ -195,7 +195,7 @@ $loginBody = @{
     password = $novaSenha
 } | ConvertTo-Json
 
-$loginResponse = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/auth/login" `
+$loginResponse = Invoke-RestMethod -Uri "http://localhost:7000/api/v1/auth/login" `
   -Method POST `
   -ContentType "application/json" `
   -Body $loginBody
@@ -253,7 +253,7 @@ Write-Host "Login realizado com sucesso!" -ForegroundColor Green
 
 ## 📞 Informações de Contato do Sistema
 
-- **Endpoint Base:** `http://localhost:8080/api/v1`
+- **Endpoint Base:** `http://localhost:7000/api/v1`
 - **Endpoint de Emergência:** `/emergency/reset-root-password`
 - **Endpoint de Login:** `/auth/login`
 - **Username Padrão:** `root`

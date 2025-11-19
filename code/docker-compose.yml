@@ -5,11 +5,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
-      - ./backend/.env.dev
+      - ./backend/.env
     environment:
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Sao_Paulo
     ports:
-      - "8080:8080"
+      - "7000:7000"
     restart: always
     networks:
       - app-network

@@ -10,6 +10,8 @@ export interface GroupDTO {
   memberCount?: number;
 }
 
+import { GroupEnrollmentDTO } from './enrollment.service';
+
 export interface MemberDTO {
   id?: number;
   nome?: string;
@@ -31,7 +33,7 @@ export interface MemberDTO {
   bairro?: string;
   cidade?: string;
   estado?: string;
-  groupIds?: number[];
+  groupEnrollments?: GroupEnrollmentDTO[];
 }
 
 export interface UpdateMemberDTO {
@@ -57,7 +59,6 @@ export interface UpdateMemberDTO {
   rede?: string;
   operadora?: string;
   contato?: string;
-  groupIds?: number[];
 }
 
 @Injectable({

@@ -2,17 +2,9 @@
   padding: 20px;
 }
 
-//.content-card {
-//  background: white;
-//  border-radius: 8px;
-//  padding: 24px;
-//  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-//  margin-top: 20px;
-//}
-
 .toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 20px;
   gap: 16px;
@@ -72,5 +64,185 @@
 
 .text-danger {
   color: #dc3545;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+// Tabs
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #1f2937;
+  background: #f9fafb;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  font-weight: 600;
+}
+
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background-color: #ff9800;
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+// Sub-tabs
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sub-tab-button {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-tab-button:hover {
+  color: #1f2937;
+  background: #f9fafb;
+}
+
+.sub-tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  font-weight: 600;
+}
+
+// Status Badge
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  
+  &.approved {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  
+  &.rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+// Avatar
+.avatar-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+// WhatsApp Link
+.whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #25D366;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.whatsapp-link:hover {
+  opacity: 0.8;
+}
+
+// Group Badges
+.groups-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.group-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+// Filter Select
+.filter-select {
+  max-width: 250px;
+  margin-left: 12px;
+}
+
+// Radio Options
+.radio-option {
+  display: block;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.radio-option:hover {
+  background-color: #f9fafb;
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 8px;
 }
 

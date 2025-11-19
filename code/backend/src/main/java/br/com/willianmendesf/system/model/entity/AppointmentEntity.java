@@ -1,6 +1,7 @@
 package br.com.willianmendesf.system.model.entity;
 
 import br.com.willianmendesf.system.exception.AppointmentException;
+import br.com.willianmendesf.system.model.converter.TaskTypeConverter;
 import br.com.willianmendesf.system.model.enums.RecipientType;
 import br.com.willianmendesf.system.model.enums.TaskStatus;
 import br.com.willianmendesf.system.model.enums.TaskType;
@@ -46,7 +47,7 @@ public class AppointmentEntity {
     @Column(name = "recipient_type")
     private RecipientType recipientType;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = TaskTypeConverter.class)
     @Column(name = "task_type")
     private TaskType taskType; // WHATSAPP_MESSAGE, API_CALL
 

@@ -1254,7 +1254,7 @@ Para receber mensagens em tempo real, você precisa:
 ```javascript
 // Backend (Node.js)
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 7000 });
 
 app.post('/webhook', (req, res) => {
   // ... processar webhook ...
@@ -1276,7 +1276,7 @@ app.post('/webhook', (req, res) => {
 **Frontend (JavaScript):**
 ```javascript
 // Conectar ao WebSocket
-const ws = new WebSocket('ws://localhost:8080');
+const ws = new WebSocket('ws://localhost:7000');
 
 ws.onmessage = (event) => {
   const message = JSON.parse(event.data);

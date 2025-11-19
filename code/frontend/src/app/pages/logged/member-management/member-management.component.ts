@@ -16,6 +16,7 @@ import { SpousePreviewComponent } from './components/spouse-preview.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { GroupService, GroupDTO } from '../../../shared/service/group.service';
+import { EnrollmentService, GroupEnrollmentDTO } from '../../../shared/service/enrollment.service';
 import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
 
 @Component({
@@ -39,11 +40,12 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
   tipoCadastroFilter = '';
   estadoCivilFilter = '';
   intercessorFilter = '';
-  groupFilter = '';
+  groupFilter: number | null = null;
   currentSort: { column: string; direction: 'asc' | 'desc' } | null = null;
   
   availableGroups: GroupDTO[] = [];
   selectedGroupIds: number[] = [];
+  memberEnrollments: Map<number, GroupEnrollmentDTO[]> = new Map();
 
   tableColumns: TableColumn[] = [
     { key: 'foto', label: '', width: '60px', align: 'center' },
@@ -101,7 +103,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     private api: ApiService,
     private cdr: ChangeDetectorRef,
     private notificationService: NotificationService,
-    private groupService: GroupService
+    private groupService: GroupService,
+    private enrollmentService: EnrollmentService
   ) {}
 
   ngOnDestroy(): void {
@@ -267,11 +270,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   public getMembers() {
-    const url = this.groupFilter 
-      ? `members?groupId=${this.groupFilter}` 
-      : "members";
-    
-    this.api.get(url)
+    // Sempre buscar todos os membros - filtro por grupo será aplicado localmente via groupEnrollments
+    this.api.get("members")
       .pipe(takeUntil(this.unsubscribe$))
         .subscribe({
           next: res => {
@@ -289,10 +289,16 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
               return {
                 ...member,
                 fotoUrl: member.fotoUrl || null,
-                groupIds: member.groupIds || [],
+                groupEnrollments: member.groupEnrollments || [],
                 estadoCivil: estadoCivilBoolean,
                 child: member.child !== undefined ? member.child : false
               };
+            });
+            // Carregar enrollments para todos os membros
+            this.members.forEach(member => {
+              if (member.id) {
+                this.loadMemberEnrollments(member.id);
+              }
             });
             this.filterMembers();
             setTimeout(() => {
@@ -314,11 +320,9 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
 
   public createMember(member: Member) {
     const memberData = {
-      ...member,
-      groups: this.selectedGroupIds.length > 0 
-        ? this.selectedGroupIds.map(id => ({ id }))
-        : undefined
-    };
+      ...member
+      // NÃO enviar groups - grupos são gerenciados via enrollments
+    } as any;
     
     this.api.post("members", memberData)
       .pipe(takeUntil(this.unsubscribe$))
@@ -327,9 +331,30 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
           if (this.selectedPhotoFile && res && res.id) {
             await this.uploadMemberPhoto(res.id);
           }
-          this.notificationService.showSuccess("Membro criado com sucesso!");
-          this.getMembers();
-          this.closeMemberModal();
+          
+          // Criar enrollments APPROVED para grupos selecionados
+          if (res && res.id && this.selectedGroupIds.length > 0) {
+            const enrollmentPromises = this.selectedGroupIds.map(groupId =>
+              this.enrollmentService.createDirectApproval(res.id, groupId).toPromise()
+            );
+            
+            Promise.all(enrollmentPromises)
+              .then(() => {
+                this.notificationService.showSuccess("Membro criado com sucesso!");
+                this.getMembers();
+                this.closeMemberModal();
+              })
+              .catch((error) => {
+                console.error('Error creating enrollments:', error);
+                this.notificationService.showError('Membro criado, mas houve erro ao adicionar grupos. Tente novamente.');
+                this.getMembers();
+                this.closeMemberModal();
+              });
+          } else {
+            this.notificationService.showSuccess("Membro criado com sucesso!");
+            this.getMembers();
+            this.closeMemberModal();
+          }
         },
         error: (error) => {
           console.error(error);
@@ -383,10 +408,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       fotoUrl: (member as any).fotoUrl || null
     };
     
-    // Adicionar groups apenas se houver grupos selecionados (não enviar array vazio)
-    if (this.selectedGroupIds.length > 0) {
-      memberData.groups = this.selectedGroupIds.map(id => ({ id }));
-    }
+    // NÃO enviar groups - grupos são gerenciados via enrollments
     
     // Garantir que campos obrigatórios estejam presentes
     if (!memberData.nome || memberData.nome.trim() === '') {
@@ -410,7 +432,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       memberData.lgpd = null;
     }
     
-    const fieldsToAlwaysInclude = ['nome', 'email', 'estadoCivil', 'intercessor', 'groups', 
+    const fieldsToAlwaysInclude = ['nome', 'email', 'estadoCivil', 'intercessor', 
                                     'comungante', 'tipoCadastro', 'lgpd', 'lgpdAceitoEm'];
     
     Object.keys(memberData).forEach(key => {
@@ -429,9 +451,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => {
-          this.notificationService.showSuccess("Membro atualizado com sucesso!");
-          this.getMembers();
-          this.closeMemberModal();
+          // Atualizar enrollments após salvar membro
+          this.updateMemberEnrollments(member.id);
         },
         error: (error) => {
           console.error('Error updating member:', error);
@@ -440,6 +461,56 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
           this.notificationService.showError(errorMessage);
         }
       });
+  }
+
+  updateMemberEnrollments(memberId: number): void {
+    const approvedGroups = this.getMemberApprovedGroups(memberId);
+    const currentSelected = this.selectedGroupIds;
+
+    // Grupos novos (marcados sem enrollment APPROVED)
+    const newGroups = currentSelected.filter(id => !approvedGroups.includes(id));
+    
+    // Grupos removidos (approved sem marcar)
+    const removedGroups = approvedGroups.filter(id => !currentSelected.includes(id));
+
+    const enrollmentOperations: Promise<any>[] = [];
+
+    // Criar enrollments APPROVED para grupos novos
+    newGroups.forEach(groupId => {
+      enrollmentOperations.push(
+        this.enrollmentService.createDirectApproval(memberId, groupId).toPromise()
+      );
+    });
+
+    // Remover enrollments para grupos removidos
+    removedGroups.forEach(groupId => {
+      const enrollments = this.memberEnrollments.get(memberId) || [];
+      const enrollment = enrollments.find(e => e.groupId === groupId && e.status === 'APPROVED');
+      if (enrollment) {
+        enrollmentOperations.push(
+          this.enrollmentService.removeEnrollment(enrollment.id).toPromise()
+        );
+      }
+    });
+
+    if (enrollmentOperations.length > 0) {
+      Promise.all(enrollmentOperations)
+        .then(() => {
+          this.notificationService.showSuccess("Membro atualizado com sucesso!");
+          this.getMembers();
+          this.closeMemberModal();
+        })
+        .catch((error) => {
+          console.error('Error updating enrollments:', error);
+          this.notificationService.showError('Membro atualizado, mas houve erro ao atualizar grupos. Tente novamente.');
+          this.getMembers();
+          this.closeMemberModal();
+        });
+    } else {
+      this.notificationService.showSuccess("Membro atualizado com sucesso!");
+      this.getMembers();
+      this.closeMemberModal();
+    }
   }
   
   lookupCep(cep: string) {
@@ -526,7 +597,15 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
         }
       }
 
-      return matchesSearch && matchesEstadoCivil && matchesTipoCadastro && matchesIntercessor;
+      // Filtro por grupo usando groupEnrollments (apenas APPROVED)
+      let matchesGroup = true;
+      if (this.groupFilter !== null && this.groupFilter !== undefined) {
+        matchesGroup = member.groupEnrollments?.some(e => 
+          e.groupId === this.groupFilter && e.status === 'APPROVED'
+        ) || false;
+      }
+
+      return matchesSearch && matchesEstadoCivil && matchesTipoCadastro && matchesIntercessor && matchesGroup;
     });
 
     this.getTableData();
@@ -562,13 +641,30 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
         comercial: '',
         celular: '',
         email: '',
-        groupIds: [],
         lgpd: null,
         lgpdAceitoEm: null,
         rede: '',
         version: null
       };
-      this.selectedGroupIds = member?.groupIds ? [...member.groupIds] : [];
+      // Carregar grupos aprovados dos enrollments
+      if (member?.id) {
+        const enrollments = this.memberEnrollments.get(member.id) || [];
+        // Se não há enrollments carregados, usar groupEnrollments do objeto member
+        if (enrollments.length === 0 && member.groupEnrollments) {
+          this.selectedGroupIds = member.groupEnrollments
+            .filter(e => e.status === 'APPROVED')
+            .map(e => e.groupId);
+        } else {
+          this.selectedGroupIds = enrollments
+            .filter(e => e.status === 'APPROVED')
+            .map(e => e.groupId);
+        }
+      } else {
+        // Fallback apenas se não houver id e não houver groupEnrollments
+        this.selectedGroupIds = (member?.groupEnrollments || [])
+          .filter((e: GroupEnrollmentDTO) => e.status === 'APPROVED')
+          .map((e: GroupEnrollmentDTO) => e.groupId);
+      }
       this.photoPreview = (member as any)?.fotoUrl || null;
       this.selectedPhotoFile = null;
       this.cdr.markForCheck();
@@ -600,8 +696,9 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     return this.selectedGroupIds.includes(groupId);
   }
 
-  onGroupFilterChange(): void {
-    this.getMembers();
+  onGroupFilterChange(value: number | null): void {
+    this.groupFilter = value;
+    this.filterMembers();
   }
 
   onPhotoSelected(event: Event): void {
@@ -687,6 +784,9 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
 
   viewMember(member: Member) {
     this.viewingMember = { ...member };
+    if (member.id) {
+      this.loadMemberEnrollments(member.id);
+    }
     this.showViewModal = true;
     this.cdr.markForCheck();
   }
@@ -776,6 +876,35 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     this.cdr.markForCheck();
   }
 
+  loadMemberEnrollments(memberId: number): void {
+    this.enrollmentService.getMemberEnrollments(memberId)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (enrollments) => {
+          this.memberEnrollments.set(memberId, enrollments);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error loading enrollments:', err);
+          this.memberEnrollments.set(memberId, []);
+        }
+      });
+  }
+
+  getMemberApprovedGroups(memberId: number): number[] {
+    const enrollments = this.memberEnrollments.get(memberId) || [];
+    return enrollments
+      .filter(e => e.status === 'APPROVED')
+      .map(e => e.groupId);
+  }
+
+  getMemberPendingGroups(memberId: number): number[] {
+    const enrollments = this.memberEnrollments.get(memberId) || [];
+    return enrollments
+      .filter(e => e.status === 'PENDING')
+      .map(e => e.groupId);
+  }
+
   editMember(memberId: number) {
     this.closeViewModal();
     this.api.get(`members/${memberId}`)
@@ -790,6 +919,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
           } else {
             member.estadoCivil = false; // default para Solteiro
           }
+          this.loadMemberEnrollments(memberId);
           this.openMemberModal(member);
         },
         error: (error) => {

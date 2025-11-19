@@ -87,6 +87,9 @@ public class SecurityConfig {
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/public/**").permitAll() // Portal público de atualização cadastral, visitantes e empréstimos
+                .requestMatchers("/enrollments/request").permitAll() // Solicitação de participação em grupos (público)
+                .requestMatchers("/enrollments/member/**").permitAll() // Consulta de enrollments do membro (público)
+                .requestMatchers("/enrollments/can-request/**").permitAll() // Verificar se pode solicitar novamente (público)
 
                 // 4c. Exija autenticação para todo o resto
                 .anyRequest().authenticated()

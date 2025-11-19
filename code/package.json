@@ -5,11 +5,12 @@
   "main": "",
   "scripts": {
     "install": "npm run docker:start -- --build",
-    "start": "./docker-compose-up.sh",
-    "docker:start": "./docker-compose-up.sh",
+    "start": "./docker-compose-up.sh dev",
+    "docker:start": "./docker-compose-up.sh dev",
     "docker:stop": "./docker-compose-down.sh",
     "docker:build": "docker-compose build",
-    "re-run": "./docker-compose-up.sh --build --force-recreate"
+    "re-run": "./docker-compose-up.sh dev --build --force-recreate",
+    "re-run:prod": "./docker-compose-up.sh prod --build --force-recreate"
   },
   "keywords": [],
   "author": "willianmendesf",
