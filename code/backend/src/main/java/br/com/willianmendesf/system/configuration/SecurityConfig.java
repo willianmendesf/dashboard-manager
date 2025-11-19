@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import br.com.willianmendesf.system.security.CustomAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -54,6 +55,9 @@ public class SecurityConfig {
         return new HttpSessionSecurityContextRepository();
     }
 
+    // Bean para CustomAuthenticationEntryPoint - retorna 401 apenas para rotas protegidas
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint = new CustomAuthenticationEntryPoint();
+
     // Bean da Cadeia de Filtros de Segurança (Onde tudo é amarrado)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -72,6 +76,14 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                 .maximumSessions(1) // Permite apenas uma sessão por usuário
                 .maxSessionsPreventsLogin(false) // Permite login mesmo com sessão existente
+            )
+
+            // 3.5. CONFIGURAR TRATAMENTO DE EXCEÇÕES (CRÍTICO PARA API JSON)
+            // Retorna 401 (Unauthorized) apenas para rotas protegidas
+            // Rotas públicas não devem retornar 401, devem ser permitidas normalmente
+            // Isso permite que o interceptor do Angular detecte a expiração da sessão
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
             )
 
             // 4. AUTORIZE AS REQUISIÇÕES
