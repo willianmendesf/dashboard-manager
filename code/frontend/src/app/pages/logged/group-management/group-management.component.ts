@@ -31,6 +31,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   // Groups tab
   groups: GroupDTO[] = [];
   filteredGroups: GroupDTO[] = [];
+  filteredGroupsData: any[] = [];
   searchTerm = '';
   isLoading = false;
 
@@ -167,12 +168,20 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
         next: (groups) => {
           this.groups = groups;
           this.filteredGroups = [...groups];
+          this.updateGroupsTableData();
           this.isLoading = false;
+          // Se estiver na aba de membros, atualiza filtro após carregar grupos
+          if (this.activeTab === 'members' && this.members.length > 0) {
+            this.filterMembers();
+          }
           this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Error loading groups:', err);
           this.notificationService.showError('Erro ao carregar grupos');
+          this.groups = [];
+          this.filteredGroups = [];
+          this.filteredGroupsData = [];
           this.isLoading = false;
           this.cdr.detectChanges();
         }
@@ -182,14 +191,22 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   filterGroups(): void {
     if (!this.searchTerm.trim()) {
       this.filteredGroups = [...this.groups];
-      return;
+    } else {
+      const term = this.searchTerm.toLowerCase();
+      this.filteredGroups = this.groups.filter(group =>
+        group.nome.toLowerCase().includes(term) ||
+        (group.descricao && group.descricao.toLowerCase().includes(term))
+      );
     }
+    this.updateGroupsTableData();
+  }
 
-    const term = this.searchTerm.toLowerCase();
-    this.filteredGroups = this.groups.filter(group =>
-      group.nome.toLowerCase().includes(term) ||
-      (group.descricao && group.descricao.toLowerCase().includes(term))
-    );
+  updateGroupsTableData(): void {
+    this.filteredGroupsData = this.filteredGroups.map(group => ({
+      ...group,
+      memberCount: group.memberCount || 0,
+      _original: group
+    }));
   }
 
   openCreateModal(): void {
@@ -289,11 +306,7 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
   }
 
   getTableData(): any[] {
-    return this.filteredGroups.map(group => ({
-      ...group,
-      memberCount: group.memberCount || 0,
-      _original: group
-    }));
+    return this.filteredGroupsData;
   }
 
   getModalButtons(): ModalButton[] {

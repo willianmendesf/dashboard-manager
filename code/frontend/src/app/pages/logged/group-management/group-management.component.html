@@ -48,7 +48,7 @@
 
     <app-data-table
       [columns]="tableColumns"
-      [data]="getTableData()"
+      [data]="filteredGroupsData"
       [actions]="getTableActions()"
       [loading]="isLoading"
       emptyMessage="Nenhum grupo encontrado"
