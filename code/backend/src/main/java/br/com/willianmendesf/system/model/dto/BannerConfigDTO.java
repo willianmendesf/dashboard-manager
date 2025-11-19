@@ -16,6 +16,7 @@ public class BannerConfigDTO {
     private BannerType type;
     private LocalTime startTime;
     private LocalTime endTime;
+    private String title;
     private String youtubeUrl;
     private Boolean isActive;
     private Integer order;
@@ -26,6 +27,7 @@ public class BannerConfigDTO {
         this.type = config.getType();
         this.startTime = config.getStartTime();
         this.endTime = config.getEndTime();
+        this.title = config.getTitle();
         this.youtubeUrl = config.getYoutubeUrl();
         this.isActive = config.getIsActive();
         this.order = config.getOrder();

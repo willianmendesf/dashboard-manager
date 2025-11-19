@@ -42,6 +42,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     type: 'IMAGE_SLIDE',
     startTime: '09:00',
     endTime: '10:00',
+    title: '',
     isActive: true,
     order: 0,
     muted: false
@@ -291,6 +292,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
         type: 'IMAGE_SLIDE',
         startTime: '09:00',
         endTime: '10:00',
+        title: '',
         isActive: true,
         order: 0,
         muted: false
@@ -305,6 +307,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
       type: 'IMAGE_SLIDE',
       startTime: '09:00',
       endTime: '10:00',
+      title: '',
       isActive: true,
       order: 0,
       muted: false

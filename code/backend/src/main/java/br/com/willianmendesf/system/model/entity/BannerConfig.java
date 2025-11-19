@@ -31,6 +31,9 @@ public class BannerConfig {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @Column(name = "title", length = 200)
+    private String title;
+
     @Column(name = "youtube_url", length = 500)
     private String youtubeUrl;
 

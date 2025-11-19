@@ -109,6 +109,7 @@ public class BannerService {
             config.setType(dto.getType());
             config.setStartTime(dto.getStartTime());
             config.setEndTime(dto.getEndTime());
+            config.setTitle(dto.getTitle());
             config.setYoutubeUrl(dto.getYoutubeUrl());
             config.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
             config.setOrder(dto.getOrder() != null ? dto.getOrder() : 0);
@@ -144,6 +145,7 @@ public class BannerService {
             if (dto.getType() != null) config.setType(dto.getType());
             if (dto.getStartTime() != null) config.setStartTime(dto.getStartTime());
             if (dto.getEndTime() != null) config.setEndTime(dto.getEndTime());
+            if (dto.getTitle() != null) config.setTitle(dto.getTitle());
             if (dto.getYoutubeUrl() != null) config.setYoutubeUrl(dto.getYoutubeUrl());
             if (dto.getIsActive() != null) config.setIsActive(dto.getIsActive());
             if (dto.getOrder() != null) config.setOrder(dto.getOrder());

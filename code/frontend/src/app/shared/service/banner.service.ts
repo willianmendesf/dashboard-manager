@@ -13,6 +13,7 @@ export interface BannerConfigDTO {
   type: 'IMAGE_SLIDE' | 'VIDEO_YOUTUBE';
   startTime: string;
   endTime: string;
+  title?: string;
   youtubeUrl?: string;
   isActive?: boolean;
   order?: number;
