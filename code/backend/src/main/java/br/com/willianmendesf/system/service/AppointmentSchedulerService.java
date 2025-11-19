@@ -258,18 +258,22 @@ public class AppointmentSchedulerService {
             execution.setExecutionTime(now);
 
             // Executar a tarefa conforme o tipo
-            switch (appointment.getTaskType()) {
-                case WHATSAPP_MESSAGE:
-                    executeWhatsAppMessage(appointment);
-                    executeMonitoringMessage(appointment);
-                    break;
-                case API_CALL:
-                    executeApiCall(appointment);
-                    executeMonitoringMessage(appointment);
-                    break;
-                default:
-                    log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
-                    break;
+            if (appointment.getTaskType() == null) {
+                log.warn("TaskType é null para o agendamento: {} (ID: {})", appointment.getName(), appointment.getId());
+            } else {
+                switch (appointment.getTaskType()) {
+                    case WHATSAPP_MESSAGE:
+                        executeWhatsAppMessage(appointment);
+                        executeMonitoringMessage(appointment);
+                        break;
+                    case API_CALL:
+                        executeApiCall(appointment);
+                        executeMonitoringMessage(appointment);
+                        break;
+                    default:
+                        log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
+                        break;
+                }
             }
 
             // Atualizar status de sucesso
@@ -452,18 +456,22 @@ public class AppointmentSchedulerService {
 
         try {
             // Executar a tarefa conforme o tipo
-            switch (appointment.getTaskType()) {
-                case WHATSAPP_MESSAGE:
-                    executeWhatsAppMessage(appointment);
-                    executeMonitoringMessage(appointment);
-                    break;
-                case API_CALL:
-                    executeApiCall(appointment);
-                    executeMonitoringMessage(appointment);
-                    break;
-                default:
-                    log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
-                    break;
+            if (appointment.getTaskType() == null) {
+                log.warn("TaskType é null para o agendamento: {} (ID: {})", appointment.getName(), appointment.getId());
+            } else {
+                switch (appointment.getTaskType()) {
+                    case WHATSAPP_MESSAGE:
+                        executeWhatsAppMessage(appointment);
+                        executeMonitoringMessage(appointment);
+                        break;
+                    case API_CALL:
+                        executeApiCall(appointment);
+                        executeMonitoringMessage(appointment);
+                        break;
+                    default:
+                        log.warn("Tipo de tarefa desconhecido para o agendamento: {}", appointment.getId());
+                        break;
+                }
             }
 
             // Atualizar status de sucesso

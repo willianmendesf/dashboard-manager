@@ -156,7 +156,7 @@
             </div>
             <div class="detail-item">
               <label>Tipo de Envio</label>
-              <span>{{ viewingAppointment.taskType === 'API_CALL' ? 'Acionar uma API' : 'WhatsApp Message' }}</span>
+              <span>{{ viewingAppointment.taskType === 'API_CALL' ? 'Acionar uma API' : (viewingAppointment.taskType === 'WHATSAPP_MESSAGE' ? 'WhatsApp Message' : (viewingAppointment.taskType || 'N/A')) }}</span>
             </div>
           </div>
         </div>
