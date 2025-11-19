@@ -3,24 +3,35 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../service/auth.service';
+import { NotificationService } from '../services/notification.service';
+import { isPublicFrontendRoute, isPublicApiRoute } from '../utils/route-utils';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const notificationService = inject(NotificationService);
 
-  // Rotas públicas que não devem ser interceptadas
-  const publicRoutes = ['/auth/login', '/auth/logout', '/auth/solicitar-reset', '/auth/redefinir-senha', '/usuarios/registro'];
-  const isPublicRoute = publicRoutes.some(route => req.url.includes(route));
+  const isPublicApi = isPublicApiRoute(req.url);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Se for erro 401 (Unauthorized) e não for rota pública
-      if (error.status === 401 && !isPublicRoute) {
-        // Limpar estado de autenticação local
+      if ([401, 403].includes(error.status)) {
+        if (isPublicApi) {
+          return throwError(() => error);
+        }
+
+        const currentUrl = router.url || (typeof window !== 'undefined' ? window.location.pathname : '') || '';
+        const isPublicFrontend = isPublicFrontendRoute(currentUrl);
+
+        if (isPublicFrontend) {
+          return throwError(() => error);
+        }
+
         authService.clearAuthState();
+        notificationService.showError('Sua sessão expirou. Por favor, faça login novamente.');
         
-        // Redirecionar para login apenas se não estiver já na página de login
-        if (!router.url.includes('/login')) {
+        const finalUrl = router.url || (typeof window !== 'undefined' ? window.location.pathname : '') || '';
+        if (!isPublicFrontendRoute(finalUrl)) {
           router.navigate(['/login']);
         }
       }

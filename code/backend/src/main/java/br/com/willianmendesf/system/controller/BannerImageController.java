@@ -11,7 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/banners/images")
@@ -48,7 +50,7 @@ public class BannerImageController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
-    public ResponseEntity<BannerImageDTO> uploadImage(
+    public ResponseEntity<?> uploadImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "displayOrder", required = false, defaultValue = "0") Integer displayOrder,
@@ -57,11 +59,15 @@ public class BannerImageController {
             log.info("Uploading banner image");
 
             if (file == null || file.isEmpty()) {
-                return ResponseEntity.badRequest().build();
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "O arquivo não pode estar vazio");
+                return ResponseEntity.badRequest().body(error);
             }
 
             if (!storageService.isValidImageFile(file)) {
-                return ResponseEntity.badRequest().build();
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Arquivo de imagem inválido. Apenas JPEG, PNG, GIF e WEBP são permitidos.");
+                return ResponseEntity.badRequest().body(error);
             }
 
             // Upload file to storage
@@ -82,9 +88,31 @@ public class BannerImageController {
 
             BannerImageDTO created = bannerService.createImage(dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            log.error("Error uploading banner image: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        } catch (RuntimeException e) {
+            log.error("Error uploading banner image", e);
+            Map<String, String> error = new HashMap<>();
+            String message = e.getMessage();
+            if (message != null && (message.contains("size") || message.contains("tamanho") || message.contains("large"))) {
+                error.put("error", "A imagem é muito grande. O tamanho máximo permitido é 100MB.");
+            } else {
+                error.put("error", "Falha ao fazer upload da imagem: " + (message != null ? message : "Erro desconhecido"));
+            }
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
         } catch (Exception e) {
             log.error("Error uploading banner image", e);
-            return ResponseEntity.internalServerError().build();
+            Map<String, String> error = new HashMap<>();
+            String message = e.getMessage();
+            if (message != null && (message.contains("size") || message.contains("tamanho") || message.contains("large"))) {
+                error.put("error", "A imagem é muito grande. O tamanho máximo permitido é 100MB.");
+            } else {
+                error.put("error", "Erro ao fazer upload da imagem: " + (message != null ? message : "Erro desconhecido"));
+            }
+            return ResponseEntity.internalServerError().body(error);
         }
     }
 

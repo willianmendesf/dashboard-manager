@@ -105,11 +105,13 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.imagePreview = e.target?.result as string;
+        this.cdr.detectChanges();
       };
       reader.onerror = () => {
         this.notificationService.showError('Erro ao ler o arquivo selecionado.');
         this.selectedFile = null;
         this.imagePreview = null;
+        this.cdr.detectChanges();
       };
       reader.readAsDataURL(this.selectedFile);
     }
@@ -201,7 +203,32 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Erro ao enviar imagem:', error);
-            this.notificationService.showError('Erro ao enviar imagem');
+            // Extrair mensagem de erro da resposta da API
+            let errorMessage = 'Erro ao enviar imagem';
+            if (error?.error) {
+              // Se o erro tem uma propriedade 'error' (string)
+              if (typeof error.error === 'string') {
+                errorMessage = error.error;
+              } else if (error.error?.error) {
+                // Se o erro tem uma propriedade 'error' (objeto com mensagem)
+                errorMessage = error.error.error;
+              } else if (error.error?.message) {
+                errorMessage = error.error.message;
+              }
+            } else if (error?.message) {
+              errorMessage = error.message;
+            }
+            
+            // Tratamento específico para erros de tamanho de arquivo
+            if (errorMessage.toLowerCase().includes('size') || 
+                errorMessage.toLowerCase().includes('tamanho') ||
+                errorMessage.toLowerCase().includes('large') ||
+                errorMessage.toLowerCase().includes('grande') ||
+                error?.status === 413) {
+              errorMessage = 'A imagem é muito grande. O tamanho máximo permitido é 100MB.';
+            }
+            
+            this.notificationService.showError(errorMessage);
           }
         });
     }
