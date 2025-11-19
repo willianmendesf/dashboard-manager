@@ -36,10 +36,10 @@
         <option value="Sim">Sim</option>
         <option value="Não">Não</option>
       </select>
-      <select [(ngModel)]="groupFilter" (change)="onGroupFilterChange()" class="filter-select">
-        <option value="">Todos os Grupos</option>
+      <select [ngModel]="groupFilter" (ngModelChange)="onGroupFilterChange($event)" class="filter-select">
+        <option [ngValue]="null">Todos os Grupos</option>
         @for (group of availableGroups; track group.id) {
-          <option [value]="group.id">{{ group.nome }}</option>
+          <option [ngValue]="group.id">{{ group.nome }}</option>
         }
       </select>
     </div>

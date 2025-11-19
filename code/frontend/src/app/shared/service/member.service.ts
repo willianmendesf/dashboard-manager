@@ -24,7 +24,6 @@ export interface MemberDTO {
   bairro?: string;
   cidade?: string;
   estado?: string;
-  groupIds?: number[];
   groupEnrollments?: GroupEnrollmentDTO[];
 }
 

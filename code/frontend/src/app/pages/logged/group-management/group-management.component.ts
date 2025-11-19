@@ -251,7 +251,10 @@ export class GroupManagementComponent implements OnInit, OnDestroy {
             this.isEditing ? 'Grupo atualizado com sucesso!' : 'Grupo criado com sucesso!'
           );
           this.closeModal();
-          this.loadGroups();
+          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.loadGroups();
+          }, 100);
         },
         error: (err) => {
           console.error('Error saving group:', err);

@@ -11,6 +11,13 @@
   </button>
   <button 
     class="tab-button" 
+    [class.active]="activeTab === 'members'"
+    (click)="switchTab('members')"
+  >
+    Membros por Grupo
+  </button>
+  <button 
+    class="tab-button" 
     [class.active]="activeTab === 'approvals'"
     (click)="switchTab('approvals')"
   >
@@ -18,13 +25,6 @@
     @if (pendingEnrollments.length > 0) {
       <span class="badge-count">{{ pendingEnrollments.length }}</span>
     }
-  </button>
-  <button 
-    class="tab-button" 
-    [class.active]="activeTab === 'members'"
-    (click)="switchTab('members')"
-  >
-    Membros por Grupo
   </button>
 </div>
 

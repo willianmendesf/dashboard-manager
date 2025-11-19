@@ -26,7 +26,6 @@ export interface Member {
   operadora?: string;
   contato?: string;
   email: string;
-  groupIds?: number[];
   groupEnrollments?: GroupEnrollmentDTO[];
   lgpd?: string;
   lgpdAceitoEm?: string | Date;
