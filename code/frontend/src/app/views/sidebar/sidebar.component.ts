@@ -61,13 +61,6 @@ export class SidebarComponent implements OnInit {
       permission: 'READ_MEMBERS'
     },
     { 
-      path: '/appointments', 
-      label: 'Agendamentos', 
-      icon: this.getSafeIcon(() => NavigationIcons.appointments({ size: 20, color: 'currentColor' })),
-      exact: true,
-      permission: null
-    },
-    { 
       path: '/whatsapp', 
       label: 'WhatsApp', 
       icon: this.getSafeIcon(() => NavigationIcons.whatsapp({ size: 20, color: 'currentColor' })),
@@ -94,6 +87,20 @@ export class SidebarComponent implements OnInit {
       icon: this.getSafeIcon(() => NavigationIcons.users({ size: 20, color: 'currentColor' })),
       exact: true,
       permission: 'READ_USERS'
+    },
+    { 
+      path: '/appointments', 
+      label: 'Agendamentos', 
+      icon: this.getSafeIcon(() => NavigationIcons.appointments({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: null
+    },
+    { 
+      path: '/banner-management', 
+      label: 'Banners', 
+      icon: this.getSafeIcon(() => NavigationIcons.monitor({ size: 20, color: 'currentColor' })),
+      exact: true,
+      permission: 'READ_MEMBERS'
     },
     { 
       path: '/settings', 

@@ -1,0 +1,70 @@
+<div class="mural-container" [class.transitioning]="isTransitioning">
+  <!-- Botão Voltar -->
+  <button 
+    class="back-button"
+    (click)="goBack()"
+    (keydown.enter)="goBack()"
+    (keydown.space)="goBack(); $event.preventDefault()"
+    aria-label="Voltar para página inicial"
+    title="Voltar (ESC ou Backspace)"
+    tabindex="0">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+  </button>
+
+  <!-- Modo Vídeo -->
+  <div *ngIf="currentMode === 'VIDEO' && getYouTubeEmbedUrl()" 
+       class="video-container"
+       [class.fade-out]="isTransitioning">
+    <iframe 
+      [src]="getYouTubeEmbedUrl()!"
+      frameborder="0"
+      allow="autoplay; encrypted-media"
+      allowfullscreen
+      class="youtube-iframe">
+    </iframe>
+  </div>
+
+  <!-- Modo Slide -->
+  <div *ngIf="currentMode === 'SLIDE'" 
+       class="slide-container"
+       [class.fade-out]="isTransitioning">
+    <div *ngIf="currentImages.length > 0" class="slide-content">
+      <!-- Imagem com transição -->
+      <div class="image-wrapper">
+        <img 
+          [src]="getCurrentImageUrl()" 
+          [alt]="(currentImages[currentImageIndex] && currentImages[currentImageIndex].title) || 'Slide'"
+          class="slide-image"
+          [class.fade-transition]="isImageTransitioning"
+          (error)="$event.target.src = ''"
+          [attr.data-image-id]="currentImages[currentImageIndex]?.id"
+          [attr.data-image-index]="currentImageIndex"
+        />
+      </div>
+      
+      <!-- Indicadores -->
+      <div *ngIf="currentImages.length > 1" class="slide-indicators">
+        <button 
+          *ngFor="let image of currentImages; let i = index"
+          [class.active]="i === currentImageIndex"
+          (click)="goToSlide(i)"
+          class="indicator-dot"
+          [attr.aria-label]="'Ir para slide ' + (i + 1)">
+        </button>
+      </div>
+
+      <!-- Barra de Progresso Discreta (no fundo) -->
+      <div *ngIf="currentImages.length > 1" class="progress-bar-container-bottom">
+        <div class="progress-bar-bottom" [style.width.%]="getSlideProgress()"></div>
+      </div>
+    </div>
+
+    <!-- Mensagem quando não há imagens -->
+    <div *ngIf="currentImages.length === 0" class="no-content">
+      <p>Nenhuma imagem disponível</p>
+    </div>
+  </div>
+</div>
+

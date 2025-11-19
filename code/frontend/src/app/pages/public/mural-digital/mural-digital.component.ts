@@ -1,0 +1,433 @@
+import { Component, OnInit, OnDestroy, inject, HostListener, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { BannerService, BannerCurrentStateDTO, BannerImageDTO } from '../../../shared/service/banner.service';
+import { interval, Subject } from 'rxjs';
+import { takeUntil, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+
+@Component({
+  selector: 'app-mural-digital',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './mural-digital.component.html',
+  styleUrl: './mural-digital.component.scss'
+})
+export class MuralDigitalComponent implements OnInit, OnDestroy {
+  private bannerService = inject(BannerService);
+  private sanitizer = inject(DomSanitizer);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+  private destroy$ = new Subject<void>();
+
+  currentMode: 'SLIDE' | 'VIDEO' = 'SLIDE';
+  currentVideoUrl: string | null = null;
+  currentVideoId: string | null = null;
+  currentMuted: boolean = false;
+  currentImages: BannerImageDTO[] = [];
+  currentImageIndex: number = 0;
+  currentImageUrl: string = '';
+  previousState: BannerCurrentStateDTO | null = null;
+  isTransitioning: boolean = false;
+  isImageTransitioning: boolean = false; // Transição entre imagens
+
+  slideTransitionDuration: number = 10000; // Default 10 segundos
+  currentSlideProgress: number = 0; // Progresso da transição atual (0-100)
+  private slideTimeout: any = null;
+  private progressInterval: any = null;
+  private slideStartTime: number = 0;
+
+  ngOnInit(): void {
+    this.loadCurrentState();
+    // Polling a cada 5 segundos
+    interval(5000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadCurrentState();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.slideTimeout) {
+      clearTimeout(this.slideTimeout);
+    }
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+  }
+
+  private loadCurrentState(): void {
+    this.bannerService.getCurrentState()
+      .pipe(
+        catchError(error => {
+          console.error('Erro ao carregar estado atual:', error);
+          return of(null);
+        })
+      )
+      .subscribe(state => {
+        if (state) {
+          // Se é o primeiro carregamento e não há estado anterior, aplicar diretamente
+          if (!this.previousState) {
+            this.applyStateDirectly(state);
+          } else {
+            this.handleStateChange(state);
+          }
+        }
+      });
+  }
+
+  private applyStateDirectly(state: BannerCurrentStateDTO): void {
+    // Aplicar estado inicial sem transição
+    if (state.mode === 'VIDEO') {
+      this.switchToVideo(state);
+    } else {
+      this.switchToSlide(state);
+    }
+    
+    this.previousState = {
+      mode: state.mode,
+      videoUrl: state.videoUrl,
+      muted: state.muted || false,
+      images: state.images ? [...state.images] : []
+    };
+    
+    this.cdr.detectChanges();
+  }
+
+  private handleStateChange(newState: BannerCurrentStateDTO): void {
+    // Verificar se houve mudança real
+    const hasModeChanged = !this.previousState || this.previousState.mode !== newState.mode;
+    const hasVideoUrlChanged = !this.previousState || this.previousState.videoUrl !== newState.videoUrl;
+    const hasImagesChanged = this.hasImagesChanged(this.previousState?.images || [], newState.images || []);
+
+    // Se não houve mudanças, retornar
+    if (!hasModeChanged && !hasVideoUrlChanged && !hasImagesChanged) {
+      return; // Sem mudanças
+    }
+
+    // Se apenas as imagens mudaram e o modo continua SLIDE, atualizar sem transição completa
+    if (!hasModeChanged && !hasVideoUrlChanged && hasImagesChanged && newState.mode === 'SLIDE') {
+      this.updateImagesOnly(newState);
+      return;
+    }
+
+    if (this.isTransitioning) {
+      return; // Já está em transição
+    }
+
+    this.isTransitioning = true;
+
+    // Fade out
+    setTimeout(() => {
+      if (newState.mode === 'VIDEO') {
+        this.switchToVideo(newState);
+      } else {
+        this.switchToSlide(newState);
+      }
+
+      // Fade in após troca
+      setTimeout(() => {
+        this.isTransitioning = false;
+        this.previousState = { 
+          mode: newState.mode,
+          videoUrl: newState.videoUrl,
+          muted: newState.muted || false,
+          images: newState.images ? [...newState.images] : []
+        };
+        // Forçar detecção de mudanças
+        this.cdr.detectChanges();
+      }, 50);
+    }, 250); // Meio da transição
+  }
+
+  private updateImagesOnly(state: BannerCurrentStateDTO): void {
+    // Atualizar apenas as imagens sem transição completa
+    this.currentImages = state.images ? [...state.images] : [];
+    
+    // Resetar índice se necessário
+    if (this.currentImageIndex >= this.currentImages.length) {
+      this.currentImageIndex = 0;
+    }
+    
+    // Atualizar URL da imagem atual
+    this.updateCurrentImageUrl();
+    
+    // Reiniciar carrossel
+    this.startSlideCarousel();
+    
+    // Atualizar estado anterior
+    this.previousState = {
+      mode: state.mode,
+      videoUrl: state.videoUrl,
+      muted: state.muted || false,
+      images: state.images ? [...state.images] : []
+    };
+    
+    // Forçar detecção de mudanças
+    this.cdr.detectChanges();
+  }
+
+  private hasImagesChanged(oldImages: BannerImageDTO[], newImages: BannerImageDTO[]): boolean {
+    // Se os tamanhos são diferentes, há mudança
+    if (oldImages.length !== newImages.length) {
+      return true;
+    }
+
+    // Se ambos estão vazios, não há mudança
+    if (oldImages.length === 0 && newImages.length === 0) {
+      return false;
+    }
+
+    // Criar strings de comparação usando ID e URL combinados
+    // Isso garante detecção mesmo se IDs forem undefined
+    const createImageKey = (img: BannerImageDTO): string => {
+      return `${img.id || 'no-id'}|${img.imageUrl || ''}`;
+    };
+
+    const oldKeys = oldImages.map(createImageKey).sort().join('||');
+    const newKeys = newImages.map(createImageKey).sort().join('||');
+
+    return oldKeys !== newKeys;
+  }
+
+  private switchToVideo(state: BannerCurrentStateDTO): void {
+    this.currentMode = 'VIDEO';
+    this.currentVideoUrl = state.videoUrl ?? null;
+    this.currentMuted = state.muted || false;
+    this.currentImages = [];
+    this.currentImageIndex = 0;
+
+    if (this.currentVideoUrl) {
+      this.currentVideoId = this.extractYouTubeId(this.currentVideoUrl);
+    }
+
+    // Parar carrossel de slides
+    if (this.slideTimeout) {
+      clearTimeout(this.slideTimeout);
+      this.slideTimeout = null;
+    }
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
+  }
+
+  private switchToSlide(state: BannerCurrentStateDTO): void {
+    this.currentMode = 'SLIDE';
+    this.currentVideoUrl = null;
+    this.currentVideoId = null;
+    
+    // Criar nova referência do array para garantir detecção de mudanças
+    this.currentImages = state.images ? [...state.images] : [];
+    
+    // Resetar índice sempre que mudar as imagens
+    this.currentImageIndex = 0;
+    
+    // Atualizar URL da imagem atual
+    this.updateCurrentImageUrl();
+
+    // Forçar detecção de mudanças antes de iniciar carrossel
+    this.cdr.detectChanges();
+
+    // Iniciar carrossel de slides
+    this.startSlideCarousel();
+  }
+
+  private startSlideCarousel(): void {
+    // Sempre limpar intervalos anteriores
+    if (this.slideTimeout) {
+      clearTimeout(this.slideTimeout);
+      this.slideTimeout = null;
+    }
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
+
+    // Se não há imagens ou apenas uma, não iniciar carrossel
+    if (this.currentImages.length <= 1) {
+      this.currentSlideProgress = 0;
+      return;
+    }
+
+    // Garantir que o índice está válido
+    if (this.currentImageIndex >= this.currentImages.length) {
+      this.currentImageIndex = 0;
+    }
+
+    // Iniciar transição da imagem atual
+    this.startCurrentSlideTransition();
+  }
+
+  private startCurrentSlideTransition(): void {
+    // Obter duração da imagem atual (default 10 segundos)
+    const currentImage = this.currentImages[this.currentImageIndex];
+    const duration = (currentImage?.transitionDurationSeconds || 10) * 1000; // Converter para ms
+
+    // Resetar progresso
+    this.currentSlideProgress = 0;
+    this.slideStartTime = Date.now();
+    this.isImageTransitioning = false;
+
+    // Atualizar progresso a cada 50ms para animação suave
+    this.progressInterval = setInterval(() => {
+      const elapsed = Date.now() - this.slideStartTime;
+      this.currentSlideProgress = Math.min((elapsed / duration) * 100, 100);
+      this.cdr.detectChanges();
+    }, 50);
+
+    // Avançar para próxima imagem após duração completa
+    // A transição visual será iniciada no nextSlide()
+    this.slideTimeout = setTimeout(() => {
+      this.nextSlide();
+    }, duration);
+  }
+
+  private nextSlide(): void {
+    if (this.currentImages.length > 0) {
+      // Limpar intervalos
+      if (this.progressInterval) {
+        clearInterval(this.progressInterval);
+        this.progressInterval = null;
+      }
+      
+      // Fade out completo antes de trocar
+      this.isImageTransitioning = true;
+      this.cdr.detectChanges();
+      
+      // Aguardar fade out completo (800ms) antes de trocar imagem
+      setTimeout(() => {
+        // Avançar para próxima imagem
+        this.currentImageIndex = (this.currentImageIndex + 1) % this.currentImages.length;
+        this.updateCurrentImageUrl();
+        this.isImageTransitioning = false;
+        this.currentSlideProgress = 0;
+        
+        // Forçar detecção de mudanças para mostrar nova imagem
+        this.cdr.detectChanges();
+        
+        // Aguardar um frame para garantir que a nova imagem está carregada
+        setTimeout(() => {
+          // Reiniciar transição para nova imagem
+          this.startCurrentSlideTransition();
+        }, 50);
+      }, 800);
+    }
+  }
+
+  private updateCurrentImageUrl(): void {
+    this.currentImageUrl = this.buildImageUrl();
+  }
+
+  private buildImageUrl(): string {
+    if (this.currentImages.length === 0) {
+      return '';
+    }
+    const image = this.currentImages[this.currentImageIndex];
+    if (!image || !image.imageUrl) {
+      return '';
+    }
+    
+    // Se já é uma URL completa (http/https), retornar diretamente
+    if (image.imageUrl.startsWith('http://') || image.imageUrl.startsWith('https://')) {
+      return image.imageUrl;
+    }
+    
+    // O StorageService retorna URLs no formato /api/v1/files/{folder}/{filename}
+    // Precisamos construir a URL completa
+    const baseUrl = environment.apiUrl.replace('/api/v1/', '');
+    
+    // Se já começa com /api/v1/files, usar diretamente
+    if (image.imageUrl.startsWith('/api/v1/files')) {
+      return `${baseUrl}${image.imageUrl}`;
+    }
+    
+    // Se começa com /, assumir que é relativo ao baseUrl
+    if (image.imageUrl.startsWith('/')) {
+      return `${baseUrl}${image.imageUrl}`;
+    }
+    
+    // Caso contrário, construir URL completa
+    return `${baseUrl}/api/v1/files/banners/${image.imageUrl}`;
+  }
+
+  getCurrentImageUrl(): string {
+    return this.currentImageUrl;
+  }
+
+  getYouTubeEmbedUrl(): SafeResourceUrl | null {
+    if (!this.currentVideoId) {
+      return null;
+    }
+    const muteParam = this.currentMuted ? '1' : '0';
+    const url = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&controls=0&mute=${muteParam}&loop=1&playlist=${this.currentVideoId}`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  private extractYouTubeId(url: string): string | null {
+    if (!url) return null;
+
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+      /youtube\.com\/embed\/([^&\n?#]+)/,
+      /youtube\.com\/v\/([^&\n?#]+)/
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    return null;
+  }
+
+  goToSlide(index: number): void {
+    if (index >= 0 && index < this.currentImages.length) {
+      // Limpar intervalos atuais
+      if (this.slideTimeout) {
+        clearTimeout(this.slideTimeout);
+        this.slideTimeout = null;
+      }
+      if (this.progressInterval) {
+        clearInterval(this.progressInterval);
+        this.progressInterval = null;
+      }
+      
+      this.currentImageIndex = index;
+      this.updateCurrentImageUrl();
+      this.isImageTransitioning = false;
+      this.currentSlideProgress = 0;
+      
+      // Reiniciar carrossel
+      this.startSlideCarousel();
+      this.cdr.detectChanges();
+    }
+  }
+
+  getSlideProgress(): number {
+    return this.currentSlideProgress;
+  }
+
+  goBack(): void {
+    this.router.navigate(['/landing']);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    // Suporte para controle remoto/TV: ESC ou Backspace para voltar
+    if (event.key === 'Escape' || event.key === 'Backspace') {
+      // Verificar se não está em um input/textarea
+      const target = event.target as HTMLElement;
+      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+        this.goBack();
+      }
+    }
+  }
+}
+

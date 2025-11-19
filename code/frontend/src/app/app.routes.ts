@@ -21,6 +21,8 @@ import { NotFoundComponent } from './pages/logged/not-found/not-found.component'
 import { LandingComponent } from './pages/public/landing/landing.component';
 import { EmprestimoPublicoComponent } from './pages/public/emprestimo-publico/emprestimo-publico.component';
 import { LoansComponent } from './pages/logged/loans/loans.component';
+import { MuralDigitalComponent } from './pages/public/mural-digital/mural-digital.component';
+import { BannerManagementComponent } from './pages/logged/banner-management/banner-management.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/landing', pathMatch: 'full' },
@@ -31,6 +33,7 @@ export const routes: Routes = [
   { path: 'atualizar-cadastro', component: AtualizarCadastroComponent },
   { path: 'adicionar-visitantes', component: AdicionarVisitantesComponent },
   { path: 'emprestimo', component: EmprestimoPublicoComponent },
+  { path: 'mural', component: MuralDigitalComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,
@@ -79,6 +82,11 @@ export const routes: Routes = [
   { 
     path: 'loans', 
     component: LoansComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'banner-management', 
+    component: BannerManagementComponent,
     canActivate: [AuthGuard]
   },
   { 
