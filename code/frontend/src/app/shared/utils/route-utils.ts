@@ -15,7 +15,8 @@ export const PUBLIC_FRONTEND_ROUTES = [
   '/mural',
   '/adicionar-visitantes',
   '/emprestimo',
-  '/atualizar-cadastro'
+  '/atualizar-cadastro',
+  '/lista-presenca'
 ] as const;
 
 /**
@@ -33,7 +34,10 @@ export const PUBLIC_API_ROUTES = [
   '/emergency/',
   '/enrollments/request',
   '/enrollments/member/',
-  '/enrollments/can-request/'
+  '/enrollments/can-request/',
+  '/events',
+  '/attendance/toggle',
+  '/attendance/event/'
 ] as const;
 
 /**
@@ -58,6 +62,16 @@ export function isPublicFrontendRoute(url: string): boolean {
 export function isPublicApiRoute(url: string): boolean {
   if (!url) return false;
   
-  return PUBLIC_API_ROUTES.some(route => url.includes(route));
+  // Normalizar URL removendo protocolo, domínio e query params
+  const normalizedUrl = url.split('?')[0].toLowerCase();
+  
+  return PUBLIC_API_ROUTES.some(route => {    
+    const cleanRoute = route.startsWith('/') ? route.substring(1) : route;
+    
+    return normalizedUrl.includes(`/${cleanRoute}`) || 
+           normalizedUrl.includes(`/api/v1/${cleanRoute}`) ||
+           normalizedUrl.endsWith(`/${cleanRoute}`) ||
+           normalizedUrl.endsWith(`/api/v1/${cleanRoute}`);
+  });
 }
 

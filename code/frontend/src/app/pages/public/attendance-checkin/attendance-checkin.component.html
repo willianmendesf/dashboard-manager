@@ -1,0 +1,141 @@
+<div class="attendance-checkin-container">
+  <div class="header-section">
+    <h1>Lista de Presença</h1>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label for="datePicker">Data do Evento:</label>
+        <input 
+          type="date" 
+          id="datePicker"
+          [(ngModel)]="selectedDate" 
+          (change)="onDateChange()"
+          class="form-control"
+        />
+      </div>
+
+      <div class="control-group">
+        <label for="eventSelect">Evento:</label>
+        <select 
+          id="eventSelect"
+          [(ngModel)]="selectedEventId" 
+          (change)="onEventChange()"
+          class="form-control"
+          [disabled]="events.length === 0"
+        >
+          <option [value]="null">Selecione um evento</option>
+          @for (event of events; track event.id) {
+            <option [value]="event.id">
+              {{ event.name }} - {{ event.startTime }} às {{ event.endTime }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="searchInput">Buscar por nome:</label>
+        <input 
+          type="text" 
+          id="searchInput"
+          [(ngModel)]="searchTerm" 
+          (input)="onSearchChange()"
+          placeholder="Buscar por nome..."
+          class="form-control"
+        />
+      </div>
+
+      <div class="control-group">
+        <label>Filtro:</label>
+        <div class="toggle-switch">
+          <button 
+            type="button"
+            [class.active]="memberTypeFilter === 'adultos'"
+            (click)="memberTypeFilter = 'adultos'; onMemberTypeChange()"
+          >
+            Adultos
+          </button>
+          <button 
+            type="button"
+            [class.active]="memberTypeFilter === 'criancas'"
+            (click)="memberTypeFilter = 'criancas'; onMemberTypeChange()"
+          >
+            Crianças
+          </button>
+        </div>
+      </div>
+    </div>
+
+    @if (error) {
+      <div class="error-message">{{ error }}</div>
+    }
+
+    @if (events.length === 0 && !loading) {
+      <div class="info-message">Nenhum evento encontrado para esta data</div>
+    }
+  </div>
+
+  <div class="members-section">
+    @if (loading) {
+      <div class="loading-message">Carregando...</div>
+    } @else if (filteredMembers.length === 0 && selectedEventId) {
+      <div class="empty-message">Nenhum membro encontrado</div>
+    } @else {
+      <div class="members-list">
+        <cdk-virtual-scroll-viewport itemSize="80" class="virtual-scroll-viewport">
+          <div 
+            *cdkVirtualFor="let memberItem of filteredMembers; trackBy: trackByMemberId"
+            class="member-card" 
+            [class.present]="memberItem.isPresent"
+          >
+            <div class="member-avatar">
+              @if (memberItem.member.fotoUrl) {
+                <img 
+                  [src]="getNormalizedPhotoUrl(memberItem.member.fotoUrl)" 
+                  [alt]="memberItem.member.nome"
+                  onerror="this.src='./img/avatar-default.png'"
+                />
+              } @else {
+                <div class="avatar-initials">{{ getInitials(memberItem.member.nome) }}</div>
+              }
+            </div>
+            
+            <div class="member-info">
+              <div class="member-name">{{ memberItem.member.nome }}</div>
+              @if (memberItem.isPresent) {
+                <div class="present-badge">✓ Presente</div>
+              }
+            </div>
+
+            <div class="member-actions">
+              @if (utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone)) {
+                <a 
+                  [href]="utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone)!"
+                  target="_blank"
+                  class="whatsapp-button"
+                  [innerHTML]="getWhatsAppIcon()"
+                  title="Abrir WhatsApp"
+                ></a>
+              }
+              
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  [checked]="memberItem.isPresent"
+                  [disabled]="memberItem.isLoading || !selectedEventId"
+                  (change)="toggleAttendance(memberItem)"
+                />
+                <span class="checkmark"></span>
+                <span class="checkbox-label">Presente</span>
+              </label>
+              
+              @if (memberItem.isLoading) {
+                <div class="loading-spinner-small"></div>
+              }
+            </div>
+          </div>
+        </cdk-virtual-scroll-viewport>
+      </div>
+    }
+  </div>
+</div>
+

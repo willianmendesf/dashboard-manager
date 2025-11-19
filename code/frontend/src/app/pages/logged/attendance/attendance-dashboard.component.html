@@ -1,0 +1,223 @@
+<pagetitle
+  title="Presença"
+  subtitle="Gerenciamento de presença e visitantes"
+></pagetitle>
+
+<div class="tabs-container">
+  <div class="tabs-header">
+    <button 
+      type="button"
+      class="tab-button"
+      [class.active]="activeTab === 'attendance'"
+      (click)="activeTab = 'attendance'"
+    >
+      Presença
+    </button>
+    <button 
+      type="button"
+      class="tab-button"
+      [class.active]="activeTab === 'visitors'"
+      (click)="activeTab = 'visitors'"
+    >
+      Visitantes
+    </button>
+  </div>
+
+  <div class="tabs-content">
+    @if (activeTab === 'attendance') {
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Estatísticas de Presença</h3>
+            <div class="chart-controls">
+              <div class="controls-row">
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="useCustomRange"
+                      (change)="onChartDateRangeChange()"
+                    />
+                    <span>Intervalo customizado</span>
+                  </label>
+                </div>
+                @if (useCustomRange) {
+                  <div class="control-separator"></div>
+                  <div class="date-range-controls">
+                    <div class="date-input-group">
+                      <label for="chartStartDate">Data Início</label>
+                      <input
+                        id="chartStartDate"
+                        type="date"
+                        [(ngModel)]="chartStartDate"
+                        (change)="onChartDateRangeChange()"
+                        class="date-input"
+                      />
+                    </div>
+                    <div class="date-input-group">
+                      <label for="chartEndDate">Data Fim</label>
+                      <input
+                        id="chartEndDate"
+                        type="date"
+                        [(ngModel)]="chartEndDate"
+                        (change)="onChartDateRangeChange()"
+                        class="date-input"
+                      />
+                    </div>
+                  </div>
+                }
+                <div class="control-separator"></div>
+                <div class="control-buttons">
+                  <button
+                    type="button"
+                    class="btn-reset"
+                    (click)="resetChartToDefault()"
+                    [disabled]="!useCustomRange"
+                  >
+                    <span>Resetar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-save"
+                    (click)="saveAsDefault()"
+                  >
+                    <span>Salvar como Padrão</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            @if (lineChartData.labels && lineChartData.labels.length > 0) {
+              <canvas
+                baseChart
+                [data]="lineChartData"
+                [options]="lineChartOptions"
+                [type]="lineChartType">
+              </canvas>
+            } @else {
+              <div class="no-data-message">
+                <p>Nenhum dado disponível</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Management Section -->
+      <div class="management-section">
+        <div class="section-header">
+          <h3>Gerenciar Presenças</h3>
+          <div class="filters">
+            <div class="filter-group">
+              <label for="datePicker">Data:</label>
+              <input 
+                type="date" 
+                id="datePicker"
+                [(ngModel)]="selectedDate" 
+                (change)="onDateChange()"
+                class="form-control"
+              />
+            </div>
+            <div class="filter-group">
+              <label for="eventSelect">Evento:</label>
+              <select 
+                id="eventSelect"
+                [(ngModel)]="selectedEventId" 
+                (change)="onEventChange()"
+                class="form-control"
+                [disabled]="events.length === 0"
+              >
+                <option [value]="null">Selecione um evento</option>
+                @for (event of events; track event.id) {
+                  <option [value]="event.id">
+                    {{ event.name }} - {{ event.startTime }} às {{ event.endTime }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="searchInput">Buscar:</label>
+              <input 
+                type="text" 
+                id="searchInput"
+                [(ngModel)]="searchTerm" 
+                (input)="onSearchChange()"
+                placeholder="Buscar por nome..."
+                class="form-control"
+              />
+            </div>
+          </div>
+        </div>
+
+        @if (error) {
+          <div class="error-message">{{ error }}</div>
+        }
+
+        @if (loading) {
+          <div class="loading-message">Carregando...</div>
+        } @else if (filteredMembers.length === 0 && selectedEventId) {
+          <div class="empty-message">Nenhum membro encontrado</div>
+        } @else {
+          <div class="members-list">
+            @for (memberItem of filteredMembers; track memberItem.member.id) {
+              <div class="member-card" [class.present]="memberItem.isPresent">
+                <div class="member-avatar">
+                  @if (memberItem.member.fotoUrl) {
+                    <img 
+                      [src]="getNormalizedPhotoUrl(memberItem.member.fotoUrl)" 
+                      [alt]="memberItem.member.nome"
+                      onerror="this.src='./img/avatar-default.png'"
+                    />
+                  } @else {
+                    <div class="avatar-initials">{{ getInitials(memberItem.member.nome) }}</div>
+                  }
+                </div>
+                
+                <div class="member-info">
+                  <div class="member-name">{{ memberItem.member.nome }}</div>
+                  @if (memberItem.isPresent) {
+                    <div class="present-badge">✓ Presente</div>
+                  }
+                </div>
+
+                <div class="member-actions">
+                  @if (utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone)) {
+                    <a 
+                      [href]="utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone)!"
+                      target="_blank"
+                      class="whatsapp-button"
+                      [innerHTML]="getWhatsAppIcon()"
+                      title="Abrir WhatsApp"
+                    ></a>
+                  }
+                  
+                  <label class="checkbox-container">
+                    <input 
+                      type="checkbox" 
+                      [checked]="memberItem.isPresent"
+                      [disabled]="memberItem.isLoading || !selectedEventId"
+                      (change)="toggleAttendance(memberItem)"
+                    />
+                    <span class="checkmark"></span>
+                    <span class="checkbox-label">Presente</span>
+                  </label>
+                  
+                  @if (memberItem.isLoading) {
+                    <div class="loading-spinner-small"></div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (activeTab === 'visitors') {
+      <app-visitor-management></app-visitor-management>
+    }
+  </div>
+</div>
+

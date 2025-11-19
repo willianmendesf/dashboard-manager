@@ -23,6 +23,8 @@ import { EmprestimoPublicoComponent } from './pages/public/emprestimo-publico/em
 import { LoansComponent } from './pages/logged/loans/loans.component';
 import { MuralDigitalComponent } from './pages/public/mural-digital/mural-digital.component';
 import { BannerManagementComponent } from './pages/logged/banner-management/banner-management.component';
+import { AttendanceCheckinComponent } from './pages/public/attendance-checkin/attendance-checkin.component';
+import { AttendanceDashboardComponent } from './pages/logged/attendance/attendance-dashboard.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/landing', pathMatch: 'full' },
@@ -34,6 +36,7 @@ export const routes: Routes = [
   { path: 'adicionar-visitantes', component: AdicionarVisitantesComponent },
   { path: 'emprestimo', component: EmprestimoPublicoComponent },
   { path: 'mural', component: MuralDigitalComponent },
+  { path: 'lista-presenca', component: AttendanceCheckinComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,
@@ -77,6 +80,11 @@ export const routes: Routes = [
   { 
     path: 'visitor-management', 
     component: VisitorManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'dashboard/attendance', 
+    component: AttendanceDashboardComponent,
     canActivate: [AuthGuard]
   },
   { 
