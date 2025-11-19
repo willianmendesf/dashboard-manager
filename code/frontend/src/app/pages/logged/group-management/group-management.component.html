@@ -251,9 +251,9 @@
           <label class="radio-option">
             <input
               type="radio"
+              [name]="'removeGroup_' + selectedMember.id"
               [value]="enrollment.id"
-              [(ngModel)]="selectedEnrollmentToRemove"
-              [ngModel]="selectedEnrollmentToRemove?.id === enrollment.id ? enrollment : null"
+              [checked]="selectedEnrollmentToRemove?.id === enrollment.id"
               (change)="selectedEnrollmentToRemove = enrollment"
             />
             {{ enrollment.groupName }}
