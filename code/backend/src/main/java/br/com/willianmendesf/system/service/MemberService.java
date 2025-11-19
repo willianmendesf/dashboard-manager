@@ -2,11 +2,13 @@ package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.exception.MembersException;
 import br.com.willianmendesf.system.exception.UserException;
+import br.com.willianmendesf.system.model.dto.GroupEnrollmentDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
 import br.com.willianmendesf.system.model.dto.UpdateMemberDTO;
 import br.com.willianmendesf.system.model.entity.GroupEntity;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
+import br.com.willianmendesf.system.repository.GroupEnrollmentRepository;
 import br.com.willianmendesf.system.repository.GroupRepository;
 import br.com.willianmendesf.system.repository.MemberRepository;
 import br.com.willianmendesf.system.service.utils.CPFUtil;
@@ -21,6 +23,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -31,12 +34,19 @@ public class MemberService {
 
     private final MemberRepository repository;
     private final GroupRepository groupRepository;
+    private final GroupEnrollmentRepository enrollmentRepository;
 
     public List<MemberDTO> getAll() {
         try {
             log.info("Getting all members from database");
             return repository.findAllWithGroups().stream()
-                    .map(MemberDTO::new)
+                    .map(member -> {
+                        List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(member.getId())
+                                .stream()
+                                .map(GroupEnrollmentDTO::new)
+                                .collect(Collectors.toList());
+                        return new MemberDTO(member, enrollments);
+                    })
                     .collect(java.util.stream.Collectors.toList());
         } catch (Exception e) {
             throw new MembersException("Error to return values" ,e);
@@ -47,7 +57,13 @@ public class MemberService {
         try {
             log.info("Getting all members by group ID: {}", groupId);
             return repository.findByGroupsId(groupId).stream()
-                    .map(MemberDTO::new)
+                    .map(member -> {
+                        List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(member.getId())
+                                .stream()
+                                .map(GroupEnrollmentDTO::new)
+                                .collect(Collectors.toList());
+                        return new MemberDTO(member, enrollments);
+                    })
                     .collect(java.util.stream.Collectors.toList());
         } catch (Exception e) {
             throw new MembersException("Error to return members by group", e);
@@ -59,7 +75,11 @@ public class MemberService {
             log.info("Getting member by ID: {}", id);
             MemberEntity entity = repository.findByIdWithGroups(id)
                     .orElseThrow(() -> new MembersException("Cadastro not found for ID: " + id));
-            return new MemberDTO(entity);
+            List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(id)
+                    .stream()
+                    .map(GroupEnrollmentDTO::new)
+                    .collect(Collectors.toList());
+            return new MemberDTO(entity, enrollments);
         } catch (MembersException e) {
             throw e;
         } catch (Exception e) {
@@ -220,7 +240,11 @@ public class MemberService {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
             }
             
-            return new MemberDTO(entity);
+            List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(entity.getId())
+                    .stream()
+                    .map(GroupEnrollmentDTO::new)
+                    .collect(Collectors.toList());
+            return new MemberDTO(entity, enrollments);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {

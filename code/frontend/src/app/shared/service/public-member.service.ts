@@ -10,6 +10,8 @@ export interface GroupDTO {
   memberCount?: number;
 }
 
+import { GroupEnrollmentDTO } from './enrollment.service';
+
 export interface MemberDTO {
   id?: number;
   nome?: string;
@@ -32,6 +34,7 @@ export interface MemberDTO {
   cidade?: string;
   estado?: string;
   groupIds?: number[];
+  groupEnrollments?: GroupEnrollmentDTO[];
 }
 
 export interface UpdateMemberDTO {

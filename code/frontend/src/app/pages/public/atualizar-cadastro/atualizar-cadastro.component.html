@@ -292,18 +292,66 @@
               <div class="groups-checkbox-list">
                 @for (group of availableGroups; track group.id) {
                   <div class="checkbox-item">
-                    <input
-                      type="checkbox"
-                      [id]="'group-' + group.id"
-                      [checked]="isGroupSelected(group.id!)"
-                      (change)="toggleGroup(group.id!)"
-                    />
-                    <label [for]="'group-' + group.id">
-                      {{ group.nome }}
-                      @if (group.descricao) {
-                        <small class="text-muted"> - {{ group.descricao }}</small>
-                      }
-                    </label>
+                    @if (isGroupApproved(group.id!)) {
+                      <input
+                        type="checkbox"
+                        [id]="'group-' + group.id"
+                        [checked]="true"
+                        [disabled]="true"
+                      />
+                      <label [for]="'group-' + group.id" class="group-approved">
+                        {{ group.nome }}
+                        @if (group.descricao) {
+                          <small class="text-muted"> - {{ group.descricao }}</small>
+                        }
+                        <small class="status-text">✓ Você faz parte deste grupo</small>
+                      </label>
+                    } @else if (isGroupPending(group.id!)) {
+                      <input
+                        type="checkbox"
+                        [id]="'group-' + group.id"
+                        [checked]="true"
+                        [disabled]="true"
+                      />
+                      <label [for]="'group-' + group.id" class="group-pending">
+                        {{ group.nome }}
+                        @if (group.descricao) {
+                          <small class="text-muted"> - {{ group.descricao }}</small>
+                        }
+                        <small class="status-text">⏳ Solicitação aguardando aprovação</small>
+                      </label>
+                    } @else if (isGroupRejected(group.id!) && !canRequestGroup(group.id!)) {
+                      <input
+                        type="checkbox"
+                        [id]="'group-' + group.id"
+                        [checked]="false"
+                        [disabled]="true"
+                      />
+                      <label [for]="'group-' + group.id" class="group-rejected">
+                        {{ group.nome }}
+                        @if (group.descricao) {
+                          <small class="text-muted"> - {{ group.descricao }}</small>
+                        }
+                        <small class="status-text">✗ Solicitação rejeitada. Você poderá solicitar novamente em {{ getRejectionDate(group.id!) }}</small>
+                        @if (getRejectionReason(group.id!)) {
+                          <small class="rejection-reason">Motivo: {{ getRejectionReason(group.id!) }}</small>
+                        }
+                      </label>
+                    } @else {
+                      <input
+                        type="checkbox"
+                        [id]="'group-' + group.id"
+                        [checked]="false"
+                        (change)="toggleGroup(group.id!)"
+                        [disabled]="isLoading"
+                      />
+                      <label [for]="'group-' + group.id">
+                        {{ group.nome }}
+                        @if (group.descricao) {
+                          <small class="text-muted"> - {{ group.descricao }}</small>
+                        }
+                      </label>
+                    }
                   </div>
                 }
               </div>

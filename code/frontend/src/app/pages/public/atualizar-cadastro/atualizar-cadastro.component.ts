@@ -5,6 +5,9 @@ import { Router, RouterModule } from '@angular/router';
 import { PublicMemberService, MemberDTO, UpdateMemberDTO, GroupDTO } from '../../../shared/service/public-member.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { EnrollmentService, GroupEnrollmentDTO } from '../../../shared/service/enrollment.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 function cpfValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) {
@@ -68,10 +71,14 @@ export class AtualizarCadastroComponent implements OnInit {
   hasConjugueCPF = false; // Flag para controlar write-once
   availableGroups: GroupDTO[] = [];
   selectedGroupIds: number[] = [];
+  memberEnrollments: GroupEnrollmentDTO[] = [];
+  enrollmentStatusMap: Map<number, GroupEnrollmentDTO> = new Map();
+  canRequestMap: Map<number, boolean> = new Map();
 
   constructor(
     private fb: FormBuilder,
     private memberService: PublicMemberService,
+    private enrollmentService: EnrollmentService,
     private notificationService: NotificationService,
     private cdr: ChangeDetectorRef,
     private router: Router
@@ -150,6 +157,7 @@ export class AtualizarCadastroComponent implements OnInit {
     this.memberService.getMemberByCpf(cpf).subscribe({
       next: (member) => {
         this.foundMember = member;
+        this.loadMemberEnrollments(member.id!);
         this.isLoading = false;
         this.showEditForm = true;
         this.cdr.detectChanges();
@@ -165,6 +173,51 @@ export class AtualizarCadastroComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  loadMemberEnrollments(memberId: number): void {
+    this.enrollmentService.getMemberEnrollments(memberId, true).subscribe({
+      next: (enrollments) => {
+        this.memberEnrollments = enrollments;
+        this.populateEnrollmentMap();
+        this.loadCanRequestMap(memberId);
+      },
+      error: (err) => {
+        console.error('Error loading enrollments:', err);
+        this.memberEnrollments = [];
+        this.enrollmentStatusMap.clear();
+      }
+    });
+  }
+
+  populateEnrollmentMap(): void {
+    this.enrollmentStatusMap.clear();
+    this.memberEnrollments.forEach(enrollment => {
+      this.enrollmentStatusMap.set(enrollment.groupId, enrollment);
+    });
+  }
+
+  loadCanRequestMap(memberId: number): void {
+    const requests = this.availableGroups.map(group => {
+      const enrollment = this.enrollmentStatusMap.get(group.id!);
+      if (enrollment && enrollment.status === 'REJECTED') {
+        return this.enrollmentService.canRequestAgain(memberId, group.id!, true)
+          .pipe(
+            map(canRequest => ({ groupId: group.id!, canRequest })),
+            catchError(() => of({ groupId: group.id!, canRequest: false }))
+          );
+      }
+      return of({ groupId: group.id!, canRequest: true });
+    });
+
+    if (requests.length > 0) {
+      forkJoin(requests).subscribe(results => {
+        results.forEach(result => {
+          this.canRequestMap.set(result.groupId!, result.canRequest);
+        });
+        this.cdr.detectChanges();
+      });
+    }
   }
 
   private populateEditForm(member: MemberDTO): void {
@@ -183,8 +236,10 @@ export class AtualizarCadastroComponent implements OnInit {
 
     this.hasConjugueCPF = !!(member.conjugueCPF && member.conjugueCPF.trim().length > 0);
 
-    // Carrega os grupos selecionados
-    this.selectedGroupIds = member.groupIds || [];
+    // Carrega os grupos selecionados (apenas APPROVED para compatibilidade)
+    this.selectedGroupIds = member.groupEnrollments
+      ?.filter(e => e.status === 'APPROVED')
+      .map(e => e.groupId) || [];
 
     this.editForm.patchValue({
       cpf: member.cpf || '',
@@ -267,7 +322,6 @@ export class AtualizarCadastroComponent implements OnInit {
       rg: formData.rg,
       conjugueCPF: conjugueCPF.length > 0 ? conjugueCPF : undefined,
       tipoCadastro: formData.tipoCadastro,
-      groupIds: this.selectedGroupIds.length > 0 ? this.selectedGroupIds : undefined,
       rede: formData.rede,
       operadora: formData.operadora,
       contato: formData.contato
@@ -296,23 +350,102 @@ export class AtualizarCadastroComponent implements OnInit {
     this.foundMember = null;
     this.hasConjugueCPF = false;
     this.selectedGroupIds = [];
+    this.memberEnrollments = [];
+    this.enrollmentStatusMap.clear();
+    this.canRequestMap.clear();
     this.searchForm.reset();
     this.editForm.reset();
     this.editForm.get('estadoCivil')?.enable();
     this.editForm.get('conjugueCPF')?.enable();
   }
 
-  toggleGroup(groupId: number): void {
-    const index = this.selectedGroupIds.indexOf(groupId);
-    if (index > -1) {
-      this.selectedGroupIds.splice(index, 1);
-    } else {
-      this.selectedGroupIds.push(groupId);
+  getGroupStatus(groupId: number): 'APPROVED' | 'PENDING' | 'REJECTED' | null {
+    const enrollment = this.enrollmentStatusMap.get(groupId);
+    return enrollment ? (enrollment.status as 'APPROVED' | 'PENDING' | 'REJECTED') : null;
+  }
+
+  isGroupApproved(groupId: number): boolean {
+    return this.getGroupStatus(groupId) === 'APPROVED';
+  }
+
+  isGroupPending(groupId: number): boolean {
+    return this.getGroupStatus(groupId) === 'PENDING';
+  }
+
+  isGroupRejected(groupId: number): boolean {
+    return this.getGroupStatus(groupId) === 'REJECTED';
+  }
+
+  canRequestGroup(groupId: number): boolean {
+    const enrollment = this.enrollmentStatusMap.get(groupId);
+    if (!enrollment) return true;
+    if (enrollment.status === 'REJECTED') {
+      return this.canRequestMap.get(groupId) ?? false;
     }
+    return false;
+  }
+
+  getRejectionDate(groupId: number): string {
+    const enrollment = this.enrollmentStatusMap.get(groupId);
+    if (!enrollment || !enrollment.rejectedAt) return '';
+    const date = new Date(enrollment.rejectedAt);
+    const futureDate = new Date(date);
+    futureDate.setDate(futureDate.getDate() + 30);
+    return futureDate.toLocaleDateString('pt-BR');
+  }
+
+  getRejectionReason(groupId: number): string | null {
+    const enrollment = this.enrollmentStatusMap.get(groupId);
+    return enrollment?.rejectionReason || null;
+  }
+
+  toggleGroup(groupId: number): void {
+    if (!this.foundMember?.id) return;
+
+    const status = this.getGroupStatus(groupId);
+    
+    if (status === 'APPROVED') {
+      // Solicitar saída - criar PENDING para remoção (ou remover direto?)
+      // Por enquanto, apenas informar que precisa ser feito pelo admin
+      this.notificationService.showError('Para sair de um grupo, entre em contato com o administrador.');
+      return;
+    }
+
+    if (status === 'PENDING') {
+      this.notificationService.showInfo('Você já tem uma solicitação pendente para este grupo.');
+      return;
+    }
+
+    if (status === 'REJECTED' && !this.canRequestGroup(groupId)) {
+      const date = this.getRejectionDate(groupId);
+      this.notificationService.showError(`Você poderá solicitar novamente em ${date}`);
+      return;
+    }
+
+    // Criar nova solicitação
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    
+    this.enrollmentService.requestEnrollment(this.foundMember.id, groupId, true).subscribe({
+      next: (enrollment) => {
+        this.memberEnrollments.push(enrollment);
+        this.enrollmentStatusMap.set(groupId, enrollment);
+        this.notificationService.showSuccess('Solicitação enviada! Aguarde a aprovação do administrador.');
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error requesting enrollment:', err);
+        const errorMessage = err?.error?.message || err?.error || 'Erro ao solicitar participação no grupo';
+        this.notificationService.showError(errorMessage);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   isGroupSelected(groupId: number): boolean {
-    return this.selectedGroupIds.includes(groupId);
+    return this.isGroupApproved(groupId) || this.isGroupPending(groupId);
   }
 
   goToLanding(): void {

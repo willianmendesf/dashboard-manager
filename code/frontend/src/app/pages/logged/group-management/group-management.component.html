@@ -1,30 +1,165 @@
 <pagetitle title="Gerenciamento de Grupos" subtitle="Gerencie os grupos de voluntariado e atividades"></pagetitle>
 
-<div class="content-card">
-  <div class="toolbar">
-    <div class="search-box">
-      <input
-        type="text"
-        class="form-control"
-        placeholder="Buscar grupos..."
-        [(ngModel)]="searchTerm"
-        (input)="filterGroups()"
-      />
-    </div>
-    <button class="btn btn-primary" (click)="openCreateModal()">
-      + Novo Grupo
-    </button>
-  </div>
-
-  <app-data-table
-    [columns]="tableColumns"
-    [data]="getTableData()"
-    [actions]="getTableActions()"
-    [loading]="isLoading"
-    emptyMessage="Nenhum grupo encontrado"
-  ></app-data-table>
+<!-- Tabs -->
+<div class="filter-tabs">
+  <button 
+    class="tab-button" 
+    [class.active]="activeTab === 'groups'"
+    (click)="switchTab('groups')"
+  >
+    Grupos
+  </button>
+  <button 
+    class="tab-button" 
+    [class.active]="activeTab === 'approvals'"
+    (click)="switchTab('approvals')"
+  >
+    Aprovações
+  </button>
+  <button 
+    class="tab-button" 
+    [class.active]="activeTab === 'members'"
+    (click)="switchTab('members')"
+  >
+    Membros por Grupo
+  </button>
 </div>
 
+<!-- Aba Grupos -->
+@if (activeTab === 'groups') {
+  <div class="content-card">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar grupos..."
+          [(ngModel)]="searchTerm"
+          (input)="filterGroups()"
+        />
+      </div>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        + Novo Grupo
+      </button>
+    </div>
+
+    <app-data-table
+      [columns]="tableColumns"
+      [data]="getTableData()"
+      [actions]="getTableActions()"
+      [loading]="isLoading"
+      emptyMessage="Nenhum grupo encontrado"
+    ></app-data-table>
+  </div>
+}
+
+<!-- Aba Aprovações -->
+@if (activeTab === 'approvals') {
+  <div class="content-card">
+    <app-data-table
+      [columns]="approvalsColumns"
+      [data]="getApprovalsTableData()"
+      [actions]="getApprovalsTableActions()"
+      [loading]="isLoadingApprovals"
+      emptyMessage="Nenhuma solicitação pendente"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'foto') {
+          <img 
+            [src]="getEnrollmentImageUrl(row._original)" 
+            class="avatar-small"
+            alt="Foto"
+            onerror="this.src='./img/avatar-default.png'"
+          />
+        } @else if (column.key === 'whatsapp') {
+          @if (getEnrollmentWhatsAppLink(row._original)) {
+            <a 
+              [href]="getEnrollmentWhatsAppLink(row._original)!" 
+              target="_blank" 
+              class="whatsapp-link"
+              [innerHTML]="getWhatsAppIcon()"
+              title="Abrir no WhatsApp"
+            ></a>
+          } @else {
+            <span class="text-muted">-</span>
+          }
+        } @else {
+          {{ row[column.key] || '-' }}
+        }
+      </ng-template>
+    </app-data-table>
+  </div>
+}
+
+<!-- Aba Membros -->
+@if (activeTab === 'members') {
+  <div class="content-card">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar por nome..."
+          [(ngModel)]="memberSearchTerm"
+          (input)="filterMembers()"
+        />
+      </div>
+      <select 
+        class="form-control filter-select" 
+        [(ngModel)]="groupFilter"
+        (change)="filterMembers()"
+      >
+        <option [value]="null">Todos os Grupos</option>
+        @for (group of groups; track group.id) {
+          <option [value]="group.id">{{ group.nome }}</option>
+        }
+      </select>
+    </div>
+
+    <app-data-table
+      [columns]="membersColumns"
+      [data]="getMembersTableData()"
+      [actions]="getMembersTableActions()"
+      [loading]="isLoadingMembers"
+      emptyMessage="Nenhum membro encontrado"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'foto') {
+          <img 
+            [src]="getMemberImageUrl(row._original)" 
+            class="avatar-small"
+            alt="Foto"
+            onerror="this.src='./img/avatar-default.png'"
+          />
+        } @else if (column.key === 'grupos') {
+          <div class="groups-badges">
+            @if (row.grupos) {
+              @for (enrollment of row.grupos; track enrollment.id) {
+                <span class="group-badge">{{ enrollment.groupName }}</span>
+              }
+            }
+          </div>
+        } @else if (column.key === 'whatsapp') {
+          @if (getMemberWhatsAppLink(row._original)) {
+            <a 
+              [href]="getMemberWhatsAppLink(row._original)!" 
+              target="_blank" 
+              class="whatsapp-link"
+              [innerHTML]="getWhatsAppIcon()"
+              title="Abrir no WhatsApp"
+            ></a>
+          } @else {
+            <span class="text-muted">-</span>
+          }
+        } @else {
+          {{ row[column.key] || '-' }}
+        }
+      </ng-template>
+    </app-data-table>
+  </div>
+}
+
+<!-- Modal Criar/Editar Grupo -->
 <app-modal
   [title]="modalTitle"
   [isOpen]="showModal"
@@ -56,4 +191,72 @@
       ></textarea>
     </div>
   </div>
+</app-modal>
+
+<!-- Modal Rejeitar Solicitação -->
+<app-modal
+  title="Rejeitar Solicitação"
+  [isOpen]="showRejectModal"
+  [size]="'medium'"
+  [footerButtons]="getRejectModalButtons()"
+  (close)="closeRejectModal()"
+>
+  @if (selectedEnrollment) {
+    <div class="form-container">
+      <p>Tem certeza que deseja rejeitar a solicitação de <strong>{{ selectedEnrollment.memberName }}</strong> para o grupo <strong>{{ selectedEnrollment.groupName }}</strong>?</p>
+      
+      <div class="form-group">
+        <label>
+          <input
+            type="checkbox"
+            [(ngModel)]="rejectJustify"
+          />
+          Justificar rejeição
+        </label>
+      </div>
+
+      @if (rejectJustify) {
+        <div class="form-group">
+          <label for="rejectReason">Motivo da Rejeição *</label>
+          <textarea
+            id="rejectReason"
+            class="form-control"
+            [(ngModel)]="rejectReason"
+            placeholder="Informe o motivo da rejeição..."
+            rows="4"
+          ></textarea>
+        </div>
+      }
+    </div>
+  }
+</app-modal>
+
+<!-- Modal Remover do Grupo -->
+<app-modal
+  title="Remover do Grupo"
+  [isOpen]="showRemoveModal"
+  [size]="'medium'"
+  [footerButtons]="getRemoveModalButtons()"
+  (close)="closeRemoveModal()"
+>
+  @if (selectedMember) {
+    <div class="form-container">
+      <p>Selecione de qual grupo deseja remover <strong>{{ selectedMember.nome }}</strong>:</p>
+      
+      <div class="form-group">
+        @for (enrollment of getApprovedEnrollments(selectedMember); track enrollment.id) {
+          <label class="radio-option">
+            <input
+              type="radio"
+              [value]="enrollment.id"
+              [(ngModel)]="selectedEnrollmentToRemove"
+              [ngModel]="selectedEnrollmentToRemove?.id === enrollment.id ? enrollment : null"
+              (change)="selectedEnrollmentToRemove = enrollment"
+            />
+            {{ enrollment.groupName }}
+          </label>
+        }
+      </div>
+    </div>
+  }
 </app-modal>
