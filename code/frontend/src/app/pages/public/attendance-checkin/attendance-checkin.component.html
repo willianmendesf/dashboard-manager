@@ -9,65 +9,62 @@
       </div>
     </div>
     
-    <div class="controls">
-      <div class="control-group">
-        <label for="datePicker">Data do Evento:</label>
-        <input 
-          type="date" 
-          id="datePicker"
-          [(ngModel)]="selectedDate" 
-          (change)="onDateChange()"
-          class="form-control"
-        />
-      </div>
-
-      <div class="control-group">
-        <label for="eventSelect">Evento:</label>
-        <select 
-          id="eventSelect"
-          [(ngModel)]="selectedEventId" 
-          (change)="onEventChange()"
-          class="form-control"
-          [disabled]="events.length === 0"
-        >
-          <option [value]="null">Selecione um evento</option>
-          @for (event of events; track event.id) {
-            <option [value]="event.id">
-              {{ event.name }} - {{ event.startTime }} às {{ event.endTime }}
-            </option>
-          }
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="searchInput">Buscar por nome:</label>
-        <input 
-          type="text" 
-          id="searchInput"
-          [(ngModel)]="searchTerm" 
-          (input)="onSearchChange()"
-          placeholder="Buscar por nome..."
-          class="form-control"
-        />
-      </div>
-
-      <div class="control-group">
-        <label>Filtro:</label>
-        <div class="toggle-switch">
-          <button 
-            type="button"
-            [class.active]="memberTypeFilter === 'adultos'"
-            (click)="memberTypeFilter = 'adultos'; onMemberTypeChange()"
+    <div class="actions-bar">
+      <div class="search-filters">
+        <div class="filter-group">
+          <label for="datePicker">Data:</label>
+          <input 
+            type="date" 
+            id="datePicker"
+            [(ngModel)]="selectedDate" 
+            (change)="onDateChange()"
+            class="form-control"
+          />
+        </div>
+        <div class="filter-group">
+          <label for="eventSelect">Evento:</label>
+          <select 
+            id="eventSelect"
+            [(ngModel)]="selectedEventId" 
+            (change)="onEventChange()"
+            class="form-control"
+            [disabled]="events.length === 0"
           >
-            Adultos
-          </button>
-          <button 
-            type="button"
-            [class.active]="memberTypeFilter === 'criancas'"
-            (click)="memberTypeFilter = 'criancas'; onMemberTypeChange()"
-          >
-            Crianças
-          </button>
+            <option [value]="null">Selecione um evento</option>
+            @for (event of events; track event.id) {
+              <option [value]="event.id">
+                {{ event.name }} - {{ event.startTime }} às {{ event.endTime }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Buscar membros..."
+          />
+          <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
+        </div>
+        <div class="filter-group">
+          <label>Filtro:</label>
+          <div class="toggle-switch">
+            <button 
+              type="button"
+              [class.active]="memberTypeFilter === 'adultos'"
+              (click)="memberTypeFilter = 'adultos'; onMemberTypeChange()"
+            >
+              Adultos
+            </button>
+            <button 
+              type="button"
+              [class.active]="memberTypeFilter === 'criancas'"
+              (click)="memberTypeFilter = 'criancas'; onMemberTypeChange()"
+            >
+              Crianças
+            </button>
+          </div>
         </div>
       </div>
     </div>
