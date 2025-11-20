@@ -288,15 +288,12 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   }
 
   updateChartData(stats: AttendanceStats) {
-    const labels = stats.dailyCounts.map(d => {
-      const date = new Date(d.date);
-      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    // Create maps for presence and visitor data
+    const presenceMap = new Map<string, number>();
+    stats.dailyCounts.forEach(d => {
+      presenceMap.set(d.date, d.count);
     });
-    
-    // Base presence data
-    let presenceData = stats.dailyCounts.map(d => d.count);
-    
-    // Create a map of visitor stats by date
+
     const visitorMap = new Map<string, number>();
     if (this.visitorStats && this.visitorStats.length > 0) {
       this.visitorStats.forEach(vs => {
@@ -305,27 +302,48 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       });
     }
 
+    // Collect all unique dates from both presence and visitors
+    const allDates = new Set<string>();
+    presenceMap.forEach((_, date) => allDates.add(date));
+    visitorMap.forEach((_, date) => allDates.add(date));
+
+    // Sort dates chronologically
+    const sortedDates = Array.from(allDates).sort((a, b) => {
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
+
+    // Create labels from sorted dates
+    const labels = sortedDates.map(date => {
+      const dateObj = new Date(date);
+      return dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    });
+
+    // Build data arrays for each date
+    let presenceData = sortedDates.map(date => {
+      return presenceMap.get(date) || 0;
+    });
+
     // Combine visitors with presence if option is enabled
     if (this.includeVisitorsInPresence) {
-      presenceData = stats.dailyCounts.map((d, index) => {
-        const dateKey = d.date;
-        const visitors = visitorMap.get(dateKey) || 0;
-        return d.count + visitors;
+      presenceData = sortedDates.map(date => {
+        const presence = presenceMap.get(date) || 0;
+        const visitors = visitorMap.get(date) || 0;
+        return presence + visitors;
       });
     }
 
     // Visitor separate line data
     const visitorData = this.showVisitorsSeparate 
-      ? stats.dailyCounts.map(d => {
-          const dateKey = d.date;
-          return visitorMap.get(dateKey) || 0;
+      ? sortedDates.map(date => {
+          return visitorMap.get(date) || 0;
         })
       : null;
 
     // Absence data
     const absenceData = this.showAbsences
-      ? stats.dailyCounts.map(d => {
-          return Math.max(0, this.totalMembers - d.count);
+      ? sortedDates.map(date => {
+          const presence = presenceMap.get(date) || 0;
+          return Math.max(0, this.totalMembers - presence);
         })
       : null;
 
