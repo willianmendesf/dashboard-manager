@@ -130,6 +130,86 @@
     margin-top: 20px;
     border: 1px solid #bfdbfe;
   }
+
+  .photo-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .member-photo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .photo-placeholder {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #667eea;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  }
+
+  .status-present {
+    color: #059669;
+    font-weight: 600;
+  }
+
+  .status-absent {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .whatsapp-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #25d366;
+    color: white;
+    text-decoration: none;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #20ba5a;
+      transform: scale(1.1);
+    }
+  }
+
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+
+    input[type="checkbox"] {
+      width: 28px !important;
+      height: 28px !important;
+      cursor: pointer;
+      accent-color: #667eea;
+      margin: 0;
+      flex-shrink: 0;
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 
 .members-section {
@@ -262,24 +342,31 @@
       .checkbox-container {
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
         cursor: pointer;
         user-select: none;
+        padding: 8px;
+        min-width: 44px;
+        min-height: 44px;
+        -webkit-tap-highlight-color: transparent;
 
         input[type="checkbox"] {
-          width: 20px;
-          height: 20px;
+          width: 28px;
+          height: 28px;
           cursor: pointer;
+          accent-color: #667eea;
+          margin: 0;
+          flex-shrink: 0;
 
           &:disabled {
             cursor: not-allowed;
             opacity: 0.6;
           }
-        }
 
-        .checkbox-label {
-          font-size: 14px;
-          color: #555;
+          @media (max-width: 768px) {
+            width: 32px;
+            height: 32px;
+          }
         }
       }
 

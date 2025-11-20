@@ -230,7 +230,6 @@
                   [disabled]="row.isLoading || !selectedEventId"
                   (change)="toggleAttendance(row._original)"
                 />
-                <span class="checkbox-label">{{ row.presenca ? 'Presente' : 'Ausente' }}</span>
               </label>
             } @else {
               {{ row[column.key] || '-' }}
