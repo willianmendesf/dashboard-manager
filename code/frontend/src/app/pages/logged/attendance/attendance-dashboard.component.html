@@ -86,6 +86,38 @@
                   </button>
                 </div>
               </div>
+              <div class="controls-row chart-options">
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="includeVisitorsInPresence"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Incluir visitantes na presença</span>
+                  </label>
+                </div>
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="showVisitorsSeparate"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Mostrar visitantes separado</span>
+                  </label>
+                </div>
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="showAbsences"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Mostrar ausências</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
           <div class="chart-container">

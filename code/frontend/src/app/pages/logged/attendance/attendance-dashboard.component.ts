@@ -2,11 +2,13 @@ import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Subject, debounceTime } from 'rxjs';
+import { Subject, debounceTime, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.component';
 import { EventService, Event } from '../../../shared/service/event.service';
 import { AttendanceService, MemberAttendance, AttendanceStats } from '../../../shared/service/attendance.service';
+import { VisitorService } from '../../../shared/service/visitor.service';
+import { MemberService } from '../../../shared/service/member.service';
 import { ApiService } from '../../../shared/service/api.service';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { MessageIcons } from '../../../shared/lib/utils/icons';
@@ -15,6 +17,7 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { VisitorManagementComponent } from './visitor-tab/visitor-management.component';
 import { DataTableComponent, TableColumn, TableAction } from '../../../shared/lib/utils/data-table.component';
+import { VisitorStats } from './visitor-tab/model/visitor.model';
 
 interface MemberWithAttendance {
   member: any;
@@ -135,16 +138,42 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   periodType: 'weeks' | 'months' | 'years' = 'months';
   defaultIntervalMonths: number = 3;
 
+  // Chart options
+  includeVisitorsInPresence: boolean = false;
+  showVisitorsSeparate: boolean = false;
+  showAbsences: boolean = false;
+
+  // Data cache
+  visitorStats: VisitorStats[] = [];
+  totalMembers: number = 0;
+
   constructor(
     private eventService: EventService,
     private attendanceService: AttendanceService,
+    private visitorService: VisitorService,
+    private memberService: MemberService,
     private apiService: ApiService
   ) {}
 
   ngOnInit() {
     this.loadDefaultInterval();
+    this.loadTotalMembers();
     this.loadChartData();
     this.loadEvents();
+  }
+
+  loadTotalMembers() {
+    this.memberService.getAll()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (members) => {
+          this.totalMembers = members.length;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error loading total members:', err);
+        }
+      });
   }
 
   ngOnDestroy() {
@@ -172,11 +201,30 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
-    this.attendanceService.getStats(this.chartStartDate!, this.chartEndDate!)
+    
+    // Prepare observables
+    const observables: any[] = [
+      this.attendanceService.getStats(this.chartStartDate!, this.chartEndDate!)
+    ];
+
+    // Load visitor stats if needed
+    if (this.includeVisitorsInPresence || this.showVisitorsSeparate) {
+      observables.push(
+        this.visitorService.getStats(this.chartStartDate!, this.chartEndDate!)
+      );
+    }
+
+    forkJoin(observables)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
-        next: (stats) => {
-          this.updateChartData(stats);
+        next: (results: any[]) => {
+          const attendanceStats = results[0] as AttendanceStats;
+          if ((this.includeVisitorsInPresence || this.showVisitorsSeparate) && results.length > 1) {
+            this.visitorStats = (results[1] as VisitorStats[]) || [];
+          } else {
+            this.visitorStats = [];
+          }
+          this.updateChartData(attendanceStats);
           this.loading = false;
           this.cdr.markForCheck();
         },
@@ -194,21 +242,101 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       const date = new Date(d.date);
       return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     });
-    const data = stats.dailyCounts.map(d => d.count);
-    const averageData = new Array(data.length).fill(stats.periodAverage);
+    
+    // Base presence data
+    let presenceData = stats.dailyCounts.map(d => d.count);
+    
+    // Create a map of visitor stats by date
+    const visitorMap = new Map<string, number>();
+    if (this.visitorStats && this.visitorStats.length > 0) {
+      this.visitorStats.forEach(vs => {
+        const dateKey = new Date(vs.data).toISOString().split('T')[0];
+        visitorMap.set(dateKey, vs.quantidade);
+      });
+    }
+
+    // Combine visitors with presence if option is enabled
+    if (this.includeVisitorsInPresence) {
+      presenceData = stats.dailyCounts.map((d, index) => {
+        const dateKey = d.date;
+        const visitors = visitorMap.get(dateKey) || 0;
+        return d.count + visitors;
+      });
+    }
+
+    // Visitor separate line data
+    const visitorData = this.showVisitorsSeparate 
+      ? stats.dailyCounts.map(d => {
+          const dateKey = d.date;
+          return visitorMap.get(dateKey) || 0;
+        })
+      : null;
+
+    // Absence data
+    const absenceData = this.showAbsences
+      ? stats.dailyCounts.map(d => {
+          return Math.max(0, this.totalMembers - d.count);
+        })
+      : null;
+
+    // Average data
+    const averageData = new Array(presenceData.length).fill(stats.periodAverage);
+
+    // Build datasets array
+    const datasets: any[] = [
+      {
+        data: presenceData,
+        label: this.includeVisitorsInPresence ? 'Presenças (com Visitantes)' : 'Presenças por Evento',
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        tension: 0.4,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      },
+      {
+        data: averageData,
+        label: 'Média de Presença',
+        borderColor: '#10b981',
+        backgroundColor: 'transparent',
+        borderDash: [5, 5],
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 0
+      }
+    ];
+
+    // Add visitors separate line if enabled
+    if (this.showVisitorsSeparate && visitorData) {
+      datasets.push({
+        data: visitorData,
+        label: 'Visitantes',
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+        tension: 0.4,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      });
+    }
+
+    // Add absences line if enabled
+    if (this.showAbsences && absenceData) {
+      datasets.push({
+        data: absenceData,
+        label: 'Ausências',
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.4,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      });
+    }
 
     this.lineChartData = {
       labels: labels,
-      datasets: [
-        {
-          ...this.lineChartData.datasets[0],
-          data: data
-        },
-        {
-          ...this.lineChartData.datasets[1],
-          data: averageData
-        }
-      ]
+      datasets: datasets
     };
     this.cdr.markForCheck();
   }
@@ -220,6 +348,10 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       this.calculateDefaultDateRange();
       this.loadChartData();
     }
+  }
+
+  onChartOptionChange() {
+    this.loadChartData();
   }
 
   resetChartToDefault() {

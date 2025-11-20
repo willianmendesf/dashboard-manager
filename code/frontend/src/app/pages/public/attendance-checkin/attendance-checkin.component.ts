@@ -20,7 +20,7 @@ interface MemberWithAttendance {
 }
 
 @Component({
-  selector: 'app-attendance-checkin',
+  selector: 'app-lista-presenca',
   standalone: true,
   templateUrl: './attendance-checkin.component.html',
   styleUrl: './attendance-checkin.component.scss',
