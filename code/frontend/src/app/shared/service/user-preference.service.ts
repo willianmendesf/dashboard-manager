@@ -15,6 +15,7 @@ export interface AttendanceChartPreference {
   includeVisitorsInPresence?: boolean;
   showVisitorsSeparate?: boolean;
   showAbsences?: boolean;
+  showAverage?: boolean;
   defaultIntervalMonths?: number;
   periodType?: 'weeks' | 'months' | 'years';
 }

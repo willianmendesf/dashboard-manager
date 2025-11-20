@@ -16,6 +16,7 @@ public class AttendanceChartPreferenceDTO {
     private Boolean includeVisitorsInPresence;
     private Boolean showVisitorsSeparate;
     private Boolean showAbsences;
+    private Boolean showAverage;
     private Integer defaultIntervalMonths;
     private String periodType; // 'weeks', 'months', 'years'
 }

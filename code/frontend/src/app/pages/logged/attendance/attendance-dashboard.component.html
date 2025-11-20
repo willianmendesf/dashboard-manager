@@ -116,6 +116,16 @@
                     <span>Mostrar ausências</span>
                   </label>
                 </div>
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="showAverage"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Mostrar média</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>

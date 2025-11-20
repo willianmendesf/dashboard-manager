@@ -144,6 +144,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   includeVisitorsInPresence: boolean = false;
   showVisitorsSeparate: boolean = false;
   showAbsences: boolean = false;
+  showAverage: boolean = true;
 
   // Data cache
   visitorStats: VisitorStats[] = [];
@@ -188,6 +189,9 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
             }
             if (preference.showAbsences !== undefined) {
               this.showAbsences = preference.showAbsences;
+            }
+            if (preference.showAverage !== undefined) {
+              this.showAverage = preference.showAverage;
             }
             if (preference.defaultIntervalMonths) {
               this.defaultIntervalMonths = preference.defaultIntervalMonths;
@@ -348,7 +352,9 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       : null;
 
     // Average data
-    const averageData = new Array(presenceData.length).fill(stats.periodAverage);
+    const averageData = this.showAverage 
+      ? new Array(presenceData.length).fill(stats.periodAverage)
+      : null;
 
     // Build datasets array
     const datasets: any[] = [
@@ -361,8 +367,12 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
         fill: false,
         pointRadius: 4,
         pointHoverRadius: 6
-      },
-      {
+      }
+    ];
+
+    // Add average line if enabled
+    if (this.showAverage && averageData) {
+      datasets.push({
         data: averageData,
         label: 'Média de Presença',
         borderColor: '#10b981',
@@ -371,8 +381,8 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 0
-      }
-    ];
+      });
+    }
 
     // Add visitors separate line if enabled
     if (this.showVisitorsSeparate && visitorData) {
@@ -427,6 +437,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     this.includeVisitorsInPresence = false;
     this.showVisitorsSeparate = false;
     this.showAbsences = false;
+    this.showAverage = true;
     this.defaultIntervalMonths = 3;
     this.periodType = 'months';
     this.calculateDefaultDateRange();
@@ -453,6 +464,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       includeVisitorsInPresence: this.includeVisitorsInPresence,
       showVisitorsSeparate: this.showVisitorsSeparate,
       showAbsences: this.showAbsences,
+      showAverage: this.showAverage,
       defaultIntervalMonths: this.defaultIntervalMonths,
       periodType: this.periodType
     };
