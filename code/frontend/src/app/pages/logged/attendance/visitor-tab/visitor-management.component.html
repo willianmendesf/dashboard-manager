@@ -1,0 +1,351 @@
+<div class="graph-section">
+  <div class="graph-card">
+    <div class="graph-header">
+      <h3>Contagem de Visitantes por Data</h3>
+      <div class="graph-controls">
+        <div class="controls-row">
+          <div class="control-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="useCustomRange"
+                (change)="onChartDateRangeChange()"
+              />
+              <span>Intervalo customizado</span>
+            </label>
+          </div>
+          @if (useCustomRange) {
+            <div class="control-separator"></div>
+            <div class="date-range-controls">
+              <div class="date-input-group">
+                <label for="chartStartDate">Data Início</label>
+                <div class="date-input-wrapper">
+                  <input
+                    id="chartStartDate"
+                    type="date"
+                    [(ngModel)]="chartStartDate"
+                    (change)="onChartDateRangeChange()"
+                    class="date-input"
+                  />
+                </div>
+              </div>
+              <div class="date-input-group">
+                <label for="chartEndDate">Data Fim</label>
+                <div class="date-input-wrapper">
+                  <input
+                    id="chartEndDate"
+                    type="date"
+                    [(ngModel)]="chartEndDate"
+                    (change)="onChartDateRangeChange()"
+                    class="date-input"
+                  />
+                </div>
+              </div>
+            </div>
+          }
+          <div class="control-separator"></div>
+          <div class="control-buttons">
+            <button
+              type="button"
+              class="btn-reset"
+              (click)="resetChartToDefault()"
+              [disabled]="!useCustomRange"
+            >
+              <span class="btn-icon">↺</span>
+              <span>Resetar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-container">
+      @if (lineChartData.labels && lineChartData.labels.length > 0) {
+        <canvas
+          baseChart
+          [data]="lineChartData"
+          [options]="lineChartOptions"
+          [type]="lineChartType">
+        </canvas>
+      } @else {
+        <div class="no-data-message">
+          <p>Nenhum dado disponível</p>
+          <small>Cadastre visitantes para visualizar o gráfico</small>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<div class="actions-bar">
+  <div class="search-filters">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchTermChange()"
+        placeholder="Buscar visitantes..."
+      />
+      <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
+    </div>
+    <input
+      type="date"
+      [(ngModel)]="dateFilter"
+      (change)="onDateFilterChange()"
+      class="filter-date"
+      placeholder="Filtrar por data"
+    />
+  </div>
+  <div class="action-buttons">
+    <button class="btn-secondary" (click)="refreshData()" type="button">Atualizar</button>
+    <button class="btn-secondary" (click)="openImportModal()" type="button">
+      Importar Planilha
+    </button>
+    <button class="btn-primary" (click)="openCreateModal()" type="button">
+      <span class="btn-icon" [innerHTML]="getAddIcon()" [attr.aria-hidden]="true"></span>
+      Novo Visitante
+    </button>
+  </div>
+</div>
+
+<app-data-table
+  [columns]="tableColumns"
+  [data]="tableData"
+  [actions]="getTableActions()"
+  [loading]="isLoading"
+  emptyMessage="Nenhum visitante encontrado"
+  [striped]="true"
+  [hoverable]="true"
+  [enablePagination]="true"
+>
+  <ng-template #rowTemplate let-row let-column="column">
+    @if (column.key === 'foto') {
+      <div class="photo-cell">
+        @if (row.foto) {
+          <img [src]="row.foto" alt="Foto" class="visitor-photo" />
+        } @else {
+          <div class="photo-placeholder">Sem foto</div>
+        }
+      </div>
+    } @else {
+      {{ row[column.key] || '-' }}
+    }
+  </ng-template>
+</app-data-table>
+
+<!-- Edit/Create Visitor Modal -->
+<app-modal
+  [title]="isEditing ? 'Editar Visitante' : 'Novo Visitante'"
+  [isOpen]="showVisitorModal"
+  [size]="'large'"
+  [footerButtons]="getModalButtons()"
+  (close)="closeVisitorModal()">
+  
+  <form (ngSubmit)="saveVisitor()">
+    <div class="form-section">
+      <div class="form-group photo-upload-group">
+        <label>Foto</label>
+        <div class="photo-upload-container">
+          @if (photoPreview) {
+            <img [src]="photoPreview" alt="Preview" class="photo-preview" />
+          } @else {
+            <div class="photo-placeholder-large">Sem foto</div>
+          }
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onPhotoSelected($event)"
+            class="photo-input"
+            id="photo-input"
+          />
+          <label for="photo-input" class="photo-upload-button">
+            {{ photoPreview ? 'Alterar Foto' : 'Adicionar Foto' }}
+          </label>
+          @if (uploadingPhoto) {
+            <div class="upload-progress">Enviando...</div>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="nomeCompleto">Nome Completo *</label>
+        <input
+          id="nomeCompleto"
+          type="text"
+          [(ngModel)]="currentVisitor.nomeCompleto"
+          name="nomeCompleto"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="dataVisita">Data Visita *</label>
+        <input
+          id="dataVisita"
+          type="date"
+          [(ngModel)]="currentVisitor.dataVisita"
+          name="dataVisita"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="telefone">Telefone (WhatsApp)</label>
+        <input
+          id="telefone"
+          type="text"
+          [(ngModel)]="currentVisitor.telefone"
+          name="telefone"
+          class="form-control"
+          placeholder="(00) 00000-0000"
+          [mask]="'(00) 00000-0000'"
+          [dropSpecialCharacters]="false"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="jaFrequentaIgreja">Já Frequenta Igreja?</label>
+        <select
+          id="jaFrequentaIgreja"
+          [(ngModel)]="currentVisitor.jaFrequentaIgreja"
+          name="jaFrequentaIgreja"
+          class="form-control"
+        >
+          <option value="">Selecione</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+
+      @if (jaFrequentaIgreja === 'Sim') {
+        <div class="form-group">
+          <label for="nomeIgreja">Nome da Igreja</label>
+          <input
+            id="nomeIgreja"
+            type="text"
+            [(ngModel)]="currentVisitor.nomeIgreja"
+            name="nomeIgreja"
+            class="form-control"
+            placeholder="Digite o nome da igreja"
+          />
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="procuraIgreja">Está à Procura de Igreja?</label>
+        <select
+          id="procuraIgreja"
+          [(ngModel)]="currentVisitor.procuraIgreja"
+          name="procuraIgreja"
+          class="form-control"
+        >
+          <option value="">Selecione</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="eDeSP">É de SP?</label>
+        <select
+          id="eDeSP"
+          [ngModel]="currentVisitor.eDeSP"
+          (ngModelChange)="onEDeSPChange($event)"
+          name="eDeSP"
+          class="form-control"
+        >
+          <option [value]="true">Sim</option>
+          <option [value]="false">Não</option>
+        </select>
+      </div>
+
+      @if (!eDeSP) {
+        <div class="form-group">
+          <label for="estado">Estado *</label>
+          <select
+            id="estado"
+            [(ngModel)]="currentVisitor.estado"
+            name="estado"
+            class="form-control"
+          >
+            <option value="">Selecione o estado</option>
+            @for (estado of estadosBR; track estado) {
+              <option [value]="estado">{{ estado }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  </form>
+</app-modal>
+
+<!-- Import Modal -->
+<app-modal
+  title="Importar Visitantes"
+  [isOpen]="showImportModal"
+  [size]="'medium'"
+  [footerButtons]="getImportModalButtons()"
+  (close)="closeImportModal()">
+  
+  <div class="import-section">
+    <div class="import-actions">
+      <button type="button" class="btn-secondary" (click)="downloadTemplate()">
+        Baixar Modelo
+      </button>
+    </div>
+
+    <div
+      class="drop-zone"
+      (dragover)="onImportDragOver($event)"
+      (drop)="onImportFileDropped($event)"
+      [class.has-file]="selectedImportFile"
+    >
+      @if (!selectedImportFile) {
+        <div class="drop-zone-content">
+          <p>Arraste e solte o arquivo aqui</p>
+          <p class="drop-zone-hint">ou</p>
+          <label for="import-file-input" class="btn-secondary">
+            Selecionar Arquivo
+          </label>
+          <input
+            type="file"
+            id="import-file-input"
+            accept=".xlsx,.xls,.csv"
+            (change)="onImportFileSelected($event)"
+            style="display: none;"
+          />
+        </div>
+      } @else {
+        <div class="file-selected">
+          <p>Arquivo selecionado: <strong>{{ selectedImportFile.name }}</strong></p>
+          <button type="button" class="btn-link" (click)="selectedImportFile = null">
+            Remover
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (importProgress) {
+      <div class="import-progress">
+        <p>{{ importProgress }}</p>
+      </div>
+    }
+
+    @if (importResult) {
+      <div class="import-result">
+        <h4>Resultado da Importação</h4>
+        <p>Total: {{ importResult.totalRows }}</p>
+        <p class="success">Sucesso: {{ importResult.successCount }}</p>
+        @if (importResult.errorCount > 0) {
+          <p class="error">Erros: {{ importResult.errorCount }}</p>
+          <div class="error-list">
+            @for (error of importResult.errors; track $index) {
+              <div class="error-item">{{ error }}</div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</app-modal>

@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -164,21 +165,24 @@ public class VisitorImportService {
             visitor.setNomeCompleto(nomeCompleto.trim());
             
             // Data Visita (coluna 1)
-            String dataVisitaStr = getCellValueAsString(row.getCell(1));
-            if (dataVisitaStr != null && !dataVisitaStr.trim().isEmpty()) {
-                try {
-                    LocalDate dataVisita = parseDate(dataVisitaStr);
+            Cell dataVisitaCell = row.getCell(1);
+            LocalDate dataVisita = getCellValueAsLocalDate(dataVisitaCell);
+            if (dataVisita != null) {
+                visitor.setDataVisita(dataVisita);
+            } else {
+                // Se não conseguiu extrair a data, tenta como string
+                String dataVisitaStr = getCellValueAsString(dataVisitaCell);
+                if (dataVisitaStr != null && !dataVisitaStr.trim().isEmpty()) {
+                    dataVisita = parseDate(dataVisitaStr);
                     if (dataVisita != null) {
                         visitor.setDataVisita(dataVisita);
                     } else {
+                        log.warn("Invalid date format at row {}: {}, using current date", rowNumber, dataVisitaStr);
                         visitor.setDataVisita(LocalDate.now());
                     }
-                } catch (Exception e) {
-                    log.warn("Invalid date format at row {}: {}", rowNumber, dataVisitaStr);
+                } else {
                     visitor.setDataVisita(LocalDate.now());
                 }
-            } else {
-                visitor.setDataVisita(LocalDate.now());
             }
             
             // Telefone (coluna 2)
@@ -193,19 +197,21 @@ public class VisitorImportService {
                 visitor.setJaFrequentaIgreja(jaFrequentaIgreja.trim());
             }
             
-            // Está à Procura de Igreja? (coluna 4)
-            String procuraIgreja = getCellValueAsString(row.getCell(4));
+            String nomeIgreja = getCellValueAsString(row.getCell(4));
+            if (nomeIgreja != null && !nomeIgreja.trim().isEmpty()) {
+                visitor.setNomeIgreja(nomeIgreja.trim());
+            }
+            
+            String procuraIgreja = getCellValueAsString(row.getCell(5));
             if (procuraIgreja != null && !procuraIgreja.trim().isEmpty()) {
                 visitor.setProcuraIgreja(procuraIgreja.trim());
             }
             
-            // É de SP? (coluna 5)
-            Boolean eDeSP = getCellValueAsBoolean(row.getCell(5));
+            Boolean eDeSP = getCellValueAsBoolean(row.getCell(6));
             visitor.setEDeSP(eDeSP != null ? eDeSP : false);
             
-            // Estado (coluna 6) - apenas se não for SP
             if (Boolean.FALSE.equals(visitor.getEDeSP())) {
-                String estado = getCellValueAsString(row.getCell(6));
+                String estado = getCellValueAsString(row.getCell(7));
                 if (estado != null && !estado.trim().isEmpty()) {
                     visitor.setEstado(estado.trim().toUpperCase());
                 }
@@ -233,15 +239,11 @@ public class VisitorImportService {
             // Data Visita (coluna 1)
             String dataVisitaStr = (values.length > 1 && values[1] != null) ? values[1].trim() : "";
             if (!dataVisitaStr.isEmpty()) {
-                try {
-                    LocalDate dataVisita = parseDate(dataVisitaStr);
-                    if (dataVisita != null) {
-                        visitor.setDataVisita(dataVisita);
-                    } else {
-                        visitor.setDataVisita(LocalDate.now());
-                    }
-                } catch (Exception e) {
-                    log.warn("Invalid date format at row {}: {}", rowNumber, dataVisitaStr);
+                LocalDate dataVisita = parseDate(dataVisitaStr);
+                if (dataVisita != null) {
+                    visitor.setDataVisita(dataVisita);
+                } else {
+                    log.warn("Invalid date format at row {}: {}, using current date", rowNumber, dataVisitaStr);
                     visitor.setDataVisita(LocalDate.now());
                 }
             } else {
@@ -260,20 +262,26 @@ public class VisitorImportService {
                 visitor.setJaFrequentaIgreja(jaFrequentaIgreja);
             }
             
-            // Está à Procura de Igreja? (coluna 4)
-            String procuraIgreja = (values.length > 4 && values[4] != null) ? values[4].trim() : "";
+            // Nome da Igreja (coluna 4)
+            String nomeIgreja = (values.length > 4 && values[4] != null) ? values[4].trim() : "";
+            if (!nomeIgreja.isEmpty()) {
+                visitor.setNomeIgreja(nomeIgreja);
+            }
+            
+            // Está à Procura de Igreja? (coluna 5)
+            String procuraIgreja = (values.length > 5 && values[5] != null) ? values[5].trim() : "";
             if (!procuraIgreja.isEmpty()) {
                 visitor.setProcuraIgreja(procuraIgreja);
             }
             
-            // É de SP? (coluna 5)
-            String eDeSPStr = (values.length > 5 && values[5] != null) ? values[5].trim().toLowerCase() : "";
+            // É de SP? (coluna 6)
+            String eDeSPStr = (values.length > 6 && values[6] != null) ? values[6].trim().toLowerCase() : "";
             Boolean eDeSP = eDeSPStr.equals("sim") || eDeSPStr.equals("true") || eDeSPStr.equals("1");
             visitor.setEDeSP(eDeSP);
             
-            // Estado (coluna 6) - apenas se não for SP
+            // Estado (coluna 7) - apenas se não for SP
             if (!eDeSP) {
-                String estado = (values.length > 6 && values[6] != null) ? values[6].trim() : "";
+                String estado = (values.length > 7 && values[7] != null) ? values[7].trim() : "";
                 if (!estado.isEmpty()) {
                     visitor.setEstado(estado.toUpperCase());
                 }
@@ -329,26 +337,71 @@ public class VisitorImportService {
         }
     }
 
-    private LocalDate parseDate(String dateStr) {
+    private LocalDate getCellValueAsLocalDate(Cell cell) {
+        if (cell == null) return null;
+        
         try {
-            // Try ISO format first
-            return LocalDate.parse(dateStr);
+            switch (cell.getCellType()) {
+                case NUMERIC:
+                    if (DateUtil.isCellDateFormatted(cell)) {
+                        // Excel stores dates as numeric values, convert directly
+                        Date dateValue = cell.getDateCellValue();
+                        if (dateValue != null) {
+                            return dateValue.toInstant()
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate();
+                        }
+                    }
+                    break;
+                case STRING:
+                    String dateStr = cell.getStringCellValue().trim();
+                    if (!dateStr.isEmpty()) {
+                        return parseDate(dateStr);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            log.warn("Error extracting date from cell: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Try ISO format first (yyyy-MM-dd)
+            return LocalDate.parse(dateStr.trim());
         } catch (Exception e) {
             try {
                 // Try dd/MM/yyyy
-                String[] parts = dateStr.split("/");
+                String[] parts = dateStr.trim().split("/");
                 if (parts.length == 3) {
-                    return LocalDate.of(
-                        Integer.parseInt(parts[2]),
-                        Integer.parseInt(parts[1]),
-                        Integer.parseInt(parts[0])
-                    );
+                    int day = Integer.parseInt(parts[0]);
+                    int month = Integer.parseInt(parts[1]);
+                    int year = Integer.parseInt(parts[2]);
+                    return LocalDate.of(year, month, day);
                 }
             } catch (Exception e2) {
-                log.warn("Could not parse date: {}", dateStr);
+                try {
+                    // Try dd-MM-yyyy
+                    String[] parts = dateStr.trim().split("-");
+                    if (parts.length == 3) {
+                        int day = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        int year = Integer.parseInt(parts[2]);
+                        return LocalDate.of(year, month, day);
+                    }
+                } catch (Exception e3) {
+                    log.warn("Could not parse date: {}", dateStr);
+                }
             }
-            return null;
         }
+        return null;
     }
 
     private String[] parseCsvLine(String line) {
@@ -379,7 +432,7 @@ public class VisitorImportService {
             Row headerRow = sheet.createRow(0);
             String[] headers = {
                 "Nome Completo", "Data Visita", "Telefone", "Já Frequenta Igreja?", 
-                "Está à Procura de Igreja?", "É de SP?", "Estado"
+                "Nome da Igreja", "Está à Procura de Igreja?", "É de SP?", "Estado"
             };
             
             CellStyle headerStyle = workbook.createCellStyle();
