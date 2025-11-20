@@ -11,6 +11,8 @@ import { VisitorService } from '../../../shared/service/visitor.service';
 import { MemberService } from '../../../shared/service/member.service';
 import { ApiService } from '../../../shared/service/api.service';
 import { UtilsService } from '../../../shared/services/utils.service';
+import { UserPreferenceService } from '../../../shared/service/user-preference.service';
+import { NotificationService } from '../../../shared/services/notification.service';
 import { MessageIcons } from '../../../shared/lib/utils/icons';
 import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
 import { ChartData, ChartOptions } from 'chart.js';
@@ -152,14 +154,62 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     private attendanceService: AttendanceService,
     private visitorService: VisitorService,
     private memberService: MemberService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private userPreferenceService: UserPreferenceService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
-    this.loadDefaultInterval();
+    this.loadSavedPreferences();
     this.loadTotalMembers();
-    this.loadChartData();
     this.loadEvents();
+  }
+
+  loadSavedPreferences(): void {
+    this.userPreferenceService.getAttendanceChartPreference()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (preference) => {
+          if (preference) {
+            if (preference.useCustomRange !== undefined) {
+              this.useCustomRange = preference.useCustomRange;
+            }
+            if (preference.chartStartDate) {
+              this.chartStartDate = preference.chartStartDate;
+            }
+            if (preference.chartEndDate) {
+              this.chartEndDate = preference.chartEndDate;
+            }
+            if (preference.includeVisitorsInPresence !== undefined) {
+              this.includeVisitorsInPresence = preference.includeVisitorsInPresence;
+            }
+            if (preference.showVisitorsSeparate !== undefined) {
+              this.showVisitorsSeparate = preference.showVisitorsSeparate;
+            }
+            if (preference.showAbsences !== undefined) {
+              this.showAbsences = preference.showAbsences;
+            }
+            if (preference.defaultIntervalMonths) {
+              this.defaultIntervalMonths = preference.defaultIntervalMonths;
+            }
+            if (preference.periodType) {
+              this.periodType = preference.periodType;
+            }
+          }
+          
+          // Se não houver preferências salvas ou não usar intervalo customizado, calcular padrão
+          if (!this.useCustomRange || !this.chartStartDate || !this.chartEndDate) {
+            this.loadDefaultInterval();
+          }
+          
+          this.loadChartData();
+        },
+        error: (err) => {
+          console.error('Error loading saved preferences:', err);
+          this.loadDefaultInterval();
+          this.loadChartData();
+        }
+      });
   }
 
   loadTotalMembers() {
@@ -356,15 +406,50 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
 
   resetChartToDefault() {
     this.useCustomRange = false;
+    this.includeVisitorsInPresence = false;
+    this.showVisitorsSeparate = false;
+    this.showAbsences = false;
+    this.defaultIntervalMonths = 3;
+    this.periodType = 'months';
     this.calculateDefaultDateRange();
-    this.loadChartData();
+    
+    // Deletar preferências salvas
+    this.userPreferenceService.deleteAttendanceChartPreference()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => {
+          this.loadChartData();
+        },
+        error: (err) => {
+          console.error('Error deleting preferences:', err);
+          this.loadChartData();
+        }
+      });
   }
 
   saveAsDefault() {
-    // TODO: Save to database
-    this.defaultIntervalMonths = 3;
-    this.calculateDefaultDateRange();
-    this.loadChartData();
+    const preference = {
+      useCustomRange: this.useCustomRange,
+      chartStartDate: this.chartStartDate,
+      chartEndDate: this.chartEndDate,
+      includeVisitorsInPresence: this.includeVisitorsInPresence,
+      showVisitorsSeparate: this.showVisitorsSeparate,
+      showAbsences: this.showAbsences,
+      defaultIntervalMonths: this.defaultIntervalMonths,
+      periodType: this.periodType
+    };
+
+    this.userPreferenceService.saveAttendanceChartPreference(preference)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Preferências salvas como padrão com sucesso!');
+        },
+        error: (err) => {
+          console.error('Error saving preferences:', err);
+          this.notificationService.showError('Erro ao salvar preferências.');
+        }
+      });
   }
 
   loadEvents() {

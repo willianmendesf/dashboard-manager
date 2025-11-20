@@ -12,6 +12,7 @@ import { ActionIcons, NavigationIcons } from '../../../../shared/lib/utils/icons
 import { ModalComponent, ModalButton } from '../../../../shared/modules/modal/modal.component';
 import { VisitorService } from '../../../../shared/service/visitor.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { UserPreferenceService } from '../../../../shared/service/user-preference.service';
 
 @Component({
   selector: 'app-visitor-management',
@@ -158,12 +159,32 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
   constructor(
     private visitorService: VisitorService,
     private cdr: ChangeDetectorRef,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private userPreferenceService: UserPreferenceService
   ) {}
 
   ngOnInit(): void {
-    this.loadVisitorStats();
+    this.loadSavedPreferences();
     this.loadVisitors();
+  }
+
+  loadSavedPreferences(): void {
+    this.userPreferenceService.getVisitorChartPreference()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (preference) => {
+          if (preference && preference.useCustomRange) {
+            this.useCustomRange = preference.useCustomRange;
+            this.chartStartDate = preference.chartStartDate || null;
+            this.chartEndDate = preference.chartEndDate || null;
+          }
+          this.loadVisitorStats();
+        },
+        error: (err) => {
+          console.error('Error loading saved preferences:', err);
+          this.loadVisitorStats();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -276,6 +297,7 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
 
   onChartDateRangeChange(): void {
     if (!this.useCustomRange) {
+      this.savePreferences();
       this.loadVisitorStats();
       return;
     }
@@ -290,14 +312,44 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       }
     }
     
+    this.savePreferences();
     this.loadVisitorStats();
+  }
+
+  savePreferences(): void {
+    const preference = {
+      useCustomRange: this.useCustomRange,
+      chartStartDate: this.chartStartDate,
+      chartEndDate: this.chartEndDate
+    };
+
+    this.userPreferenceService.saveVisitorChartPreference(preference)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => {
+          // Preferências salvas com sucesso (silenciosamente)
+        },
+        error: (err) => {
+          console.error('Error saving preferences:', err);
+        }
+      });
   }
 
   resetChartToDefault(): void {
     this.chartStartDate = null;
     this.chartEndDate = null;
     this.useCustomRange = false;
-    this.loadVisitorStats();
+    this.userPreferenceService.deleteVisitorChartPreference()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: () => {
+          this.loadVisitorStats();
+        },
+        error: (err) => {
+          console.error('Error deleting preferences:', err);
+          this.loadVisitorStats();
+        }
+      });
   }
 
   loadVisitors(): void {
