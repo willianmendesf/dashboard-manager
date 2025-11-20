@@ -254,6 +254,38 @@ public class MemberService {
     }
 
     /**
+     * Busca um membro por telefone e retorna como DTO
+     * Usado no portal público após validação OTP
+     */
+    public MemberDTO findMemberByPhone(String phone) {
+        try {
+            log.info("Finding member by phone for public portal: {}", phone);
+            // Sanitiza o telefone (remove caracteres não numéricos)
+            String sanitizedPhone = phone.replaceAll("[^0-9]", "");
+            if (sanitizedPhone == null || sanitizedPhone.length() < 10) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
+            }
+            
+            MemberEntity entity = repository.findByTelefoneOrCelular(sanitizedPhone);
+            
+            if (entity == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o telefone informado");
+            }
+            
+            List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(entity.getId())
+                    .stream()
+                    .map(GroupEnrollmentDTO::new)
+                    .collect(Collectors.toList());
+            return new MemberDTO(entity, enrollments);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error finding member by phone: {}", phone, e);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o telefone informado");
+        }
+    }
+
+    /**
      * Atualiza um membro por CPF (portal público)
      * Regra "Write-Once": O CPF nunca pode ser alterado
      */

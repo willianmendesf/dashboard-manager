@@ -91,5 +91,13 @@ export class PublicMemberService {
       { withCredentials: false }
     );
   }
+
+  getMemberByPhone(phone: string): Observable<MemberDTO> {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return this.http.get<MemberDTO>(
+      `${this.apiUrl}public/members/by-phone/${cleanPhone}`,
+      { withCredentials: false }
+    );
+  }
 }
 

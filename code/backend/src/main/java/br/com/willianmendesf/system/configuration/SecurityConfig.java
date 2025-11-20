@@ -93,6 +93,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/logout").permitAll()
                 .requestMatchers("/auth/solicitar-reset").permitAll()
                 .requestMatchers("/auth/redefinir-senha").permitAll()
+                .requestMatchers("/auth/otp/**").permitAll() // Endpoints de OTP (público para portal de atualização cadastral)
 
                 // 4b. Permita outras rotas públicas essenciais
                 .requestMatchers("/emergency/**").permitAll()
