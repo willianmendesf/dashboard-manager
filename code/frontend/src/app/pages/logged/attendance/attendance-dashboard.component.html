@@ -1,0 +1,256 @@
+<pagetitle
+  title="Presença"
+  subtitle="Gerenciamento de presença e visitantes"
+></pagetitle>
+
+<div class="tabs-container">
+  <div class="tabs-header">
+    <button 
+      type="button"
+      class="tab-button"
+      [class.active]="activeTab === 'attendance'"
+      (click)="activeTab = 'attendance'"
+    >
+      Presença
+    </button>
+    <button 
+      type="button"
+      class="tab-button"
+      [class.active]="activeTab === 'visitors'"
+      (click)="activeTab = 'visitors'"
+    >
+      Visitantes
+    </button>
+  </div>
+
+  <div class="tabs-content">
+    @if (activeTab === 'attendance') {
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Estatísticas de Presença</h3>
+            <div class="chart-controls">
+              <div class="controls-row">
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="useCustomRange"
+                      (change)="onChartDateRangeChange()"
+                    />
+                    <span>Intervalo customizado</span>
+                  </label>
+                </div>
+                @if (useCustomRange) {
+                  <div class="control-separator"></div>
+                  <div class="date-range-controls">
+                    <div class="date-input-group">
+                      <label for="chartStartDate">Data Início</label>
+                      <input
+                        id="chartStartDate"
+                        type="date"
+                        [(ngModel)]="chartStartDate"
+                        (change)="onChartDateRangeChange()"
+                        class="date-input"
+                      />
+                    </div>
+                    <div class="date-input-group">
+                      <label for="chartEndDate">Data Fim</label>
+                      <input
+                        id="chartEndDate"
+                        type="date"
+                        [(ngModel)]="chartEndDate"
+                        (change)="onChartDateRangeChange()"
+                        class="date-input"
+                      />
+                    </div>
+                  </div>
+                }
+                <div class="control-buttons">
+                  <button
+                    type="button"
+                    class="btn-reset"
+                    (click)="resetChartToDefault()"
+                    [disabled]="!useCustomRange"
+                  >
+                    <span>Resetar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-save"
+                    (click)="saveAsDefault()"
+                  >
+                    <span>Salvar como Padrão</span>
+                  </button>
+                </div>
+              </div>
+              <div class="controls-row chart-options">
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="includeVisitorsInPresence"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Incluir visitantes na presença</span>
+                  </label>
+                </div>
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="showVisitorsSeparate"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Mostrar visitantes separado</span>
+                  </label>
+                </div>
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="showAbsences"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Mostrar ausências</span>
+                  </label>
+                </div>
+                <div class="control-group">
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="showAverage"
+                      (change)="onChartOptionChange()"
+                    />
+                    <span>Mostrar média</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            @if (lineChartData.labels && lineChartData.labels.length > 0) {
+              <canvas
+                baseChart
+                [data]="lineChartData"
+                [options]="lineChartOptions"
+                [type]="lineChartType">
+              </canvas>
+            } @else {
+              <div class="no-data-message">
+                <p>Nenhum dado disponível</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Management Section -->
+      <div class="management-section">
+        <div class="actions-bar">
+          <div class="search-filters">
+            <div class="filter-group">
+              <label for="datePicker">Data:</label>
+              <input 
+                type="date" 
+                id="datePicker"
+                [(ngModel)]="selectedDate" 
+                (change)="onDateChange()"
+                class="form-control"
+              />
+            </div>
+            <div class="filter-group">
+              <label for="eventSelect">Evento:</label>
+              <select 
+                id="eventSelect"
+                [(ngModel)]="selectedEventId" 
+                (change)="onEventChange()"
+                class="form-control"
+                [disabled]="events.length === 0"
+              >
+                <option [value]="null">Selecione um evento</option>
+                @for (event of events; track event.id) {
+                  <option [value]="event.id">
+                    {{ event.name }} - {{ event.startTime }} às {{ event.endTime }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="search-box">
+              <input
+                type="text"
+                [(ngModel)]="searchTerm"
+                (input)="onSearchChange()"
+                placeholder="Buscar membros..."
+              />
+              <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
+            </div>
+          </div>
+        </div>
+
+        @if (error) {
+          <div class="error-message">{{ error }}</div>
+        }
+
+        <app-data-table
+          [columns]="tableColumns"
+          [data]="tableData"
+          [actions]="getTableActions()"
+          [loading]="loading"
+          emptyMessage="Nenhum membro encontrado"
+          [striped]="true"
+          [hoverable]="true"
+          [enablePagination]="true"
+        >
+          <ng-template #rowTemplate let-row let-column="column">
+            @if (column.key === 'foto') {
+              <div class="photo-cell">
+                @if (row.foto) {
+                  <img 
+                    [src]="getNormalizedPhotoUrl(row.foto)" 
+                    alt="Foto" 
+                    class="member-photo"
+                    onerror="this.src='./img/avatar-default.png'"
+                  />
+                } @else {
+                  <div class="photo-placeholder">{{ getInitials(row.nome) }}</div>
+                }
+              </div>
+            } @else if (column.key === 'status') {
+              <span [class.status-present]="row.presenca" [class.status-absent]="!row.presenca">
+                {{ row.status }}
+              </span>
+            } @else if (column.key === 'whatsapp') {
+              @if (row.whatsapp) {
+                <a 
+                  [href]="row.whatsapp"
+                  target="_blank"
+                  class="whatsapp-link"
+                  [innerHTML]="getWhatsAppIcon()"
+                  title="Abrir WhatsApp"
+                ></a>
+              }
+            } @else if (column.key === 'presenca') {
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  [checked]="row.presenca"
+                  [disabled]="row.isLoading || !selectedEventId"
+                  (change)="toggleAttendance(row._original)"
+                />
+              </label>
+            } @else {
+              {{ row[column.key] || '-' }}
+            }
+          </ng-template>
+        </app-data-table>
+      </div>
+    }
+
+    @if (activeTab === 'visitors') {
+      <app-visitor-management></app-visitor-management>
+    }
+  </div>
+</div>
+

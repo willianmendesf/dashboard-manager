@@ -102,6 +102,19 @@ public class SecurityConfig {
                 .requestMatchers("/enrollments/request").permitAll() // Solicitação de participação em grupos (público)
                 .requestMatchers("/enrollments/member/**").permitAll() // Consulta de enrollments do membro (público)
                 .requestMatchers("/enrollments/can-request/**").permitAll() // Verificar se pode solicitar novamente (público)
+                
+                // 4d. Rotas públicas de presença (lista de presença pública)
+                // IMPORTANTE: getServletPath() retorna apenas a parte após o context-path
+                // Como context-path é /api/v1, para /api/v1/events o servletPath é /events
+                .requestMatchers(request -> {
+                    String path = request.getServletPath();
+                    return path != null && (path.equals("/events") || path.startsWith("/events?"));
+                }).permitAll() // Listar eventos (público) - com ou sem query params
+                .requestMatchers("/attendance/toggle").permitAll() // Toggle presença (público)
+                .requestMatchers(request -> {
+                    String path = request.getServletPath();
+                    return path != null && path.matches("/attendance/event/\\d+/members");
+                }).permitAll() // Listar membros por evento (público)
 
                 // 4c. Exija autenticação para todo o resto
                 .anyRequest().authenticated()

@@ -1,0 +1,139 @@
+<div class="attendance-checkin-container">
+  <div class="header-section">
+    <div class="header">
+      <h1>Lista de Presença</h1>
+      <div class="header-actions">
+        <button type="button" class="btn-link" (click)="goToLanding()">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+    
+    <div class="actions-bar">
+      <div class="search-filters">
+        <div class="filter-group">
+          <label for="datePicker">Data:</label>
+          <input 
+            type="date" 
+            id="datePicker"
+            [(ngModel)]="selectedDate" 
+            (change)="onDateChange()"
+            class="form-control"
+          />
+        </div>
+        <div class="filter-group">
+          <label for="eventSelect">Evento:</label>
+          <select 
+            id="eventSelect"
+            [(ngModel)]="selectedEventId" 
+            (change)="onEventChange()"
+            class="form-control"
+            [disabled]="events.length === 0"
+          >
+            <option [value]="null">Selecione um evento</option>
+            @for (event of events; track event.id) {
+              <option [value]="event.id">
+                {{ event.name }} - {{ event.startTime }} às {{ event.endTime }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Buscar membros..."
+          />
+          <div class="search-icon" [innerHTML]="getSearchIcon()" [attr.aria-hidden]="true"></div>
+        </div>
+        <div class="filter-group">
+          <label>Filtro:</label>
+          <div class="toggle-switch">
+            <button 
+              type="button"
+              [class.active]="memberTypeFilter === 'adultos'"
+              (click)="memberTypeFilter = 'adultos'; onMemberTypeChange()"
+            >
+              Adultos
+            </button>
+            <button 
+              type="button"
+              [class.active]="memberTypeFilter === 'criancas'"
+              (click)="memberTypeFilter = 'criancas'; onMemberTypeChange()"
+            >
+              Crianças
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (error) {
+      <div class="error-message">{{ error }}</div>
+    }
+
+    @if (events.length === 0 && !loading) {
+      <div class="info-message">Nenhum evento encontrado para esta data</div>
+    }
+  </div>
+
+  <div class="members-section">
+    @if (error) {
+      <div class="error-message">{{ error }}</div>
+    }
+
+    <app-data-table
+      [columns]="tableColumns"
+      [data]="tableData"
+      [loading]="loading"
+      emptyMessage="Nenhum membro encontrado"
+      [striped]="true"
+      [hoverable]="true"
+      [enablePagination]="true"
+    >
+      <ng-template #rowTemplate let-row let-column="column">
+        @if (column.key === 'foto') {
+          <div class="photo-cell">
+            @if (row.foto) {
+              <img 
+                [src]="getNormalizedPhotoUrl(row.foto)" 
+                alt="Foto" 
+                class="member-photo"
+                onerror="this.src='./img/avatar-default.png'"
+              />
+            } @else {
+              <div class="photo-placeholder">{{ getInitials(row.nome) }}</div>
+            }
+          </div>
+        } @else if (column.key === 'status') {
+          <span [class.status-present]="row.presenca" [class.status-absent]="!row.presenca">
+            {{ row.status }}
+          </span>
+        } @else if (column.key === 'whatsapp') {
+          @if (row.whatsapp) {
+            <a 
+              [href]="row.whatsapp"
+              target="_blank"
+              class="whatsapp-link"
+              [innerHTML]="getWhatsAppIcon()"
+              title="Abrir WhatsApp"
+            ></a>
+          }
+        } @else if (column.key === 'presenca') {
+          <label class="checkbox-container">
+            <input 
+              type="checkbox" 
+              [checked]="row.presenca"
+              [disabled]="row.isLoading || !selectedEventId"
+              (change)="toggleAttendance(row._original)"
+            />
+          </label>
+        } @else {
+          {{ row[column.key] || '-' }}
+        }
+      </ng-template>
+    </app-data-table>
+  </div>
+</div>
+
