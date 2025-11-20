@@ -52,5 +52,18 @@ public interface OtpTransactionRepository extends JpaRepository<OtpTransaction, 
             @Param("phoneNumber") String phoneNumber,
             @Param("context") String context
     );
+
+    /**
+     * Busca qualquer transação (usada ou não) para um telefone e contexto
+     * Usado para fazer UPDATE ao invés de criar novo registro
+     */
+    @Query("SELECT otp FROM OtpTransaction otp " +
+           "WHERE otp.phoneNumber = :phoneNumber " +
+           "AND otp.context = :context " +
+           "ORDER BY otp.createdAt DESC")
+    java.util.List<OtpTransaction> findByPhoneNumberAndContext(
+            @Param("phoneNumber") String phoneNumber,
+            @Param("context") String context
+    );
 }
 

@@ -80,29 +80,36 @@ public class OtpService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não foi possível enviar o código. Verifique se o telefone está correto.");
         }
 
-        // Invalida códigos anteriores não usados para o mesmo telefone/contexto
-        List<OtpTransaction> previousTransactions = otpRepository.findUnusedTransactions(sanitizedPhone, context);
-        if (!previousTransactions.isEmpty()) {
-            log.info("Invalidating {} previous OTP transactions for phone: {} in context: {}", 
-                    previousTransactions.size(), sanitizedPhone, context);
-            previousTransactions.forEach(prev -> prev.setUsed(true));
-            otpRepository.saveAll(previousTransactions);
-        }
-
         // Gera código de 6 dígitos
         String code = generateOtpCode();
 
-        // Cria a transação OTP
-        OtpTransaction transaction = new OtpTransaction();
-        transaction.setPhoneNumber(sanitizedPhone);
-        transaction.setCode(code);
-        transaction.setContext(context);
-        transaction.setExpirationTime(LocalDateTime.now().plusMinutes(30));
-        transaction.setUsed(false);
-        transaction.setAttempts(0);
+        // Busca qualquer transação existente para o mesmo telefone/contexto (para fazer UPDATE)
+        List<OtpTransaction> existingTransactions = otpRepository.findByPhoneNumberAndContext(sanitizedPhone, context);
+        OtpTransaction transaction;
+
+        if (!existingTransactions.isEmpty()) {
+            // Usa o registro mais recente e faz UPDATE
+            transaction = existingTransactions.get(0);
+            log.info("Updating existing OTP transaction ID: {} for phone: {} in context: {}", 
+                    transaction.getId(), sanitizedPhone, context);
+            transaction.setCode(code);
+            transaction.setExpirationTime(LocalDateTime.now().plusMinutes(30));
+            transaction.setUsed(false);
+            transaction.setAttempts(0);
+        } else {
+            // Cria nova transação OTP apenas se não existir nenhuma
+            transaction = new OtpTransaction();
+            transaction.setPhoneNumber(sanitizedPhone);
+            transaction.setCode(code);
+            transaction.setContext(context);
+            transaction.setExpirationTime(LocalDateTime.now().plusMinutes(30));
+            transaction.setUsed(false);
+            transaction.setAttempts(0);
+            log.info("Creating new OTP transaction for phone: {} in context: {}", sanitizedPhone, context);
+        }
 
         otpRepository.save(transaction);
-        log.info("OTP transaction created with ID: {} for phone: {}", transaction.getId(), sanitizedPhone);
+        log.info("OTP transaction saved with ID: {} for phone: {}", transaction.getId(), sanitizedPhone);
 
         // Envia via WhatsApp
         try {
