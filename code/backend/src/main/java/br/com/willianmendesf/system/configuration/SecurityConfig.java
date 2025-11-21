@@ -93,6 +93,10 @@ public class SecurityConfig {
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/public/**").permitAll() // Portal público de atualização cadastral, visitantes e empréstimos
+                .requestMatchers(request -> {
+                    String path = request.getServletPath();
+                    return path != null && path.startsWith("/public/");
+                }).permitAll() // Garantir que todas as rotas /public/** sejam públicas (usando servletPath)
                 .requestMatchers("/configurations/FAVICON_URL").permitAll() // Favicon (público)
                 .requestMatchers("/configurations/LOGO_URL").permitAll() // Logo (público)
                 .requestMatchers("/enrollments/request").permitAll() // Solicitação de participação em grupos (público)

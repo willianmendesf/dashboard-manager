@@ -24,8 +24,8 @@ public class LoanEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private BookEntity book;
 
-    @Column(name = "member_cpf", length = 14, nullable = false)
-    private String memberCpf;
+    @Column(name = "member_phone", length = 20, nullable = false)
+    private String memberPhone;
 
     @Column(name = "data_emprestimo", nullable = false)
     private LocalDate dataEmprestimo;

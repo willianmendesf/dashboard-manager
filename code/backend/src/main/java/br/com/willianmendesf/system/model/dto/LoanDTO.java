@@ -14,7 +14,7 @@ public class LoanDTO {
     private Long bookId;
     private String bookTitulo;
     private String bookFotoUrl;
-    private String memberCpf;
+    private String memberPhone;
     private String memberNome;
     private String memberFotoUrl;
     private String memberCelular;

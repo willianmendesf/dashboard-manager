@@ -9,7 +9,7 @@ import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.BookRepository;
 import br.com.willianmendesf.system.repository.LoanRepository;
 import br.com.willianmendesf.system.repository.MemberRepository;
-import br.com.willianmendesf.system.service.utils.CPFUtil;
+import br.com.willianmendesf.system.service.utils.PhoneUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -59,18 +59,25 @@ public class LoanService {
     @Transactional
     public LoanDTO create(CreateLoanDTO dto) {
         try {
-            log.info("Creating loan for book ID: {} and CPF: {}", dto.getBookId(), dto.getMemberCpf());
+            log.info("Creating loan for book ID: {} and Phone: {}", dto.getBookId(), dto.getMemberPhone());
             
-            // Validar e formatar CPF
-            String formattedCpf = CPFUtil.validateAndFormatCPF(dto.getMemberCpf());
+            // Sanitizar telefone (remover caracteres especiais)
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(dto.getMemberPhone());
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone number: {}", dto.getMemberPhone());
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Telefone inválido. Por favor, verifique o número informado."
+                );
+            }
             
-            // Validar se CPF existe na base de membros
-            MemberEntity member = memberRepository.findByCpf(formattedCpf);
+            // Buscar membro por telefone ou celular
+            MemberEntity member = memberRepository.findByTelefoneOrCelular(sanitizedPhone);
             if (member == null) {
-                log.warn("CPF not found in members database: {}", formattedCpf);
+                log.warn("Phone not found in members database: {}", sanitizedPhone);
                 throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "CPF não encontrado na base de membros. É necessário falar com um diácono para se cadastrar antes de realizar empréstimos."
+                    "Telefone não encontrado na base de membros. É necessário falar com um diácono para se cadastrar antes de realizar empréstimos."
                 );
             }
             
@@ -85,10 +92,10 @@ public class LoanService {
                 throw new MembersException("Livro não está disponível. Todos os exemplares estão emprestados.");
             }
             
-            // Criar empréstimo
+            // Criar empréstimo usando telefone
             LoanEntity loan = new LoanEntity();
             loan.setBook(book);
-            loan.setMemberCpf(formattedCpf);
+            loan.setMemberPhone(sanitizedPhone);
             loan.setDataEmprestimo(LocalDate.now());
             loan.setDataDevolucao(LocalDate.now().plusMonths(1));
             loan.setDevolvido(false);
@@ -123,8 +130,8 @@ public class LoanService {
             
             LoanEntity saved = loanRepository.save(loan);
             
-            // Buscar membro para o DTO
-            MemberEntity member = memberRepository.findByCpf(loan.getMemberCpf());
+            // Buscar membro para o DTO usando telefone
+            MemberEntity member = memberRepository.findByTelefoneOrCelular(saved.getMemberPhone());
             
             return toDTO(saved, member);
         } catch (MembersException e) {
@@ -136,7 +143,13 @@ public class LoanService {
     }
 
     private LoanDTO toDTO(LoanEntity loan) {
-        MemberEntity member = memberRepository.findByCpf(loan.getMemberCpf());
+        MemberEntity member = null;
+        
+        // Buscar membro por telefone
+        if (loan.getMemberPhone() != null && !loan.getMemberPhone().trim().isEmpty()) {
+            member = memberRepository.findByTelefoneOrCelular(loan.getMemberPhone());
+        }
+        
         return toDTO(loan, member);
     }
 
@@ -146,7 +159,7 @@ public class LoanService {
         dto.setBookId(loan.getBook().getId());
         dto.setBookTitulo(loan.getBook().getTitulo());
         dto.setBookFotoUrl(loan.getBook().getFotoUrl());
-        dto.setMemberCpf(loan.getMemberCpf());
+        dto.setMemberPhone(loan.getMemberPhone());
         dto.setMemberNome(member != null ? member.getNome() : null);
         dto.setMemberFotoUrl(member != null ? member.getFotoUrl() : null);
         dto.setMemberCelular(member != null ? member.getCelular() : null);

@@ -39,12 +39,12 @@ public class PublicLoanController {
     @PostMapping
     public ResponseEntity<LoanDTO> createLoan(@RequestBody CreateLoanDTO dto) {
         try {
-            log.info("Public request to create loan for book ID: {} and CPF: {}", dto.getBookId(), dto.getMemberCpf());
+            log.info("Public request to create loan for book ID: {} and Phone: {}", dto.getBookId(), dto.getMemberPhone());
             LoanDTO loan = loanService.create(dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(loan);
         } catch (ResponseStatusException e) {
-            // CPF não encontrado - retornar 404 com mensagem
-            log.warn("CPF not found: {}", dto.getMemberCpf());
+            // Telefone não encontrado - retornar 404 com mensagem
+            log.warn("Phone not found: {}", dto.getMemberPhone());
             throw e;
         } catch (Exception e) {
             log.error("Error creating loan", e);

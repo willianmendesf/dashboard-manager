@@ -88,6 +88,13 @@
     &.is-invalid {
       border-color: #ef4444;
     }
+
+    &.code-input {
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 8px;
+      font-weight: 600;
+    }
   }
 
   .form-text {
@@ -129,6 +136,55 @@
 
 .btn-block {
   width: 100%;
+}
+
+.alert-info {
+  background-color: #ebf8ff;
+  color: #2c5282;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  text-align: center;
+
+  .change-number {
+    display: block;
+    margin-top: 5px;
+    color: #667eea;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+.member-info {
+  background-color: #f0f4ff;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+
+  .member-name-label {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #1f2937;
+    
+    strong {
+      color: #667eea;
+      font-weight: 700;
+    }
+  }
+
+  .member-name-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+  }
 }
 
 .books-grid {
