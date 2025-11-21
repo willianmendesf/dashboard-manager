@@ -5,14 +5,14 @@ import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.dto.GroupEnrollmentDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
+import br.com.willianmendesf.system.model.dto.MemberChildrenDTO;
 import br.com.willianmendesf.system.model.dto.UpdateMemberDTO;
 import br.com.willianmendesf.system.model.entity.GroupEntity;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.GroupEnrollmentRepository;
 import br.com.willianmendesf.system.repository.GroupRepository;
 import br.com.willianmendesf.system.repository.MemberRepository;
-import br.com.willianmendesf.system.service.utils.CPFUtil;
-import br.com.willianmendesf.system.service.utils.RGUtil;
+import br.com.willianmendesf.system.service.utils.PhoneUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -87,26 +87,21 @@ public class MemberService {
         }
     }
 
-    public MemberEntity getByCPF(String cpf) {
-        try {
-            log.info("Getting member by CPF: {}", cpf);
-            MemberEntity entity = repository.findByCpf(CPFUtil.validateAndFormatCPF(cpf));
-            if (!isNull(entity)) return entity;
-            else return null;
-        } catch (Exception e) {
-            throw new MembersException("ID " + cpf + " not found");
-        }
-    }
-
     /**
-     * Gets spouse information by CPF (returns only nomeCompleto and fotoUrl)
+     * Gets spouse information by telefone (returns only nomeCompleto, fotoUrl and celular)
      * Used for relationship preview in member forms
      */
-    public MemberSpouseDTO getSpouseByCpf(String cpf) {
+    public MemberSpouseDTO getSpouseByTelefone(String telefone) {
         try {
-            log.info("Getting spouse by CPF: {}", cpf);
-            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity entity = repository.findByCpf(formattedCpf);
+            log.info("Getting spouse by telefone: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone format for spouse lookup: {}", telefone);
+                return null;
+            }
+            
+            MemberEntity entity = repository.findByConjugueTelefone(sanitizedPhone);
             
             if (entity == null) {
                 return null;
@@ -115,31 +110,86 @@ public class MemberService {
             MemberSpouseDTO spouse = new MemberSpouseDTO();
             spouse.setNomeCompleto(entity.getNome());
             spouse.setFotoUrl(entity.getFotoUrl());
-            spouse.setCpf(entity.getCpf());
             spouse.setCelular(entity.getCelular());
             
             return spouse;
         } catch (Exception e) {
-            log.error("Error getting spouse by CPF: {}", cpf, e);
+            log.error("Error getting spouse by telefone: {}", telefone, e);
             return null;
+        }
+    }
+
+    /**
+     * Gets parent information by telefone (returns only nomeCompleto, fotoUrl and celular)
+     * Used for relationship preview in member forms for children
+     */
+    public MemberSpouseDTO getParentByTelefone(String telefone) {
+        try {
+            log.info("Getting parent by telefone: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone format for parent lookup: {}", telefone);
+                return null;
+            }
+            
+            MemberEntity entity = repository.findByParentTelefone(sanitizedPhone);
+            
+            if (entity == null) {
+                return null;
+            }
+            
+            MemberSpouseDTO parent = new MemberSpouseDTO();
+            parent.setNomeCompleto(entity.getNome());
+            parent.setFotoUrl(entity.getFotoUrl());
+            parent.setCelular(entity.getCelular());
+            
+            return parent;
+        } catch (Exception e) {
+            log.error("Error getting parent by telefone: {}", telefone, e);
+            return null;
+        }
+    }
+
+    /**
+     * Gets children information by telefone (returns list of nomeCompleto, fotoUrl and celular)
+     * Used for relationship preview in member forms - shows children of a parent
+     */
+    public List<MemberChildrenDTO> getChildrenByTelefone(String telefone) {
+        try {
+            log.info("Getting children by telefone: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone format for children lookup: {}", telefone);
+                return new java.util.ArrayList<>();
+            }
+            
+            List<MemberEntity> children = repository.findChildrenByTelefone(sanitizedPhone);
+            
+            if (children == null || children.isEmpty()) {
+                return new java.util.ArrayList<>();
+            }
+            
+            return children.stream()
+                    .map(child -> {
+                        MemberChildrenDTO dto = new MemberChildrenDTO();
+                        dto.setNomeCompleto(child.getNome());
+                        dto.setFotoUrl(child.getFotoUrl());
+                        dto.setCelular(child.getCelular());
+                        return dto;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting children by telefone: {}", telefone, e);
+            return new java.util.ArrayList<>();
         }
     }
 
     public void create(MemberEntity member) {
         try {
             log.info("Creating new member!");
-            MemberEntity existMember = null;
-
-            if(!isNull(member.getCpf())) {
-                var cpf = CPFUtil.validateAndFormatCPF(member.getCpf());
-                existMember = this.getByCPF(cpf);
-            }
-
-            if(isNull(existMember)) {
-                member.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
-                member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
-                repository.save(member);
-            }
+            repository.save(member);
         } catch (Exception e) {
             throw new MembersException("Error to create new appointment", e);
         }
@@ -156,14 +206,26 @@ public class MemberService {
             }
             originalMember.setNome(member.getNome().trim());
 
-            if (member.getCpf() != null && !member.getCpf().trim().isEmpty()) {
-                originalMember.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
+            if (member.getConjugueTelefone() != null && !member.getConjugueTelefone().trim().isEmpty()) {
+                String sanitizedPhone = PhoneUtil.sanitizeAndValidate(member.getConjugueTelefone());
+                if (sanitizedPhone != null) {
+                    originalMember.setConjugueTelefone(sanitizedPhone);
+                }
             }
-
-            if (member.getRg() != null && !member.getRg().trim().isEmpty()) {
-                originalMember.setRg(RGUtil.validateAndFormatRG(member.getRg()));
+            
+            if (member.getTelefonePai() != null && !member.getTelefonePai().trim().isEmpty()) {
+                String sanitizedPhone = PhoneUtil.sanitizeAndValidate(member.getTelefonePai());
+                if (sanitizedPhone != null) {
+                    originalMember.setTelefonePai(sanitizedPhone);
+                }
             }
-            if (member.getConjugueCPF() != null && !member.getConjugueCPF().trim().isEmpty()) originalMember.setConjugueCPF(member.getConjugueCPF());
+            
+            if (member.getTelefoneMae() != null && !member.getTelefoneMae().trim().isEmpty()) {
+                String sanitizedPhone = PhoneUtil.sanitizeAndValidate(member.getTelefoneMae());
+                if (sanitizedPhone != null) {
+                    originalMember.setTelefoneMae(sanitizedPhone);
+                }
+            }
             originalMember.setComungante(member.getComungante());
             originalMember.setIntercessor(member.getIntercessor());
             if (member.getChild() != null) originalMember.setChild(member.getChild());
@@ -226,18 +288,24 @@ public class MemberService {
         }
     }
 
+
     /**
-     * Busca um membro por CPF e retorna como DTO
-     * Usado no portal público de atualização cadastral
+     * Busca um membro por telefone e retorna como DTO
+     * Usado no portal público após validação OTP
      */
-    public MemberDTO findMemberByCpf(String cpf) {
+    public MemberDTO findMemberByPhone(String phone) {
         try {
-            log.info("Finding member by CPF for public portal: {}", cpf);
-            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity entity = repository.findByCpfWithGroups(formattedCpf);
+            log.info("Finding member by phone for public portal: {}", phone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = br.com.willianmendesf.system.service.utils.PhoneUtil.sanitizeAndValidate(phone);
+            if (sanitizedPhone == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
+            }
+            
+            MemberEntity entity = repository.findByTelefoneOrCelular(sanitizedPhone);
             
             if (entity == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o telefone informado");
             }
             
             List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(entity.getId())
@@ -248,23 +316,27 @@ public class MemberService {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error finding member by CPF: {}", cpf, e);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
+            log.error("Error finding member by phone: {}", phone, e);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o telefone informado");
         }
     }
 
     /**
-     * Atualiza um membro por CPF (portal público)
-     * Regra "Write-Once": O CPF nunca pode ser alterado
+     * Atualiza um membro por telefone (portal público)
      */
-    public MemberDTO updateMemberByCpf(String cpf, UpdateMemberDTO dto) {
+    public MemberDTO updateMemberByTelefone(String telefone, UpdateMemberDTO dto) {
         try {
-            log.info("Updating member by CPF for public portal: {}", cpf);
-            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity existingMember = repository.findByCpfWithGroups(formattedCpf);
+            log.info("Updating member by telefone for public portal: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
+            }
+            
+            MemberEntity existingMember = repository.findByTelefoneOrCelular(sanitizedPhone);
             
             if (existingMember == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o telefone informado");
             }
 
             if (dto.getNome() != null && !dto.getNome().trim().isEmpty()) {
@@ -334,19 +406,24 @@ public class MemberService {
                 existingMember.setEstadoCivil(dto.getEstadoCivil());
             }
             
-            if (dto.getRg() != null && !dto.getRg().trim().isEmpty()) {
-                try {
-                    existingMember.setRg(RGUtil.validateAndFormatRG(dto.getRg()));
-                } catch (Exception e) {
-                    log.warn("Invalid RG format, ignoring: {}", dto.getRg());
+            if (dto.getConjugueTelefone() != null && !dto.getConjugueTelefone().trim().isEmpty()) {
+                String sanitizedConjuguePhone = PhoneUtil.sanitizeAndValidate(dto.getConjugueTelefone());
+                if (sanitizedConjuguePhone != null) {
+                    existingMember.setConjugueTelefone(sanitizedConjuguePhone);
                 }
             }
             
-            if (dto.getConjugueCPF() != null && !dto.getConjugueCPF().trim().isEmpty()) {
-                try {
-                    existingMember.setConjugueCPF(CPFUtil.validateAndFormatCPF(dto.getConjugueCPF()));
-                } catch (Exception e) {
-                    log.warn("Invalid conjugueCPF format, ignoring: {}", dto.getConjugueCPF());
+            if (dto.getTelefonePai() != null && !dto.getTelefonePai().trim().isEmpty()) {
+                String sanitizedPaiPhone = PhoneUtil.sanitizeAndValidate(dto.getTelefonePai());
+                if (sanitizedPaiPhone != null) {
+                    existingMember.setTelefonePai(sanitizedPaiPhone);
+                }
+            }
+            
+            if (dto.getTelefoneMae() != null && !dto.getTelefoneMae().trim().isEmpty()) {
+                String sanitizedMaePhone = PhoneUtil.sanitizeAndValidate(dto.getTelefoneMae());
+                if (sanitizedMaePhone != null) {
+                    existingMember.setTelefoneMae(sanitizedMaePhone);
                 }
             }
             
@@ -371,7 +448,7 @@ public class MemberService {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error updating member by CPF: {}", cpf, e);
+            log.error("Error updating member by telefone: {}", telefone, e);
             throw new MembersException("Erro ao atualizar membro: " + e.getMessage(), e);
         }
     }

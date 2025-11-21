@@ -1,0 +1,41 @@
+<div class="children-info-section">
+  @if (isLoading) {
+    <div class="loading-state">
+      <p>Buscando filhos...</p>
+    </div>
+  }
+  
+  @if (!isLoading && hasError) {
+    <div class="error-state">
+      <p>Não foi possível carregar as informações dos filhos.</p>
+    </div>
+  }
+  
+  @if (!isLoading && !hasError && children.length > 0) {
+    <div class="children-grid">
+      @for (child of children; track child.nomeCompleto) {
+        <div class="child-card">
+          <img 
+            [src]="getNormalizedPhotoUrl(child.fotoUrl)" 
+            [alt]="'Foto de ' + child.nomeCompleto"
+            class="child-avatar"
+            onerror="this.src='./img/avatar-default.png'"
+          />
+          <div class="child-text-details">
+            <h4>{{ child.nomeCompleto }}</h4>
+            <!-- @if (child.celular) {
+              <p><strong>Celular:</strong> {{ formatCelular(child.celular) }}</p>
+            }-->
+          </div>
+        </div>
+      }
+    </div>
+  }
+  
+  @if (!isLoading && !hasError && children.length === 0) {
+    <div class="no-children">
+      <p>Nenhum filho encontrado.</p>
+    </div>
+  }
+</div>
+

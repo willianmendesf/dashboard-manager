@@ -1,0 +1,43 @@
+<div class="parent-info-section">
+  @if (isLoading) {
+    <div class="loading-state">
+      <p>Buscando informações do pai/mãe...</p>
+    </div>
+  }
+  
+  @if (!isLoading && hasError) {
+    <div class="error-state">
+      <p>Não foi possível carregar as informações do pai/mãe ou telefone não encontrado.</p>
+    </div>
+  }
+  
+  @if (!isLoading && !hasError && parent) {
+    <div class="parent-details-box">
+      <img 
+        [src]="getNormalizedPhotoUrl(parent.fotoUrl)" 
+        alt="Foto do Pai/Mãe"
+        class="parent-avatar"
+        onerror="this.src='./img/avatar-default.png'"
+      />
+      <div class="parent-text-details">
+        <h3>{{ parent.nomeCompleto }}</h3>
+        @if (parent.celular) {
+          <p>
+            <strong>Celular:</strong> {{ formatCelular(parent.celular) }}
+            @if (getWhatsAppLink(parent.celular)) {
+              <a 
+                [href]="getWhatsAppLink(parent.celular)" 
+                target="_blank" 
+                class="whatsapp-icon-button"
+                title="Abrir no WhatsApp"
+                (click)="$event.stopPropagation()"
+                [innerHTML]="getWhatsAppIcon()"
+              ></a>
+            }
+          </p>
+        }
+      </div>
+    </div>
+  }
+</div>
+

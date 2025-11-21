@@ -1,56 +1,64 @@
-<div class="public-update-container">
-  <div class="public-update-card">
-    <div class="header">
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
       <h1>Atualização Cadastral</h1>
-      <p class="subtitle">Atualize seus dados cadastrais informando seu CPF</p>
+      <p class="subtitle">Atualize seus dados cadastrais informando seu Telefone</p>
       @if (!showEditForm) {
-        <div class="header-actions">
-          <button type="button" class="btn-link" (click)="goToLanding()">
-            ← Voltar
-          </button>
-        </div>
+        <a routerLink="/landing" class="back-link">← Voltar</a>
       }
     </div>
 
     @if (!showEditForm) {
-      <div class="search-section">
-        <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+      @if (step === 1) {
+        <form (ngSubmit)="requestCode()" class="auth-form">
           <div class="form-group">
-            <label for="cpf">CPF *</label>
-            <input
-              id="cpf"
-              type="text"
-              formControlName="cpf"
-              class="form-control"
-              placeholder="000.000.000-00"
-              [mask]="'000.000.000-00'"
+            <label for="phone">Telefone *</label>
+            <input 
+              id="phone" 
+              type="text" 
+              [(ngModel)]="phone" 
+              name="phone" 
+              [mask]="'(00) 00000-0000'"
               [dropSpecialCharacters]="false"
+              class="form-control"
+              placeholder="(00) 00000-0000"
               [disabled]="isLoading"
-            />
-            @if (searchForm.get('cpf')?.invalid && searchForm.get('cpf')?.touched) {
-              <small class="error-text">
-                @if (searchForm.get('cpf')?.hasError('required')) {
-                  CPF é obrigatório
-                } @else if (searchForm.get('cpf')?.hasError('invalidCpf')) {
-                  CPF inválido. Deve conter 11 dígitos no formato 000.000.000-00
-                }
-              </small>
-            }
+              required>
           </div>
 
-          <button
-            type="submit"
-            class="btn-primary"
-            [disabled]="searchForm.invalid || isLoading"
-          >
-            @if (isLoading) {
-              Buscando...
-            } @else {
-              Buscar Cadastro
-            }
+          <button type="submit" class="btn-primary btn-block" [disabled]="isLoading || !isPhoneValid()">
+            {{ isLoading ? 'Enviando...' : 'Receber Código de Acesso' }}
           </button>
         </form>
-      </div>
+      }
+
+      @if (step === 2) {
+        <form (ngSubmit)="validateCode()" class="auth-form">
+          <div class="alert-info">
+            Código enviado para <strong>{{ phone }}</strong>
+            <a (click)="step = 1" class="change-number">Alterar</a>
+          </div>
+
+          <div class="form-group">
+            <label for="code">Código de Acesso *</label>
+            <input 
+              id="code" 
+              type="text" 
+              [(ngModel)]="code" 
+              name="code" 
+              [mask]="'000000'"
+              class="form-control code-input"
+              placeholder="XXXXXX"
+              maxlength="6"
+              [disabled]="isLoading"
+              required>
+          </div>
+
+          <button type="submit" class="btn-primary btn-block" [disabled]="isLoading || !code || code.length !== 6">
+            {{ isLoading ? 'Validando...' : 'Acessar Meus Dados' }}
+          </button>
+        </form>
+      }
     }
 
     @if (showEditForm && foundMember) {
@@ -58,26 +66,11 @@
         <div class="edit-header">
           <h2>Seus Dados Cadastrais</h2>
           <button type="button" class="btn-link" (click)="backToSearch()">
-            ← Buscar outro CPF
+            ← Buscar outro telefone
           </button>
         </div>
 
         <form [formGroup]="editForm" (ngSubmit)="onSave()">
-          <!-- CPF (Read-only) -->
-          <div class="form-group">
-            <label for="edit-cpf">CPF</label>
-            <input
-              id="edit-cpf"
-              type="text"
-              formControlName="cpf"
-              class="form-control"
-              readonly
-            />
-            <small class="form-text text-muted">
-              O CPF não pode ser alterado após o cadastro.
-            </small>
-          </div>
-
           <div class="form-group">
             <label for="nome">Nome Completo *</label>
             <input
@@ -235,58 +228,48 @@
                 id="estadoCivil"
                 formControlName="estadoCivil"
                 class="form-control"
-                [disabled]="hasConjugueCPF"
+                [disabled]="hasConjugueTelefone"
               >
                 <option [value]="false">Solteiro</option>
                 <option [value]="true">Casado</option>
               </select>
-              @if (hasConjugueCPF) {
+              @if (hasConjugueTelefone) {
                 <small class="form-text text-muted">
-                  O estado civil não pode ser alterado após informar o CPF do cônjuge.
+                  O estado civil não pode ser alterado após informar o telefone do cônjuge.
                 </small>
               }
-            </div>
-
-            <div class="form-group">
-              <label for="rg">RG</label>
-              <input
-                id="rg"
-                type="text"
-                formControlName="rg"
-                class="form-control"
-              />
             </div>
           </div>
 
-          @if (editForm.get('estadoCivil')?.value || hasConjugueCPF) {
+          @if (editForm.get('estadoCivil')?.value || hasConjugueTelefone) {
             <div class="form-group">
-              <label for="conjugueCPF">CPF do Cônjuge</label>
+              <label for="conjugueTelefone">Telefone do Cônjuge</label>
               <input
-                id="conjugueCPF"
+                id="conjugueTelefone"
                 type="text"
-                formControlName="conjugueCPF"
+                formControlName="conjugueTelefone"
                 class="form-control"
-                placeholder="000.000.000-00"
-                [mask]="'000.000.000-00'"
+                placeholder="(00) 00000-0000"
+                mask="(00) 00000-0000"
                 [dropSpecialCharacters]="false"
-                [disabled]="hasConjugueCPF"
+                [disabled]="hasConjugueTelefone"
               />
-              @if (hasConjugueCPF) {
+              @if (hasConjugueTelefone) {
                 <small class="form-text text-muted">
-                  O CPF do cônjuge não pode ser alterado após ser informado.
+                  O telefone do cônjuge não pode ser alterado após ser informado.
                 </small>
               }
-              @if (editForm.get('conjugueCPF')?.invalid && editForm.get('conjugueCPF')?.touched && !hasConjugueCPF) {
+              @if (editForm.get('conjugueTelefone')?.invalid && editForm.get('conjugueTelefone')?.touched && !hasConjugueTelefone) {
                 <small class="error-text">
-                  @if (editForm.get('conjugueCPF')?.hasError('invalidCpf')) {
-                    CPF inválido. Deve conter 11 dígitos no formato 000.000.000-00
+                  @if (editForm.get('conjugueTelefone')?.hasError('invalidTelefone')) {
+                    Telefone inválido. Deve conter 10 ou 11 dígitos.
                   }
                 </small>
               }
             </div>
           }
 
-          @if (availableGroups.length > 0) {
+          @if (availableGroups.length > 0 && !foundMember.child) {
             <div class="form-group">
               <label>Grupos de Voluntariado</label>
               <div class="groups-checkbox-list">
@@ -387,4 +370,3 @@
     }
   </div>
 </div>
-

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SolicitarResetSenhaRequest {
-    private String cpf;
     private String telefone; // Pode ser celular ou telefone
 }
 

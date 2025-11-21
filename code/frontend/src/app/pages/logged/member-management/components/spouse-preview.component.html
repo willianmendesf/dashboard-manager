@@ -7,7 +7,7 @@
   
   @if (!isLoading && hasError) {
     <div class="error-state">
-      <p>Não foi possível carregar as informações do cônjuge ou CPF não encontrado.</p>
+      <p>Não foi possível carregar as informações do cônjuge ou telefone não encontrado.</p>
     </div>
   }
   
@@ -21,11 +21,21 @@
       />
       <div class="spouse-text-details">
         <h3>{{ conjugue.nomeCompleto }}</h3>
-        @if (conjugue.cpf) {
-          <p><strong>CPF:</strong> {{ formatCpf(conjugue.cpf) }}</p>
-        }
         @if (conjugue.celular) {
-          <p><strong>Celular:</strong> {{ formatCelular(conjugue.celular) }}</p>
+          <p class="phone-display">
+            <strong>Celular:</strong> 
+            <span>{{ formatCelular(conjugue.celular) }}</span>
+            @if (getWhatsAppLink(conjugue.celular)) {
+              <a 
+                [href]="getWhatsAppLink(conjugue.celular)" 
+                target="_blank" 
+                class="whatsapp-icon-button"
+                title="Abrir no WhatsApp"
+                (click)="$event.stopPropagation()"
+                [innerHTML]="getWhatsAppIcon()"
+              ></a>
+            }
+          </p>
         }
       </div>
     </div>

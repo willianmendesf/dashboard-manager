@@ -22,9 +22,9 @@ public class MemberDTO {
     private LocalDate nascimento;
     private Integer idade;
     private String estadoCivil;
-    private String cpf;
-    private String rg;
-    private String conjugueCPF;
+    private String conjugueTelefone;
+    private String telefonePai;
+    private String telefoneMae;
     private Boolean comungante;
     private Boolean child;
     private String tipoCadastro;
@@ -55,9 +55,9 @@ public class MemberDTO {
         this.comercial = member.getComercial();
         this.celular = member.getCelular();
         this.estadoCivil = (member.getEstadoCivil() == Boolean.FALSE) ? "Solteiro" : "Casado";
-        this.cpf = member.getCpf();
-        this.rg = member.getRg();
-        this.conjugueCPF = member.getConjugueCPF();
+        this.conjugueTelefone = member.getConjugueTelefone();
+        this.telefonePai = member.getTelefonePai();
+        this.telefoneMae = member.getTelefoneMae();
         this.comungante = member.getComungante();
         this.child = member.getChild();
         this.tipoCadastro = member.getTipoCadastro();

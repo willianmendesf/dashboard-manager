@@ -1,15 +1,17 @@
 import { Component, Input, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of, Subject, takeUntil } from 'rxjs';
 import { buildProfileImageUrl } from '../../../../shared/utils/image-url-builder';
+import { UtilsService } from '../../../../shared/services/utils.service';
+import { MessageIcons } from '../../../../shared/lib/utils/icons';
 
 interface MemberSpouseDTO {
   nomeCompleto: string;
   fotoUrl?: string;
-  cpf?: string;
   celular?: string;
 }
 
@@ -21,7 +23,7 @@ interface MemberSpouseDTO {
   styleUrl: './spouse-preview.component.scss'
 })
 export class SpousePreviewComponent implements OnInit, OnDestroy {
-  private _cpf: string = '';
+  private _telefone: string = '';
   conjugue: MemberSpouseDTO | null = null;
   isLoading = false;
   hasError = false;
@@ -29,14 +31,16 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
+  private utilsService = inject(UtilsService);
+  private sanitizer = inject(DomSanitizer);
   
   @Input() 
-  set cpf(value: string) {
-    if (value !== this._cpf) {
-      this._cpf = value;
-      const cleanCpf = value ? value.replace(/\D/g, '') : '';
-      if (cleanCpf.length === 11) {
-        this.searchSpouse(cleanCpf);
+  set telefone(value: string) {
+    if (value !== this._telefone) {
+      this._telefone = value;
+      const cleanTelefone = value ? value.replace(/\D/g, '') : '';
+      if (cleanTelefone.length >= 10) {
+        this.searchSpouse(cleanTelefone);
       } else {
         this.conjugue = null;
         this.isLoading = false;
@@ -46,24 +50,24 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     }
   }
   
-  get cpf(): string {
-    return this._cpf;
+  get telefone(): string {
+    return this._telefone;
   }
   
   ngOnInit() {
-    // Se o CPF já estiver presente na inicialização, buscar imediatamente
-    if (this._cpf) {
-      const cleanCpf = this._cpf.replace(/\D/g, '');
-      if (cleanCpf.length === 11) {
-        this.searchSpouse(cleanCpf);
+    // Se o telefone já estiver presente na inicialização, buscar imediatamente
+    if (this._telefone) {
+      const cleanTelefone = this._telefone.replace(/\D/g, '');
+      if (cleanTelefone.length >= 10) {
+        this.searchSpouse(cleanTelefone);
       } else {
         this.cdr.detectChanges();
       }
     }
   }
   
-  searchSpouse(cpf: string) {
-    if (!cpf || cpf.replace(/\D/g, '').length !== 11) {
+  searchSpouse(telefone: string) {
+    if (!telefone || telefone.replace(/\D/g, '').length < 10) {
       return;
     }
     
@@ -71,9 +75,9 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     this.hasError = false;
     this.conjugue = null;
     
-    const cleanCpf = cpf.replace(/\D/g, '');
-    const url = `${environment.apiUrl}members/cpf/${cleanCpf}/spouse`;
-    console.log('[SpousePreview] Searching spouse for CPF:', cleanCpf);
+    const cleanTelefone = telefone.replace(/\D/g, '');
+    const url = `${environment.apiUrl}members/telefone/${cleanTelefone}/spouse`;
+    console.log('[SpousePreview] Searching spouse for telefone:', cleanTelefone);
     
     this.http.get<MemberSpouseDTO>(url, { 
       withCredentials: true 
@@ -110,15 +114,6 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     });
   }
   
-  formatCpf(cpf: string): string {
-    if (!cpf) return '';
-    const clean = cpf.replace(/\D/g, '');
-    if (clean.length === 11) {
-      return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    return cpf;
-  }
-  
   formatCelular(celular: string): string {
     if (!celular) return '';
     const clean = celular.replace(/\D/g, '');
@@ -132,6 +127,16 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
   
   getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
     return buildProfileImageUrl(fotoUrl);
+  }
+
+  getWhatsAppIcon(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      MessageIcons.whatsapp({ size: 20, color: '#25D366' })
+    );
+  }
+
+  getWhatsAppLink(phone: string | null | undefined): string | null {
+    return this.utilsService.getWhatsAppLink(phone);
   }
 
   ngOnDestroy() {

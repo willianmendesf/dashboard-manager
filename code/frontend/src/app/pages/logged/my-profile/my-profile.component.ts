@@ -16,7 +16,6 @@ interface UserProfile {
   username: string;
   name: string;
   email: string;
-  cpf?: string;
   telefone?: string;
   profileName: string;
   fotoUrl?: string;
@@ -440,15 +439,6 @@ export class MyProfileComponent implements OnInit {
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = './img/avatar-default.png';
-  }
-
-  formatCPF(cpf: string): string {
-    if (!cpf) return '-';
-    const numbers = cpf.replace(/\D/g, '');
-    if (numbers.length === 11) {
-      return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    return cpf;
   }
 
 }

@@ -27,41 +27,20 @@ public class PublicMemberController {
     private final GroupService groupService;
 
     /**
-     * Busca um membro por CPF (público)
-     * GET /api/v1/public/members/cpf/{cpf}
+     * Atualiza um membro por telefone (público)
+     * PUT /api/v1/public/members/by-phone/{phone}
      */
-    @GetMapping("/cpf/{cpf}")
-    public ResponseEntity<MemberDTO> getMemberByCpf(@PathVariable String cpf) {
-        try {
-            log.info("Public request to get member by CPF: {}", cpf);
-            MemberDTO member = memberService.findMemberByCpf(cpf);
-            return ResponseEntity.ok(member);
-        } catch (Exception e) {
-            log.error("Error getting member by CPF: {}", cpf, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
-    /**
-     * Atualiza um membro por CPF (público)
-     * PUT /api/v1/public/members/cpf/{cpf}
-     * Regra "Write-Once": O CPF na URL é usado para buscar o membro,
-     * mas o CPF nunca pode ser alterado através deste endpoint
-     */
-    @PutMapping("/cpf/{cpf}")
-    public ResponseEntity<MemberDTO> updateMemberByCpf(
-            @PathVariable String cpf,
+    @PutMapping("/by-phone/{phone}")
+    public ResponseEntity<MemberDTO> updateMemberByTelefone(
+            @PathVariable String phone,
             @RequestBody UpdateMemberDTO memberData) {
         try {
-            log.info("Public request to update member by CPF: {}", cpf);
+            log.info("Public request to update member by telefone: {}", phone);
             
-            // Garantir que o CPF não esteja no DTO (write-once protection)
-            // O CPF é sempre obtido da URL, nunca do body
-            
-            MemberDTO updatedMember = memberService.updateMemberByCpf(cpf, memberData);
+            MemberDTO updatedMember = memberService.updateMemberByTelefone(phone, memberData);
             return ResponseEntity.ok(updatedMember);
         } catch (Exception e) {
-            log.error("Error updating member by CPF: {}", cpf, e);
+            log.error("Error updating member by telefone: {}", phone, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -79,6 +58,25 @@ public class PublicMemberController {
         } catch (Exception e) {
             log.error("Error getting all groups", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Busca um membro por telefone (público)
+     * GET /api/v1/public/members/by-phone/{phone}
+     */
+    @GetMapping("/by-phone/{phone}")
+    public ResponseEntity<MemberDTO> getMemberByPhone(@PathVariable String phone) {
+        try {
+            log.info("Public request to get member by phone: {}", phone);
+            MemberDTO member = memberService.findMemberByPhone(phone);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            return ResponseEntity.ok(member);
+        } catch (Exception e) {
+            log.error("Error getting member by phone: {}", phone, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 }

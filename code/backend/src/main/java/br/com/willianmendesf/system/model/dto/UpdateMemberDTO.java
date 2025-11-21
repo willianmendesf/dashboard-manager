@@ -9,7 +9,6 @@ import java.util.List;
 
 /**
  * DTO para atualização de dados de membro via portal público
- * CPF não deve ser incluído aqui (write-once protection)
  */
 @Data
 @NoArgsConstructor
@@ -30,8 +29,9 @@ public class UpdateMemberDTO {
     private LocalDate nascimento;
     private Integer idade;
     private Boolean estadoCivil;
-    private String rg;
-    private String conjugueCPF;
+    private String conjugueTelefone;
+    private String telefonePai;
+    private String telefoneMae;
     private Boolean child;
     private String tipoCadastro;
     private List<Long> groupIds;

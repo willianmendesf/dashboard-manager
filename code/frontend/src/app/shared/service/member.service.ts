@@ -13,9 +13,7 @@ export interface MemberDTO {
   nascimento?: string;
   idade?: number;
   estadoCivil?: string;
-  cpf?: string;
-  rg?: string;
-  conjugueCPF?: string;
+  conjugueTelefone?: string;
   fotoUrl?: string;
   cep?: string;
   logradouro?: string;

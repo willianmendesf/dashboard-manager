@@ -83,7 +83,7 @@ Após resetar, teste o login:
 
 Para usuários normais (não root), use o fluxo de recuperação de senha via WhatsApp:
 1. Acesse `/esqueci-senha`
-2. Informe CPF e telefone
+2. Informe telefone
 3. Receba código via WhatsApp
 4. Redefina a senha em `/redefinir-senha`
 
