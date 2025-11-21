@@ -6,6 +6,7 @@ import br.com.willianmendesf.system.model.entity.OtpTransaction;
 import br.com.willianmendesf.system.model.enums.WhatsappMessageType;
 import br.com.willianmendesf.system.repository.OtpTransactionRepository;
 import br.com.willianmendesf.system.service.WhatsappMessageService;
+import br.com.willianmendesf.system.service.utils.PhoneUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -61,9 +62,9 @@ public class OtpService {
     public void generateOtp(String rawPhone, String context) {
         log.info("Generating OTP for phone: {} in context: {}", rawPhone, context);
 
-        // Sanitiza o telefone
-        String sanitizedPhone = sanitizePhone(rawPhone);
-        if (sanitizedPhone == null || sanitizedPhone.length() < 10) {
+        // Sanitiza e valida o telefone
+        String sanitizedPhone = PhoneUtil.sanitizeAndValidate(rawPhone);
+        if (sanitizedPhone == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
         }
 
@@ -131,7 +132,7 @@ public class OtpService {
         // Envia via WhatsApp
         try {
             // Formata o telefone para WhatsApp (adiciona código do país 55 se necessário)
-            String whatsappPhone = formatPhoneForWhatsApp(sanitizedPhone);
+            String whatsappPhone = PhoneUtil.formatForWhatsApp(sanitizedPhone);
             
             WhatsappSender message = new WhatsappSender();
             message.setPhone(whatsappPhone);
@@ -165,9 +166,9 @@ public class OtpService {
     public String validateOtp(String rawPhone, String code, String context) {
         log.info("Validating OTP for phone: {} in context: {}", rawPhone, context);
 
-        // Sanitiza o telefone
-        String sanitizedPhone = sanitizePhone(rawPhone);
-        if (sanitizedPhone == null || sanitizedPhone.length() < 10) {
+        // Sanitiza e valida o telefone
+        String sanitizedPhone = PhoneUtil.sanitizeAndValidate(rawPhone);
+        if (sanitizedPhone == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
         }
 
@@ -237,38 +238,6 @@ public class OtpService {
         return token;
     }
 
-    /**
-     * Sanitiza o telefone removendo caracteres não numéricos
-     */
-    private String sanitizePhone(String phone) {
-        if (phone == null || phone.isBlank()) {
-            return null;
-        }
-        return phone.replaceAll("[^0-9]", "");
-    }
-
-    /**
-     * Formata o telefone para o formato WhatsApp (com código do país 55)
-     * Exemplo: 11999999999 -> 5511999999999
-     */
-    private String formatPhoneForWhatsApp(String phone) {
-        if (phone == null || phone.isBlank()) {
-            return phone;
-        }
-        
-        // Se já começa com 55 e tem mais de 12 dígitos, já está formatado
-        if (phone.startsWith("55") && phone.length() > 12) {
-            return phone;
-        }
-        
-        // Se começa com 55 mas tem menos de 12 dígitos, remove para reformatar
-        if (phone.startsWith("55")) {
-            phone = phone.substring(2);
-        }
-        
-        // Adiciona código do país 55
-        return "55" + phone;
-    }
 
     /**
      * Gera código OTP de 6 dígitos

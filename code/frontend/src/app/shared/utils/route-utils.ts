@@ -28,6 +28,8 @@ export const PUBLIC_API_ROUTES = [
   '/auth/logout',
   '/auth/solicitar-reset',
   '/auth/redefinir-senha',
+  '/auth/redefinir-senha-otp',
+  '/auth/otp/',
   '/usuarios/registro',
   '/public/',
   '/files/',

@@ -47,7 +47,7 @@ public class EmergencyController {
 
         if (secret == null || !secret.equals(expectedSecret)) {
             log.warn("Invalid emergency secret attempted");
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+            return ResponseEntity.status(401).body(Map.of("error", "Não autorizado"));
         }
 
         if (newPassword == null || newPassword.length() < 6) {

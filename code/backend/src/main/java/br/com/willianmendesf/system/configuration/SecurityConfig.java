@@ -78,21 +78,14 @@ public class SecurityConfig {
                 .maxSessionsPreventsLogin(false) // Permite login mesmo com sessão existente
             )
 
-            // 3.5. CONFIGURAR TRATAMENTO DE EXCEÇÕES (CRÍTICO PARA API JSON)
-            // Retorna 401 (Unauthorized) apenas para rotas protegidas
-            // Rotas públicas não devem retornar 401, devem ser permitidas normalmente
-            // Isso permite que o interceptor do Angular detecte a expiração da sessão
-            .exceptionHandling(e -> e
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
-            )
-
-            // 4. AUTORIZE AS REQUISIÇÕES
+            // 4. AUTORIZE AS REQUISIÇÕES (DEVE VIR ANTES DO exceptionHandling)
             .authorizeHttpRequests(authorize -> authorize
                 // 4a. Permita rotas públicas de autenticação
                 .requestMatchers("/auth/login").permitAll()
                 .requestMatchers("/auth/logout").permitAll()
                 .requestMatchers("/auth/solicitar-reset").permitAll()
                 .requestMatchers("/auth/redefinir-senha").permitAll()
+                .requestMatchers("/auth/redefinir-senha-otp").permitAll() // Redefinição de senha via OTP (público)
                 .requestMatchers("/auth/otp/**").permitAll() // Endpoints de OTP (público para portal de atualização cadastral)
 
                 // 4b. Permita outras rotas públicas essenciais
@@ -100,6 +93,8 @@ public class SecurityConfig {
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/public/**").permitAll() // Portal público de atualização cadastral, visitantes e empréstimos
+                .requestMatchers("/configurations/FAVICON_URL").permitAll() // Favicon (público)
+                .requestMatchers("/configurations/LOGO_URL").permitAll() // Logo (público)
                 .requestMatchers("/enrollments/request").permitAll() // Solicitação de participação em grupos (público)
                 .requestMatchers("/enrollments/member/**").permitAll() // Consulta de enrollments do membro (público)
                 .requestMatchers("/enrollments/can-request/**").permitAll() // Verificar se pode solicitar novamente (público)
@@ -121,10 +116,18 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // 5. Configure o authentication provider
+            // 5. CONFIGURAR TRATAMENTO DE EXCEÇÕES (DEPOIS DO authorizeHttpRequests)
+            // Retorna 401 (Unauthorized) apenas para rotas protegidas
+            // Rotas públicas não devem retornar 401, devem ser permitidas normalmente
+            // Isso permite que o interceptor do Angular detecte a expiração da sessão
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+            )
+
+            // 6. Configure o authentication provider
             .authenticationProvider(authenticationProvider())
 
-            // 6. CONFIGURE O LOGOUT
+            // 7. CONFIGURE O LOGOUT
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .deleteCookies("JSESSIONID") // Limpa o cookie de sessão

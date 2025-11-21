@@ -7,6 +7,7 @@ import br.com.willianmendesf.system.model.enums.WhatsappMessageType;
 import br.com.willianmendesf.system.repository.MemberRepository;
 import br.com.willianmendesf.system.repository.UserRepository;
 import br.com.willianmendesf.system.service.utils.CPFUtil;
+import br.com.willianmendesf.system.service.utils.PhoneUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,9 +47,9 @@ public class PasswordResetService {
         }
 
         // Validar telefone (pode ser celular ou telefone)
-        String telefoneNormalizado = normalizarTelefone(telefone);
-        String celularNormalizado = member.getCelular() != null ? normalizarTelefone(member.getCelular()) : null;
-        String telefoneNormalizadoMember = member.getTelefone() != null ? normalizarTelefone(member.getTelefone()) : null;
+        String telefoneNormalizado = PhoneUtil.sanitize(telefone);
+        String celularNormalizado = member.getCelular() != null ? PhoneUtil.sanitize(member.getCelular()) : null;
+        String telefoneNormalizadoMember = member.getTelefone() != null ? PhoneUtil.sanitize(member.getTelefone()) : null;
 
         if (!telefoneNormalizado.equals(celularNormalizado) && 
             !telefoneNormalizado.equals(telefoneNormalizadoMember)) {
@@ -133,13 +134,6 @@ public class PasswordResetService {
         return String.valueOf(code);
     }
 
-    /**
-     * Normaliza telefone removendo caracteres especiais
-     */
-    private String normalizarTelefone(String telefone) {
-        if (telefone == null) return null;
-        return telefone.replaceAll("[^0-9]", "");
-    }
 
     /**
      * Envia código OTP via WhatsApp

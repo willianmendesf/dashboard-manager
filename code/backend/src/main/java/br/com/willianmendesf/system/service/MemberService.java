@@ -260,9 +260,9 @@ public class MemberService {
     public MemberDTO findMemberByPhone(String phone) {
         try {
             log.info("Finding member by phone for public portal: {}", phone);
-            // Sanitiza o telefone (remove caracteres não numéricos)
-            String sanitizedPhone = phone.replaceAll("[^0-9]", "");
-            if (sanitizedPhone == null || sanitizedPhone.length() < 10) {
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = br.com.willianmendesf.system.service.utils.PhoneUtil.sanitizeAndValidate(phone);
+            if (sanitizedPhone == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
             }
             
