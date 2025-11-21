@@ -50,4 +50,26 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
            "WHERE REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.telefone, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone " +
            "OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.celular, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone")
     MemberEntity findByConjugueTelefone(@Param("phone") String phone);
+    
+    /**
+     * Busca membro por telefone do pai/mãe (telefone sanitizado)
+     * Usado para relacionamento de pais - busca o membro que tem o telefone informado
+     * como seu próprio telefone, celular ou comercial
+     */
+    @Query("SELECT DISTINCT m FROM MemberEntity m LEFT JOIN FETCH m.groups " +
+           "WHERE REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.telefone, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone " +
+           "OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.celular, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone " +
+           "OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.comercial, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone")
+    MemberEntity findByParentTelefone(@Param("phone") String phone);
+    
+    /**
+     * Busca filhos por telefone do pai/mãe (telefone sanitizado)
+     * Usado para relacionamento de filhos - busca filhos onde telefonePai ou telefoneMae
+     * corresponde ao telefone informado
+     */
+    @Query("SELECT DISTINCT m FROM MemberEntity m LEFT JOIN FETCH m.groups " +
+           "WHERE m.child = true " +
+           "AND (REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.telefonePai, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone " +
+           "OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.telefoneMae, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone)")
+    List<MemberEntity> findChildrenByTelefone(@Param("phone") String phone);
 }

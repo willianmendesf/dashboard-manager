@@ -26,6 +26,12 @@ public class MemberEntity {
     @Column(name = "conjugueTelefone", length = 20)
     private String conjugueTelefone;
 
+    @Column(name = "telefonePai", length = 20)
+    private String telefonePai;
+
+    @Column(name = "telefoneMae", length = 20)
+    private String telefoneMae;
+
     @Column(name = "comungante")
     private Boolean comungante;
 
@@ -110,6 +116,8 @@ public class MemberEntity {
         this.id = member.getId();
         this.nome = member.getNome();
         this.conjugueTelefone = member.getConjugueTelefone();
+        this.telefonePai = member.getTelefonePai();
+        this.telefoneMae = member.getTelefoneMae();
         this.comungante = member.getComungante();
         this.intercessor = member.getIntercessor();
         this.child = member.getChild();
@@ -139,6 +147,8 @@ public class MemberEntity {
         this.id = (actual.getId() != null) ? actual.getId() : newValue.getId();
         this.nome = (isNotEmpty(actual.getNome())) ? actual.getNome() : newValue.getNome();
         this.conjugueTelefone = (isNotEmpty(actual.getConjugueTelefone())) ? actual.getConjugueTelefone() : newValue.getConjugueTelefone();
+        this.telefonePai = (isNotEmpty(actual.getTelefonePai())) ? actual.getTelefonePai() : newValue.getTelefonePai();
+        this.telefoneMae = (isNotEmpty(actual.getTelefoneMae())) ? actual.getTelefoneMae() : newValue.getTelefoneMae();
         this.comungante = (actual.getComungante() != null) ? actual.getComungante() : newValue.getComungante();
         this.intercessor = (actual.getIntercessor() != null) ? actual.getIntercessor() : newValue.getIntercessor();
         this.child = (actual.getChild() != null) ? actual.getChild() : newValue.getChild();

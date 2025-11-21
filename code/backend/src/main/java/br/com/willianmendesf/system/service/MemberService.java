@@ -5,6 +5,7 @@ import br.com.willianmendesf.system.exception.UserException;
 import br.com.willianmendesf.system.model.dto.GroupEnrollmentDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
+import br.com.willianmendesf.system.model.dto.MemberChildrenDTO;
 import br.com.willianmendesf.system.model.dto.UpdateMemberDTO;
 import br.com.willianmendesf.system.model.entity.GroupEntity;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
@@ -118,6 +119,73 @@ public class MemberService {
         }
     }
 
+    /**
+     * Gets parent information by telefone (returns only nomeCompleto, fotoUrl and celular)
+     * Used for relationship preview in member forms for children
+     */
+    public MemberSpouseDTO getParentByTelefone(String telefone) {
+        try {
+            log.info("Getting parent by telefone: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone format for parent lookup: {}", telefone);
+                return null;
+            }
+            
+            MemberEntity entity = repository.findByParentTelefone(sanitizedPhone);
+            
+            if (entity == null) {
+                return null;
+            }
+            
+            MemberSpouseDTO parent = new MemberSpouseDTO();
+            parent.setNomeCompleto(entity.getNome());
+            parent.setFotoUrl(entity.getFotoUrl());
+            parent.setCelular(entity.getCelular());
+            
+            return parent;
+        } catch (Exception e) {
+            log.error("Error getting parent by telefone: {}", telefone, e);
+            return null;
+        }
+    }
+
+    /**
+     * Gets children information by telefone (returns list of nomeCompleto, fotoUrl and celular)
+     * Used for relationship preview in member forms - shows children of a parent
+     */
+    public List<MemberChildrenDTO> getChildrenByTelefone(String telefone) {
+        try {
+            log.info("Getting children by telefone: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone format for children lookup: {}", telefone);
+                return new java.util.ArrayList<>();
+            }
+            
+            List<MemberEntity> children = repository.findChildrenByTelefone(sanitizedPhone);
+            
+            if (children == null || children.isEmpty()) {
+                return new java.util.ArrayList<>();
+            }
+            
+            return children.stream()
+                    .map(child -> {
+                        MemberChildrenDTO dto = new MemberChildrenDTO();
+                        dto.setNomeCompleto(child.getNome());
+                        dto.setFotoUrl(child.getFotoUrl());
+                        dto.setCelular(child.getCelular());
+                        return dto;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting children by telefone: {}", telefone, e);
+            return new java.util.ArrayList<>();
+        }
+    }
+
     public void create(MemberEntity member) {
         try {
             log.info("Creating new member!");
@@ -139,7 +207,24 @@ public class MemberService {
             originalMember.setNome(member.getNome().trim());
 
             if (member.getConjugueTelefone() != null && !member.getConjugueTelefone().trim().isEmpty()) {
-                originalMember.setConjugueTelefone(member.getConjugueTelefone());
+                String sanitizedPhone = PhoneUtil.sanitizeAndValidate(member.getConjugueTelefone());
+                if (sanitizedPhone != null) {
+                    originalMember.setConjugueTelefone(sanitizedPhone);
+                }
+            }
+            
+            if (member.getTelefonePai() != null && !member.getTelefonePai().trim().isEmpty()) {
+                String sanitizedPhone = PhoneUtil.sanitizeAndValidate(member.getTelefonePai());
+                if (sanitizedPhone != null) {
+                    originalMember.setTelefonePai(sanitizedPhone);
+                }
+            }
+            
+            if (member.getTelefoneMae() != null && !member.getTelefoneMae().trim().isEmpty()) {
+                String sanitizedPhone = PhoneUtil.sanitizeAndValidate(member.getTelefoneMae());
+                if (sanitizedPhone != null) {
+                    originalMember.setTelefoneMae(sanitizedPhone);
+                }
             }
             originalMember.setComungante(member.getComungante());
             originalMember.setIntercessor(member.getIntercessor());
@@ -322,7 +407,24 @@ public class MemberService {
             }
             
             if (dto.getConjugueTelefone() != null && !dto.getConjugueTelefone().trim().isEmpty()) {
-                existingMember.setConjugueTelefone(dto.getConjugueTelefone());
+                String sanitizedConjuguePhone = PhoneUtil.sanitizeAndValidate(dto.getConjugueTelefone());
+                if (sanitizedConjuguePhone != null) {
+                    existingMember.setConjugueTelefone(sanitizedConjuguePhone);
+                }
+            }
+            
+            if (dto.getTelefonePai() != null && !dto.getTelefonePai().trim().isEmpty()) {
+                String sanitizedPaiPhone = PhoneUtil.sanitizeAndValidate(dto.getTelefonePai());
+                if (sanitizedPaiPhone != null) {
+                    existingMember.setTelefonePai(sanitizedPaiPhone);
+                }
+            }
+            
+            if (dto.getTelefoneMae() != null && !dto.getTelefoneMae().trim().isEmpty()) {
+                String sanitizedMaePhone = PhoneUtil.sanitizeAndValidate(dto.getTelefoneMae());
+                if (sanitizedMaePhone != null) {
+                    existingMember.setTelefoneMae(sanitizedMaePhone);
+                }
             }
             
             if (dto.getChild() != null) {
