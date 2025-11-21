@@ -78,7 +78,8 @@ export class AdicionarVisitantesComponent implements OnInit {
   }
 
   get eDeSP(): boolean {
-    return this.visitorForm.get('eDeSP')?.value === true;
+    const value = this.visitorForm.get('eDeSP')?.value;
+    return value === true || value === 'true' || value === 1;
   }
 
   get jaFrequentaIgreja(): string {
