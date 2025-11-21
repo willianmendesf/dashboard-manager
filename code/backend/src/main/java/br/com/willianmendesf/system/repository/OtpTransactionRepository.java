@@ -65,5 +65,21 @@ public interface OtpTransactionRepository extends JpaRepository<OtpTransaction, 
             @Param("phoneNumber") String phoneNumber,
             @Param("context") String context
     );
+
+    /**
+     * Verifica se existe transação bloqueada ativa para um telefone e contexto
+     * Retorna a transação se estiver bloqueada (blockedUntil > now)
+     */
+    @Query("SELECT otp FROM OtpTransaction otp " +
+           "WHERE otp.phoneNumber = :phoneNumber " +
+           "AND otp.context = :context " +
+           "AND otp.blockedUntil IS NOT NULL " +
+           "AND otp.blockedUntil > :now " +
+           "ORDER BY otp.blockedUntil DESC")
+    Optional<OtpTransaction> findBlockedTransaction(
+            @Param("phoneNumber") String phoneNumber,
+            @Param("context") String context,
+            @Param("now") LocalDateTime now
+    );
 }
 

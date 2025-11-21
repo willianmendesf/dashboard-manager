@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -80,6 +81,18 @@ public class OtpService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não foi possível enviar o código. Verifique se o telefone está correto.");
         }
 
+        // Verifica se o número está bloqueado ANTES de gerar código
+        LocalDateTime now = LocalDateTime.now();
+        Optional<OtpTransaction> blockedTransaction = otpRepository.findBlockedTransaction(
+                sanitizedPhone, context, now);
+        if (blockedTransaction.isPresent()) {
+            OtpTransaction blocked = blockedTransaction.get();
+            log.warn("Phone {} is blocked until {} in context {}", 
+                    sanitizedPhone, blocked.getBlockedUntil(), context);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                    "Número bloqueado. Tente novamente amanhã.");
+        }
+
         // Gera código de 6 dígitos
         String code = generateOtpCode();
 
@@ -96,6 +109,9 @@ public class OtpService {
             transaction.setExpirationTime(LocalDateTime.now().plusMinutes(30));
             transaction.setUsed(false);
             transaction.setAttempts(0);
+            if (transaction.getBlockedUntil() != null && transaction.getBlockedUntil().isBefore(now)) {
+                transaction.setBlockedUntil(null);
+            } // Remove bloqueio ao gerar novo código
         } else {
             // Cria nova transação OTP apenas se não existir nenhuma
             transaction = new OtpTransaction();
@@ -105,6 +121,7 @@ public class OtpService {
             transaction.setExpirationTime(LocalDateTime.now().plusMinutes(30));
             transaction.setUsed(false);
             transaction.setAttempts(0);
+            transaction.setBlockedUntil(null);
             log.info("Creating new OTP transaction for phone: {} in context: {}", sanitizedPhone, context);
         }
 
@@ -144,7 +161,7 @@ public class OtpService {
      * @return Token temporário (UUID) para próxima etapa
      * @throws OtpException Se o código for inválido, expirado ou exceder tentativas
      */
-    @Transactional
+    @Transactional(noRollbackFor = ResponseStatusException.class)
     public String validateOtp(String rawPhone, String code, String context) {
         log.info("Validating OTP for phone: {} in context: {}", rawPhone, context);
 
@@ -164,26 +181,54 @@ public class OtpService {
             return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Código inválido ou expirado");
         });
 
-        // Verifica tentativas
-        if (transaction.getAttempts() >= 3) {
-            log.warn("OTP transaction {} exceeded max attempts", transaction.getId());
-            transaction.setUsed(true);
-            otpRepository.save(transaction);
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Número máximo de tentativas excedido");
+        // Verifica se está bloqueado
+        LocalDateTime now = LocalDateTime.now();
+        if (transaction.getBlockedUntil() != null && transaction.getBlockedUntil().isAfter(now)) {
+            log.warn("OTP transaction {} is blocked until {}", transaction.getId(), transaction.getBlockedUntil());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                    "Número bloqueado. Tente novamente amanhã.");
         }
 
-        // Incrementa tentativas
-        transaction.setAttempts(transaction.getAttempts() + 1);
+        // Verifica tentativas antes de validar
+        int currentAttempts = transaction.getAttempts();
+        if (currentAttempts >= 3) {
+            // Bloqueia por 1 dia
+            transaction.setBlockedUntil(now.plusDays(1));
+            transaction.setUsed(true);
+            otpRepository.save(transaction);
+            log.warn("OTP transaction {} exceeded max attempts, blocked until {}", 
+                    transaction.getId(), transaction.getBlockedUntil());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                    "Número máximo de tentativas excedido. Tente novamente amanhã.");
+        }
+
+        // Incrementa tentativas ANTES de validar
+        transaction.setAttempts(currentAttempts + 1);
+        int remainingAttempts = 3 - transaction.getAttempts();
 
         // Valida código
         if (!transaction.getCode().equals(code)) {
-            otpRepository.save(transaction);
-            log.warn("Invalid OTP code for transaction: {}", transaction.getId());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Código inválido");
+            // Se foi a última tentativa, bloqueia
+            if (remainingAttempts <= 0) {
+                transaction.setBlockedUntil(now.plusDays(1));
+                transaction.setUsed(true);
+                otpRepository.save(transaction);
+                log.warn("Invalid OTP code for transaction: {}, blocked after 3 attempts", transaction.getId());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Código inválido. Número bloqueado. Tente novamente amanhã.");
+            } else {
+                otpRepository.save(transaction);
+                log.warn("Invalid OTP code for transaction: {}, attempts: {}/3", 
+                        transaction.getId(), transaction.getAttempts());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        String.format("Código inválido. Tentativas restantes: %d", remainingAttempts));
+            }
         }
 
-        // Marca como usado
+        // Código válido - reseta tentativas e bloqueio
         transaction.setUsed(true);
+        transaction.setAttempts(0);
+        transaction.setBlockedUntil(null);
         otpRepository.save(transaction);
         log.info("OTP validated successfully for phone: {} in context: {}", sanitizedPhone, context);
 

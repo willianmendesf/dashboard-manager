@@ -190,13 +190,30 @@ export class AtualizarCadastroComponent implements OnInit {
     this.otpService.validateOtp(cleanPhone, this.code, 'MEMBER_PORTAL').subscribe({
       next: (response) => {
         this.notificationService.showSuccess('Código validado com sucesso!');
+        this.isLoading = false;
         this.loadMemberData(cleanPhone);
       },
       error: (err) => {
         console.error('Error validating OTP:', err);
-        const errorMessage = err?.error?.message || err?.error || 'Código inválido. Tente novamente.';
+        // Extrai mensagem de erro do response
+        let errorMessage = 'Código inválido ou expirado. Tente novamente.';
+        
+        if (err?.error) {
+          if (typeof err.error === 'string') {
+            errorMessage = err.error;
+          } else if (err.error?.message) {
+            errorMessage = err.error.message;
+          } else if (err.error?.error) {
+            errorMessage = err.error.error;
+          }
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+        
         this.notificationService.showError(errorMessage);
         this.isLoading = false;
+        this.code = ''; // Limpa o código para permitir nova tentativa
+        this.cdr.detectChanges(); // Força atualização da UI
       }
     });
   }

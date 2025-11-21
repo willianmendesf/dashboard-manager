@@ -36,6 +36,9 @@ public class OtpTransaction {
     @Column(name = "attempts", nullable = false)
     private Integer attempts = 0;
 
+    @Column(name = "blocked_until")
+    private LocalDateTime blockedUntil;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

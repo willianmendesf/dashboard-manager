@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -42,6 +43,12 @@ public class OtpController {
             otpService.generateOtp(request.getPhone(), request.getContext());
             
             return ResponseEntity.ok(java.util.Map.of("message", "Código enviado com sucesso"));
+        } catch (ResponseStatusException e) {
+            // ResponseStatusException já tem status e mensagem configurados
+            log.error("Error requesting OTP: {}", e.getReason());
+            HttpStatus status = HttpStatus.valueOf(e.getStatusCode().value());
+            return ResponseEntity.status(status)
+                    .body(java.util.Map.of("message", e.getReason() != null ? e.getReason() : "Erro ao enviar código. Tente novamente."));
         } catch (Exception e) {
             log.error("Error requesting OTP", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -81,6 +88,12 @@ public class OtpController {
             response.setMessage("Código validado com sucesso");
             
             return ResponseEntity.ok(response);
+        } catch (ResponseStatusException e) {
+            // ResponseStatusException já tem status e mensagem configurados
+            log.error("Error validating OTP: {}", e.getReason());
+            HttpStatus status = HttpStatus.valueOf(e.getStatusCode().value());
+            return ResponseEntity.status(status)
+                    .body(Map.of("message", e.getReason() != null ? e.getReason() : "Erro ao validar código. Tente novamente."));
         } catch (Exception e) {
             log.error("Error validating OTP", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
