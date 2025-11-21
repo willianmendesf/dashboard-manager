@@ -13,11 +13,6 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
     @Query("SELECT COALESCE(MAX(u.id), 0) FROM MemberEntity u")
     Long findMaxId();
     
-    MemberEntity findByCpf(String cpf);
-    
-    @Query("SELECT DISTINCT m FROM MemberEntity m LEFT JOIN FETCH m.groups WHERE m.cpf = :cpf")
-    MemberEntity findByCpfWithGroups(@Param("cpf") String cpf);
-    
     MemberEntity findByEmail(String email);
     boolean existsByEmail(String email);
     
@@ -45,4 +40,14 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
            "WHERE REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.telefone, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone " +
            "OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.celular, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone")
     MemberEntity findByTelefoneOrCelular(@Param("phone") String phone);
+    
+    /**
+     * Busca membro por telefone do cônjuge (telefone sanitizado)
+     * Usado para relacionamento de cônjuge - busca o membro que tem o telefone informado
+     * como seu próprio telefone ou celular
+     */
+    @Query("SELECT DISTINCT m FROM MemberEntity m LEFT JOIN FETCH m.groups " +
+           "WHERE REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.telefone, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone " +
+           "OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(m.celular, ''), '(', ''), ')', ''), '-', ''), ' ', '') = :phone")
+    MemberEntity findByConjugueTelefone(@Param("phone") String phone);
 }

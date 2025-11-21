@@ -9,7 +9,6 @@ export interface UserDTO {
   username: string;
   name: string;
   email: string;
-  cpf?: string;
   telefone?: string;
   enabled: boolean;
   profileId: number;

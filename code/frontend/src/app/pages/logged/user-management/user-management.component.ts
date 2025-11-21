@@ -107,11 +107,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   isTargetRoot = false; // Indica se o usuário sendo editado é Root
   loggedInUser: any = null;
   
-  // Write-once logic: Track if CPF/Telefone should be disabled
-  get isCpfDisabled(): boolean {
-    return this.isEditingSelf && this.currentUser?.cpf && this.currentUser.cpf.trim() !== '';
-  }
-  
+  // Write-once logic: Track if Telefone should be disabled
   get isTelefoneDisabled(): boolean {
     return this.isEditingSelf && this.currentUser?.telefone && this.currentUser.telefone.trim() !== '';
   }
@@ -214,7 +210,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             profileId: user.profileId || null,
             permissions: user.permissions || [],
             fotoUrl: fotoUrl,
-            cpf: user.cpf || null,
             telefone: user.telefone || null
           };
           });
@@ -250,7 +245,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       password: user.password,
       profileId: profileId,
       enabled: user.status === 'active',
-      cpf: user.cpf,
       telefone: user.telefone,
     };
 
@@ -268,7 +262,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         console.error('Erro ao criar usuário:', error);
         // Handle 409 Conflict (duplicate data)
         if (error?.status === 409) {
-          const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique CPF, Email, Telefone ou Nome de usuário.';
+          const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique Email, Telefone ou Nome de usuário.';
           this.notificationService.showError(errorMessage);
         } else {
           const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao criar usuário. Verifique os dados e tente novamente.';
@@ -284,7 +278,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       username: user.username,
       name: user.name,
       email: user.email,
-      cpf: user.cpf,
       telefone: user.telefone,
     };
 
@@ -309,15 +302,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       }
     }
     
-    // WRITE-ONCE: Don't send CPF/Telefone if user is editing themselves and fields already have values
+    // WRITE-ONCE: Don't send Telefone if user is editing themselves and field already has value
     // SECURITY: Don't send username if user is editing themselves (username cannot be changed)
     if (this.isEditingSelf) {
       // Remove username from update payload - username cannot be changed
       delete newUser.username;
       
-      if (this.isCpfDisabled) {
-        delete newUser.cpf;
-      }
       if (this.isTelefoneDisabled) {
         delete newUser.telefone;
       }
@@ -362,7 +352,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           this.notificationService.showError(errorMessage);
         } else if (error?.status === 409) {
           // Handle 409 Conflict (duplicate data)
-          const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique CPF, Email, Telefone ou Nome de usuário.';
+          const errorMessage = error?.error?.message || error?.error || 'Dados duplicados. Verifique Email, Telefone ou Nome de usuário.';
           this.notificationService.showError(errorMessage);
         } else {
           const errorMessage = error?.error?.error || error?.error?.message || 'Erro ao atualizar usuário. Verifique os dados e tente novamente.';
@@ -442,7 +432,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         password: '',
         novaSenha: '',
         confirmarSenha: '',
-        cpf: '',
         telefone: '',
         fotoUrl: null
       };
@@ -828,7 +817,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   async saveUser() {
     // Marcar campos como tocados para exibir erros
     if (!this.currentUser.name || !this.currentUser.email || !this.currentUser.username || 
-        !this.currentUser.role || !this.currentUser.cpf || !this.currentUser.telefone) {
+        !this.currentUser.role || !this.currentUser.telefone) {
       this.notificationService.showWarning('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
@@ -873,10 +862,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             delete userToUpdate.role;
             delete userToUpdate.status;
             
-            // WRITE-ONCE: Don't send CPF/Telefone if they already have values (user cannot change them)
-            if (this.isCpfDisabled) {
-              delete userToUpdate.cpf;
-            }
+            // WRITE-ONCE: Don't send Telefone if it already has value (user cannot change it)
             if (this.isTelefoneDisabled) {
               delete userToUpdate.telefone;
             }
@@ -908,10 +894,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           delete userToUpdate.role;
           delete userToUpdate.status;
           
-          // WRITE-ONCE: Don't send CPF/Telefone if they already have values (user cannot change them)
-          if (this.isCpfDisabled) {
-            delete userToUpdate.cpf;
-          }
+          // WRITE-ONCE: Don't send Telefone if it already has value (user cannot change it)
           if (this.isTelefoneDisabled) {
             delete userToUpdate.telefone;
           }

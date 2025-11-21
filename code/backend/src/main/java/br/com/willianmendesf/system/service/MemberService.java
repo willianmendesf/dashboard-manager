@@ -11,8 +11,7 @@ import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.GroupEnrollmentRepository;
 import br.com.willianmendesf.system.repository.GroupRepository;
 import br.com.willianmendesf.system.repository.MemberRepository;
-import br.com.willianmendesf.system.service.utils.CPFUtil;
-import br.com.willianmendesf.system.service.utils.RGUtil;
+import br.com.willianmendesf.system.service.utils.PhoneUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -87,26 +86,21 @@ public class MemberService {
         }
     }
 
-    public MemberEntity getByCPF(String cpf) {
-        try {
-            log.info("Getting member by CPF: {}", cpf);
-            MemberEntity entity = repository.findByCpf(CPFUtil.validateAndFormatCPF(cpf));
-            if (!isNull(entity)) return entity;
-            else return null;
-        } catch (Exception e) {
-            throw new MembersException("ID " + cpf + " not found");
-        }
-    }
-
     /**
-     * Gets spouse information by CPF (returns only nomeCompleto and fotoUrl)
+     * Gets spouse information by telefone (returns only nomeCompleto, fotoUrl and celular)
      * Used for relationship preview in member forms
      */
-    public MemberSpouseDTO getSpouseByCpf(String cpf) {
+    public MemberSpouseDTO getSpouseByTelefone(String telefone) {
         try {
-            log.info("Getting spouse by CPF: {}", cpf);
-            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity entity = repository.findByCpf(formattedCpf);
+            log.info("Getting spouse by telefone: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                log.warn("Invalid phone format for spouse lookup: {}", telefone);
+                return null;
+            }
+            
+            MemberEntity entity = repository.findByConjugueTelefone(sanitizedPhone);
             
             if (entity == null) {
                 return null;
@@ -115,12 +109,11 @@ public class MemberService {
             MemberSpouseDTO spouse = new MemberSpouseDTO();
             spouse.setNomeCompleto(entity.getNome());
             spouse.setFotoUrl(entity.getFotoUrl());
-            spouse.setCpf(entity.getCpf());
             spouse.setCelular(entity.getCelular());
             
             return spouse;
         } catch (Exception e) {
-            log.error("Error getting spouse by CPF: {}", cpf, e);
+            log.error("Error getting spouse by telefone: {}", telefone, e);
             return null;
         }
     }
@@ -128,18 +121,7 @@ public class MemberService {
     public void create(MemberEntity member) {
         try {
             log.info("Creating new member!");
-            MemberEntity existMember = null;
-
-            if(!isNull(member.getCpf())) {
-                var cpf = CPFUtil.validateAndFormatCPF(member.getCpf());
-                existMember = this.getByCPF(cpf);
-            }
-
-            if(isNull(existMember)) {
-                member.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
-                member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
-                repository.save(member);
-            }
+            repository.save(member);
         } catch (Exception e) {
             throw new MembersException("Error to create new appointment", e);
         }
@@ -156,14 +138,9 @@ public class MemberService {
             }
             originalMember.setNome(member.getNome().trim());
 
-            if (member.getCpf() != null && !member.getCpf().trim().isEmpty()) {
-                originalMember.setCpf(CPFUtil.validateAndFormatCPF(member.getCpf()));
+            if (member.getConjugueTelefone() != null && !member.getConjugueTelefone().trim().isEmpty()) {
+                originalMember.setConjugueTelefone(member.getConjugueTelefone());
             }
-
-            if (member.getRg() != null && !member.getRg().trim().isEmpty()) {
-                originalMember.setRg(RGUtil.validateAndFormatRG(member.getRg()));
-            }
-            if (member.getConjugueCPF() != null && !member.getConjugueCPF().trim().isEmpty()) originalMember.setConjugueCPF(member.getConjugueCPF());
             originalMember.setComungante(member.getComungante());
             originalMember.setIntercessor(member.getIntercessor());
             if (member.getChild() != null) originalMember.setChild(member.getChild());
@@ -226,32 +203,6 @@ public class MemberService {
         }
     }
 
-    /**
-     * Busca um membro por CPF e retorna como DTO
-     * Usado no portal público de atualização cadastral
-     */
-    public MemberDTO findMemberByCpf(String cpf) {
-        try {
-            log.info("Finding member by CPF for public portal: {}", cpf);
-            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity entity = repository.findByCpfWithGroups(formattedCpf);
-            
-            if (entity == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
-            }
-            
-            List<GroupEnrollmentDTO> enrollments = enrollmentRepository.findByMemberId(entity.getId())
-                    .stream()
-                    .map(GroupEnrollmentDTO::new)
-                    .collect(Collectors.toList());
-            return new MemberDTO(entity, enrollments);
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error finding member by CPF: {}", cpf, e);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
-        }
-    }
 
     /**
      * Busca um membro por telefone e retorna como DTO
@@ -286,17 +237,21 @@ public class MemberService {
     }
 
     /**
-     * Atualiza um membro por CPF (portal público)
-     * Regra "Write-Once": O CPF nunca pode ser alterado
+     * Atualiza um membro por telefone (portal público)
      */
-    public MemberDTO updateMemberByCpf(String cpf, UpdateMemberDTO dto) {
+    public MemberDTO updateMemberByTelefone(String telefone, UpdateMemberDTO dto) {
         try {
-            log.info("Updating member by CPF for public portal: {}", cpf);
-            String formattedCpf = CPFUtil.validateAndFormatCPF(cpf);
-            MemberEntity existingMember = repository.findByCpfWithGroups(formattedCpf);
+            log.info("Updating member by telefone for public portal: {}", telefone);
+            // Sanitiza e valida o telefone
+            String sanitizedPhone = PhoneUtil.sanitizeAndValidate(telefone);
+            if (sanitizedPhone == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
+            }
+            
+            MemberEntity existingMember = repository.findByTelefoneOrCelular(sanitizedPhone);
             
             if (existingMember == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o CPF informado");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Membro não encontrado com o telefone informado");
             }
 
             if (dto.getNome() != null && !dto.getNome().trim().isEmpty()) {
@@ -366,20 +321,8 @@ public class MemberService {
                 existingMember.setEstadoCivil(dto.getEstadoCivil());
             }
             
-            if (dto.getRg() != null && !dto.getRg().trim().isEmpty()) {
-                try {
-                    existingMember.setRg(RGUtil.validateAndFormatRG(dto.getRg()));
-                } catch (Exception e) {
-                    log.warn("Invalid RG format, ignoring: {}", dto.getRg());
-                }
-            }
-            
-            if (dto.getConjugueCPF() != null && !dto.getConjugueCPF().trim().isEmpty()) {
-                try {
-                    existingMember.setConjugueCPF(CPFUtil.validateAndFormatCPF(dto.getConjugueCPF()));
-                } catch (Exception e) {
-                    log.warn("Invalid conjugueCPF format, ignoring: {}", dto.getConjugueCPF());
-                }
+            if (dto.getConjugueTelefone() != null && !dto.getConjugueTelefone().trim().isEmpty()) {
+                existingMember.setConjugueTelefone(dto.getConjugueTelefone());
             }
             
             if (dto.getChild() != null) {
@@ -403,7 +346,7 @@ public class MemberService {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error updating member by CPF: {}", cpf, e);
+            log.error("Error updating member by telefone: {}", telefone, e);
             throw new MembersException("Erro ao atualizar membro: " + e.getMessage(), e);
         }
     }

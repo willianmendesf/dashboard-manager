@@ -9,7 +9,6 @@ import { buildProfileImageUrl } from '../../../../shared/utils/image-url-builder
 interface MemberSpouseDTO {
   nomeCompleto: string;
   fotoUrl?: string;
-  cpf?: string;
   celular?: string;
 }
 
@@ -21,7 +20,7 @@ interface MemberSpouseDTO {
   styleUrl: './spouse-preview.component.scss'
 })
 export class SpousePreviewComponent implements OnInit, OnDestroy {
-  private _cpf: string = '';
+  private _telefone: string = '';
   conjugue: MemberSpouseDTO | null = null;
   isLoading = false;
   hasError = false;
@@ -31,12 +30,12 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   
   @Input() 
-  set cpf(value: string) {
-    if (value !== this._cpf) {
-      this._cpf = value;
-      const cleanCpf = value ? value.replace(/\D/g, '') : '';
-      if (cleanCpf.length === 11) {
-        this.searchSpouse(cleanCpf);
+  set telefone(value: string) {
+    if (value !== this._telefone) {
+      this._telefone = value;
+      const cleanTelefone = value ? value.replace(/\D/g, '') : '';
+      if (cleanTelefone.length >= 10) {
+        this.searchSpouse(cleanTelefone);
       } else {
         this.conjugue = null;
         this.isLoading = false;
@@ -46,24 +45,24 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     }
   }
   
-  get cpf(): string {
-    return this._cpf;
+  get telefone(): string {
+    return this._telefone;
   }
   
   ngOnInit() {
-    // Se o CPF já estiver presente na inicialização, buscar imediatamente
-    if (this._cpf) {
-      const cleanCpf = this._cpf.replace(/\D/g, '');
-      if (cleanCpf.length === 11) {
-        this.searchSpouse(cleanCpf);
+    // Se o telefone já estiver presente na inicialização, buscar imediatamente
+    if (this._telefone) {
+      const cleanTelefone = this._telefone.replace(/\D/g, '');
+      if (cleanTelefone.length >= 10) {
+        this.searchSpouse(cleanTelefone);
       } else {
         this.cdr.detectChanges();
       }
     }
   }
   
-  searchSpouse(cpf: string) {
-    if (!cpf || cpf.replace(/\D/g, '').length !== 11) {
+  searchSpouse(telefone: string) {
+    if (!telefone || telefone.replace(/\D/g, '').length < 10) {
       return;
     }
     
@@ -71,9 +70,9 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     this.hasError = false;
     this.conjugue = null;
     
-    const cleanCpf = cpf.replace(/\D/g, '');
-    const url = `${environment.apiUrl}members/cpf/${cleanCpf}/spouse`;
-    console.log('[SpousePreview] Searching spouse for CPF:', cleanCpf);
+    const cleanTelefone = telefone.replace(/\D/g, '');
+    const url = `${environment.apiUrl}members/telefone/${cleanTelefone}/spouse`;
+    console.log('[SpousePreview] Searching spouse for telefone:', cleanTelefone);
     
     this.http.get<MemberSpouseDTO>(url, { 
       withCredentials: true 
@@ -108,15 +107,6 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
-  }
-  
-  formatCpf(cpf: string): string {
-    if (!cpf) return '';
-    const clean = cpf.replace(/\D/g, '');
-    if (clean.length === 11) {
-      return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    return cpf;
   }
   
   formatCelular(celular: string): string {

@@ -3,9 +3,7 @@ import { GroupEnrollmentDTO } from '../../../../shared/service/enrollment.servic
 export interface Member {
   id: number;
   nome: string;
-  cpf?: string;
-  rg?: string;
-  conjugueCPF?: string;
+  conjugueTelefone?: string;
   comungante?: boolean;
   intercessor: boolean;
   child?: boolean;

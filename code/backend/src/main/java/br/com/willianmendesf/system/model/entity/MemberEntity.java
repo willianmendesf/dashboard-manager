@@ -23,14 +23,8 @@ public class MemberEntity {
     @Column(name = "nome", nullable = false)
     private String nome;
 
-    @Column(name = "cpf", length = 14)
-    private String cpf;
-
-    @Column(name = "rg", length = 20)
-    private String rg;
-
-    @Column(name = "conjugueCPF", length = 14)
-    private String conjugueCPF;
+    @Column(name = "conjugueTelefone", length = 20)
+    private String conjugueTelefone;
 
     @Column(name = "comungante")
     private Boolean comungante;
@@ -115,9 +109,7 @@ public class MemberEntity {
     public MemberEntity(MemberEntity member) {
         this.id = member.getId();
         this.nome = member.getNome();
-        this.cpf = member.getCpf();
-        this.rg = member.getRg();
-        this.conjugueCPF = member.getConjugueCPF();
+        this.conjugueTelefone = member.getConjugueTelefone();
         this.comungante = member.getComungante();
         this.intercessor = member.getIntercessor();
         this.child = member.getChild();
@@ -146,9 +138,7 @@ public class MemberEntity {
     public MemberEntity(MemberEntity actual, MemberEntity newValue) {
         this.id = (actual.getId() != null) ? actual.getId() : newValue.getId();
         this.nome = (isNotEmpty(actual.getNome())) ? actual.getNome() : newValue.getNome();
-        this.cpf = (isNotEmpty(actual.getCpf())) ? actual.getCpf() : newValue.getCpf();
-        this.rg = (isNotEmpty(actual.getRg())) ? actual.getRg() : newValue.getRg();
-        this.conjugueCPF = (isNotEmpty(actual.getConjugueCPF())) ? actual.getConjugueCPF() : newValue.getConjugueCPF();
+        this.conjugueTelefone = (isNotEmpty(actual.getConjugueTelefone())) ? actual.getConjugueTelefone() : newValue.getConjugueTelefone();
         this.comungante = (actual.getComungante() != null) ? actual.getComungante() : newValue.getComungante();
         this.intercessor = (actual.getIntercessor() != null) ? actual.getIntercessor() : newValue.getIntercessor();
         this.child = (actual.getChild() != null) ? actual.getChild() : newValue.getChild();

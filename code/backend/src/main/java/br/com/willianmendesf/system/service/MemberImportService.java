@@ -3,8 +3,6 @@ package br.com.willianmendesf.system.service;
 import br.com.willianmendesf.system.model.dto.ImportResultDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
-import br.com.willianmendesf.system.service.utils.CPFUtil;
-import br.com.willianmendesf.system.service.utils.RGUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -168,30 +166,19 @@ public class MemberImportService {
     /**
      * Parses a member from Excel row
      * Expected columns order (0-indexed):
-     * 0: Nome, 1: CPF, 2: RG, 3: Tipo Cadastro, 4: Data Nascimento, 5: Estado Civil,
-     * 6: CEP, 7: Logradouro, 8: Número, 9: Complemento, 10: Bairro, 11: Cidade, 12: Estado,
-     * 13: Telefone, 14: Comercial, 15: Celular, 16: Email, 17: Grupos
+     * 0: Nome, 1: Tipo Cadastro, 2: Data Nascimento, 3: Estado Civil,
+     * 4: CEP, 5: Logradouro, 6: Número, 7: Complemento, 8: Bairro, 9: Cidade, 10: Estado,
+     * 11: Telefone, 12: Comercial, 13: Celular, 14: Email, 15: Grupos
      */
     private MemberEntity parseMemberFromExcelRow(Row row, int rowNumber, ImportResultDTO result) {
         try {
             String nome = getCellValueAsString(row.getCell(0));
-            String email = getCellValueAsString(row.getCell(16));
-            String cpf = getCellValueAsString(row.getCell(1));
+            String email = getCellValueAsString(row.getCell(14));
 
-            // Check if member already exists (by email or CPF) - only if provided
+            // Check if member already exists (by email) - only if provided
             MemberEntity existingMember = null;
             if (email != null && !email.trim().isEmpty()) {
                 existingMember = memberRepository.findByEmail(email);
-            }
-            
-            if (existingMember == null && cpf != null && !cpf.trim().isEmpty()) {
-                try {
-                    cpf = CPFUtil.validateAndFormatCPF(cpf);
-                    existingMember = memberRepository.findByCpf(cpf);
-                } catch (Exception e) {
-                    log.warn("Invalid CPF format at row {}: {}", rowNumber, cpf);
-                    // Continue without CPF validation if format is invalid
-                }
             }
 
             MemberEntity member;
@@ -213,31 +200,13 @@ public class MemberImportService {
                 member.setNome("Sem Nome"); // Default for required field
             }
             
-            if (cpf != null && !cpf.trim().isEmpty()) {
-                try {
-                    member.setCpf(CPFUtil.validateAndFormatCPF(cpf));
-                } catch (Exception e) {
-                    log.warn("Invalid CPF at row {}: {}", rowNumber, cpf);
-                    // Continue without CPF if invalid
-                }
-            }
-            
-            String rg = getCellValueAsString(row.getCell(2));
-            if (rg != null && !rg.trim().isEmpty()) {
-                try {
-                    member.setRg(RGUtil.validateAndFormatRG(rg));
-                } catch (Exception e) {
-                    log.warn("Invalid RG at row {}: {}", rowNumber, rg);
-                }
-            }
-            
-            String tipoCadastro = getCellValueAsString(row.getCell(3));
+            String tipoCadastro = getCellValueAsString(row.getCell(1));
             if (tipoCadastro != null && !tipoCadastro.trim().isEmpty()) {
                 member.setTipoCadastro(tipoCadastro);
             }
             
             // Parse date of birth
-            Date nascimentoDate = getCellValueAsDate(row.getCell(4));
+            Date nascimentoDate = getCellValueAsDate(row.getCell(2));
             if (nascimentoDate != null) {
                 member.setNascimento(nascimentoDate.toInstant()
                     .atZone(ZoneId.systemDefault())
@@ -246,59 +215,59 @@ public class MemberImportService {
             
             // Parse estado civil (boolean: true = casado, false = solteiro)
             // Required field in DB, so set default if not provided
-            Boolean estadoCivil = getCellValueAsBoolean(row.getCell(5));
+            Boolean estadoCivil = getCellValueAsBoolean(row.getCell(3));
             if (estadoCivil != null) {
                 member.setEstadoCivil(estadoCivil);
             } else {
                 member.setEstadoCivil(false); // Default (required field)
             }
             
-            String cep = getCellValueAsString(row.getCell(6));
+            String cep = getCellValueAsString(row.getCell(4));
             if (cep != null && !cep.trim().isEmpty()) {
                 member.setCep(cep);
             }
             
-            String logradouro = getCellValueAsString(row.getCell(7));
+            String logradouro = getCellValueAsString(row.getCell(5));
             if (logradouro != null && !logradouro.trim().isEmpty()) {
                 member.setLogradouro(logradouro);
             }
             
-            String numero = getCellValueAsString(row.getCell(8));
+            String numero = getCellValueAsString(row.getCell(6));
             if (numero != null && !numero.trim().isEmpty()) {
                 member.setNumero(numero);
             }
             
-            String complemento = getCellValueAsString(row.getCell(9));
+            String complemento = getCellValueAsString(row.getCell(7));
             if (complemento != null && !complemento.trim().isEmpty()) {
                 member.setComplemento(complemento);
             }
             
-            String bairro = getCellValueAsString(row.getCell(10));
+            String bairro = getCellValueAsString(row.getCell(8));
             if (bairro != null && !bairro.trim().isEmpty()) {
                 member.setBairro(bairro);
             }
             
-            String cidade = getCellValueAsString(row.getCell(11));
+            String cidade = getCellValueAsString(row.getCell(9));
             if (cidade != null && !cidade.trim().isEmpty()) {
                 member.setCidade(cidade);
             }
             
-            String estado = getCellValueAsString(row.getCell(12));
+            String estado = getCellValueAsString(row.getCell(10));
             if (estado != null && !estado.trim().isEmpty()) {
                 member.setEstado(estado);
             }
             
-            String telefone = getCellValueAsString(row.getCell(13));
+            String telefone = getCellValueAsString(row.getCell(11));
             if (telefone != null && !telefone.trim().isEmpty()) {
                 member.setTelefone(telefone);
             }
             
-            String comercial = getCellValueAsString(row.getCell(14));
+            String comercial = getCellValueAsString(row.getCell(12));
             if (comercial != null && !comercial.trim().isEmpty()) {
                 member.setComercial(comercial);
             }
             
-            String celular = getCellValueAsString(row.getCell(15));
+            String celular = getCellValueAsString(row.getCell(13));
             if (celular != null && !celular.trim().isEmpty()) {
                 member.setCelular(celular);
             }
@@ -307,7 +276,7 @@ public class MemberImportService {
                 member.setEmail(email);
             }
             
-            String grupos = getCellValueAsString(row.getCell(17));
+            String grupos = getCellValueAsString(row.getCell(15));
             if (grupos != null && !grupos.trim().isEmpty()) {
                 member.setGrupos(grupos);
             }
@@ -337,23 +306,12 @@ public class MemberImportService {
         try {
             // Accept any number of columns, just use what's available
             String nome = (values.length > 0 && values[0] != null) ? values[0].trim() : "";
-            String email = (values.length > 16 && values[16] != null) ? values[16].trim() : "";
-            String cpf = (values.length > 1 && values[1] != null) ? values[1].trim() : "";
+            String email = (values.length > 14 && values[14] != null) ? values[14].trim() : "";
 
-            // Check if member already exists (by email or CPF) - only if provided
+            // Check if member already exists (by email) - only if provided
             MemberEntity existingMember = null;
             if (!email.isEmpty()) {
                 existingMember = memberRepository.findByEmail(email);
-            }
-            
-            if (existingMember == null && !cpf.isEmpty()) {
-                try {
-                    cpf = CPFUtil.validateAndFormatCPF(cpf);
-                    existingMember = memberRepository.findByCpf(cpf);
-                } catch (Exception e) {
-                    log.warn("Invalid CPF format at row {}: {}", rowNumber, cpf);
-                    // Continue without CPF validation if format is invalid
-                }
             }
 
             MemberEntity member;
@@ -373,32 +331,13 @@ public class MemberImportService {
                 member.setNome("Sem Nome"); // Default for required field
             }
             
-            if (!cpf.isEmpty()) {
-                try {
-                    member.setCpf(CPFUtil.validateAndFormatCPF(cpf));
-                } catch (Exception e) {
-                    log.warn("Invalid CPF at row {}: {}", rowNumber, cpf);
-                    // Continue without CPF if invalid
-                }
-            }
-            
-            String rg = (values.length > 2 && values[2] != null) ? values[2].trim() : "";
-            if (!rg.isEmpty()) {
-                try {
-                    member.setRg(RGUtil.validateAndFormatRG(rg));
-                } catch (Exception e) {
-                    log.warn("Invalid RG at row {}: {}", rowNumber, rg);
-                    // Continue without RG if invalid
-                }
-            }
-            
-            String tipoCadastro = (values.length > 3 && values[3] != null) ? values[3].trim() : "";
+            String tipoCadastro = (values.length > 1 && values[1] != null) ? values[1].trim() : "";
             if (!tipoCadastro.isEmpty()) {
                 member.setTipoCadastro(tipoCadastro);
             }
             
             // Parse date
-            String nascimentoStr = (values.length > 4 && values[4] != null) ? values[4].trim() : "";
+            String nascimentoStr = (values.length > 2 && values[2] != null) ? values[2].trim() : "";
             if (!nascimentoStr.isEmpty()) {
                 try {
                     LocalDate nascimento = parseDate(nascimentoStr);
@@ -412,59 +351,59 @@ public class MemberImportService {
             }
             
             // Parse estado civil (required field in DB, so set default if not provided)
-            String estadoCivilStr = (values.length > 5 && values[5] != null) ? values[5].trim().toLowerCase() : "";
+            String estadoCivilStr = (values.length > 3 && values[3] != null) ? values[3].trim().toLowerCase() : "";
             if (estadoCivilStr.equals("casado") || estadoCivilStr.equals("true") || estadoCivilStr.equals("1")) {
                 member.setEstadoCivil(true);
             } else {
                 member.setEstadoCivil(false); // Default (required field)
             }
             
-            String cep = (values.length > 6 && values[6] != null) ? values[6].trim() : "";
+            String cep = (values.length > 4 && values[4] != null) ? values[4].trim() : "";
             if (!cep.isEmpty()) {
                 member.setCep(cep);
             }
             
-            String logradouro = (values.length > 7 && values[7] != null) ? values[7].trim() : "";
+            String logradouro = (values.length > 5 && values[5] != null) ? values[5].trim() : "";
             if (!logradouro.isEmpty()) {
                 member.setLogradouro(logradouro);
             }
             
-            String numero = (values.length > 8 && values[8] != null) ? values[8].trim() : "";
+            String numero = (values.length > 6 && values[6] != null) ? values[6].trim() : "";
             if (!numero.isEmpty()) {
                 member.setNumero(numero);
             }
             
-            String complemento = (values.length > 9 && values[9] != null) ? values[9].trim() : "";
+            String complemento = (values.length > 7 && values[7] != null) ? values[7].trim() : "";
             if (!complemento.isEmpty()) {
                 member.setComplemento(complemento);
             }
             
-            String bairro = (values.length > 10 && values[10] != null) ? values[10].trim() : "";
+            String bairro = (values.length > 8 && values[8] != null) ? values[8].trim() : "";
             if (!bairro.isEmpty()) {
                 member.setBairro(bairro);
             }
             
-            String cidade = (values.length > 11 && values[11] != null) ? values[11].trim() : "";
+            String cidade = (values.length > 9 && values[9] != null) ? values[9].trim() : "";
             if (!cidade.isEmpty()) {
                 member.setCidade(cidade);
             }
             
-            String estado = (values.length > 12 && values[12] != null) ? values[12].trim() : "";
+            String estado = (values.length > 10 && values[10] != null) ? values[10].trim() : "";
             if (!estado.isEmpty()) {
                 member.setEstado(estado);
             }
             
-            String telefone = (values.length > 13 && values[13] != null) ? values[13].trim() : "";
+            String telefone = (values.length > 11 && values[11] != null) ? values[11].trim() : "";
             if (!telefone.isEmpty()) {
                 member.setTelefone(telefone);
             }
             
-            String comercial = (values.length > 14 && values[14] != null) ? values[14].trim() : "";
+            String comercial = (values.length > 12 && values[12] != null) ? values[12].trim() : "";
             if (!comercial.isEmpty()) {
                 member.setComercial(comercial);
             }
             
-            String celular = (values.length > 15 && values[15] != null) ? values[15].trim() : "";
+            String celular = (values.length > 13 && values[13] != null) ? values[13].trim() : "";
             if (!celular.isEmpty()) {
                 member.setCelular(celular);
             }
@@ -473,7 +412,7 @@ public class MemberImportService {
                 member.setEmail(email);
             }
             
-            String grupos = (values.length > 17 && values[17] != null) ? values[17].trim() : "";
+            String grupos = (values.length > 15 && values[15] != null) ? values[15].trim() : "";
             if (!grupos.isEmpty()) {
                 member.setGrupos(grupos);
             }
@@ -623,7 +562,7 @@ public class MemberImportService {
             // Create header row
             Row headerRow = sheet.createRow(0);
             String[] headers = {
-                "Nome", "CPF", "RG", "Tipo Cadastro", "Data Nascimento", "Estado Civil",
+                "Nome", "Tipo Cadastro", "Data Nascimento", "Estado Civil",
                 "CEP", "Logradouro", "Número", "Complemento", "Bairro", "Cidade", "Estado",
                 "Telefone", "Comercial", "Celular", "Email", "Grupos"
             };

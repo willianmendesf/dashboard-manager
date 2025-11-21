@@ -23,7 +23,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByTelefone(String telefone);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
-    boolean existsByCpf(String cpf);
     boolean existsByTelefone(String telefone);
     
     /**
@@ -43,6 +42,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // For update validation (check if exists in another user)
     boolean existsByUsernameAndIdNot(String username, Long id);
     boolean existsByEmailAndIdNot(String email, Long id);
-    boolean existsByCpfAndIdNot(String cpf, Long id);
     boolean existsByTelefoneAndIdNot(String telefone, Long id);
 }
