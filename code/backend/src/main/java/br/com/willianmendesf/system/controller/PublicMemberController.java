@@ -81,5 +81,24 @@ public class PublicMemberController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    /**
+     * Busca um membro por telefone (público)
+     * GET /api/v1/public/members/by-phone/{phone}
+     */
+    @GetMapping("/by-phone/{phone}")
+    public ResponseEntity<MemberDTO> getMemberByPhone(@PathVariable String phone) {
+        try {
+            log.info("Public request to get member by phone: {}", phone);
+            MemberDTO member = memberService.findMemberByPhone(phone);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            return ResponseEntity.ok(member);
+        } catch (Exception e) {
+            log.error("Error getting member by phone: {}", phone, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 }
 

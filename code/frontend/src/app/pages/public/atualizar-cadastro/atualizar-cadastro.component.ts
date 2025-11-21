@@ -6,6 +6,8 @@ import { PublicMemberService, MemberDTO, UpdateMemberDTO, GroupDTO } from '../..
 import { NotificationService } from '../../../shared/services/notification.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { EnrollmentService, GroupEnrollmentDTO } from '../../../shared/service/enrollment.service';
+import { OtpService } from '../../../shared/service/otp.service';
+import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -57,16 +59,18 @@ function conjugueCpfValidator(control: AbstractControl): ValidationErrors | null
 @Component({
   selector: 'app-atualizar-cadastro',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, NgxMaskDirective],
   providers: [provideNgxMask()],
   templateUrl: './atualizar-cadastro.component.html',
   styleUrl: './atualizar-cadastro.component.scss'
 })
 export class AtualizarCadastroComponent implements OnInit {
-  searchForm: FormGroup;
   editForm: FormGroup;
   foundMember: MemberDTO | null = null;
   isLoading = false;
+  step = 1; // 1 = telefone, 2 = código
+  phone = '';
+  code = '';
   showEditForm = false;
   hasConjugueCPF = false; // Flag para controlar write-once
   availableGroups: GroupDTO[] = [];
@@ -80,14 +84,10 @@ export class AtualizarCadastroComponent implements OnInit {
     private memberService: PublicMemberService,
     private enrollmentService: EnrollmentService,
     private notificationService: NotificationService,
+    private otpService: OtpService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {
-
-    this.searchForm = this.fb.group({
-      cpf: ['', [Validators.required, cpfValidator]]
-    });
-
     this.editForm = this.fb.group({
       cpf: [{ value: '', disabled: true }],
       nome: ['', Validators.required],
@@ -145,31 +145,98 @@ export class AtualizarCadastroComponent implements OnInit {
     });
   }
 
-  onSearch(): void {
-    if (this.searchForm.invalid) {
-      this.notificationService.showError('Por favor, informe um CPF válido.');
+  isPhoneValid(): boolean {
+    if (!this.phone) return false;
+    const cleanPhone = this.phone.replace(/\D/g, '');
+    return cleanPhone.length >= 10;
+  }
+
+  requestCode(): void {
+    if (!this.isPhoneValid()) {
+      this.notificationService.showError('Por favor, informe um telefone válido.');
       return;
     }
 
     this.isLoading = true;
-    const cpf = this.searchForm.get('cpf')?.value;
+    const cleanPhone = this.phone.replace(/\D/g, '');
 
-    this.memberService.getMemberByCpf(cpf).subscribe({
+    this.otpService.requestOtp(cleanPhone, 'MEMBER_PORTAL').subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Código enviado com sucesso! Verifique seu WhatsApp.');
+        this.step = 2;
+        this.code = ''; // Limpa código anterior
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error requesting OTP:', err);
+        const errorMessage = err?.error?.message || err?.error || 'Erro ao enviar código. Tente novamente.';
+        this.notificationService.showError(errorMessage);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  validateCode(): void {
+    if (!this.code || this.code.length !== 6) {
+      this.notificationService.showError('Por favor, informe o código de 6 dígitos.');
+      return;
+    }
+
+    this.isLoading = true;
+    const cleanPhone = this.phone.replace(/\D/g, '');
+
+    this.otpService.validateOtp(cleanPhone, this.code, 'MEMBER_PORTAL').subscribe({
+      next: (response) => {
+        this.notificationService.showSuccess('Código validado com sucesso!');
+        this.isLoading = false;
+        this.loadMemberData(cleanPhone);
+      },
+      error: (err) => {
+        console.error('Error validating OTP:', err);
+        // Extrai mensagem de erro do response
+        let errorMessage = 'Código inválido ou expirado. Tente novamente.';
+        
+        if (err?.error) {
+          if (typeof err.error === 'string') {
+            errorMessage = err.error;
+          } else if (err.error?.message) {
+            errorMessage = err.error.message;
+          } else if (err.error?.error) {
+            errorMessage = err.error.error;
+          }
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+        
+        this.notificationService.showError(errorMessage);
+        this.isLoading = false;
+        this.code = ''; // Limpa o código para permitir nova tentativa
+        this.cdr.detectChanges(); // Força atualização da UI
+      }
+    });
+  }
+
+  private loadMemberData(phone: string): void {
+    this.memberService.getMemberByPhone(phone).subscribe({
       next: (member) => {
         this.foundMember = member;
         this.loadMemberEnrollments(member.id!);
         this.isLoading = false;
         this.showEditForm = true;
+        this.step = 1; // Reset para voltar ao início se necessário
         this.cdr.detectChanges();
         this.populateEditForm(member);
         this.cdr.detectChanges();
         this.notificationService.showSuccess('Cadastro encontrado! Você pode atualizar seus dados abaixo.');
       },
       error: (err) => {
-        console.error('Error finding member:', err);
-        this.notificationService.showError('CPF não encontrado. Verifique o CPF informado e tente novamente.');
+        console.error('Error finding member by phone:', err);
+        this.notificationService.showError('Cadastro não encontrado. Verifique o telefone informado e tente novamente.');
         this.foundMember = null;
         this.showEditForm = false;
+        this.step = 1;
         this.isLoading = false;
       }
     });
@@ -347,13 +414,15 @@ export class AtualizarCadastroComponent implements OnInit {
 
   backToSearch(): void {
     this.showEditForm = false;
+    this.step = 1;
+    this.phone = '';
+    this.code = '';
     this.foundMember = null;
     this.hasConjugueCPF = false;
     this.selectedGroupIds = [];
     this.memberEnrollments = [];
     this.enrollmentStatusMap.clear();
     this.canRequestMap.clear();
-    this.searchForm.reset();
     this.editForm.reset();
     this.editForm.get('estadoCivil')?.enable();
     this.editForm.get('conjugueCPF')?.enable();

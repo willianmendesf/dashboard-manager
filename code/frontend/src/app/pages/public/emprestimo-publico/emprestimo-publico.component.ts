@@ -2,39 +2,20 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { BookService, BookDTO } from '../../../shared/service/book.service';
 import { LoanService, CreateLoanDTO } from '../../../shared/service/loan.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { OtpService } from '../../../shared/service/otp.service';
+import { PublicMemberService } from '../../../shared/service/public-member.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { buildBookImageUrl } from '../../../shared/utils/image-url-builder';
 import { environment } from '../../../../environments/environment';
 
-function cpfValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value) {
-    return null;
-  }
-
-  const value = control.value.toString().trim();
-  const cpfNumbers = value.replace(/\D/g, '');
-  
-  if (cpfNumbers.length !== 11) {
-    return { invalidCpf: true };
-  }
-
-  const formattedPattern = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-  const numbersOnlyPattern = /^\d{11}$/;
-  
-  if (formattedPattern.test(value) || numbersOnlyPattern.test(cpfNumbers)) {
-    return null;
-  }
-
-  return { invalidCpf: true };
-}
-
 @Component({
   selector: 'app-emprestimo-publico',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, NgxMaskDirective],
   providers: [provideNgxMask()],
   templateUrl: './emprestimo-publico.component.html',
   styleUrl: './emprestimo-publico.component.scss'
@@ -47,23 +28,131 @@ export class EmprestimoPublicoComponent implements OnInit {
   isLoadingBooks = false;
   successMessage = '';
   errorMessage = '';
+  
+  // OTP Flow
+  step = 1; // 1 = telefone, 2 = código, 3 = seleção de livro
+  phone = '';
+  code = '';
+  memberName = '';
+  memberPhone = '';
 
   constructor(
     private fb: FormBuilder,
     private bookService: BookService,
     private loanService: LoanService,
     private notificationService: NotificationService,
+    private otpService: OtpService,
+    private memberService: PublicMemberService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
     this.loanForm = this.fb.group({
-      cpf: ['', [Validators.required, cpfValidator]],
       bookId: ['', Validators.required]
     });
   }
 
   ngOnInit(): void {
-    this.loadAvailableBooks();
+    // Não carrega livros até validar OTP
+  }
+
+  isPhoneValid(): boolean {
+    if (!this.phone) return false;
+    const cleanPhone = this.phone.replace(/\D/g, '');
+    return cleanPhone.length >= 10;
+  }
+
+  requestCode(): void {
+    if (!this.isPhoneValid()) {
+      this.notificationService.showError('Por favor, informe um telefone válido.');
+      return;
+    }
+
+    this.isLoading = true;
+    const cleanPhone = this.phone.replace(/\D/g, '');
+
+    this.otpService.requestOtp(cleanPhone, 'LOAN_PORTAL').subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Código enviado com sucesso! Verifique seu WhatsApp.');
+        this.step = 2;
+        this.code = '';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error requesting OTP:', err);
+        const errorMessage = err?.error?.message || err?.error || 'Erro ao enviar código. Tente novamente.';
+        this.notificationService.showError(errorMessage);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  validateCode(): void {
+    if (!this.code || this.code.length !== 6) {
+      this.notificationService.showError('Por favor, informe o código de 6 dígitos.');
+      return;
+    }
+
+    this.isLoading = true;
+    const cleanPhone = this.phone.replace(/\D/g, '');
+
+    this.otpService.validateOtp(cleanPhone, this.code, 'LOAN_PORTAL').subscribe({
+      next: (response) => {
+        this.notificationService.showSuccess('Código validado com sucesso!');
+        this.isLoading = false;
+        this.loadMemberByPhone(cleanPhone);
+      },
+      error: (err) => {
+        console.error('Error validating OTP:', err);
+        let errorMessage = 'Código inválido ou expirado. Tente novamente.';
+        
+        if (err?.error) {
+          if (typeof err.error === 'string') {
+            errorMessage = err.error;
+          } else if (err.error?.message) {
+            errorMessage = err.error.message;
+          } else if (err.error?.error) {
+            errorMessage = err.error.error;
+          }
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+        
+        this.notificationService.showError(errorMessage);
+        this.isLoading = false;
+        this.code = '';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private loadMemberByPhone(phone: string): void {
+    this.isLoading = true;
+    this.memberService.getMemberByPhone(phone).subscribe({
+      next: (member) => {
+        if (!member.nome) {
+          this.notificationService.showError('Cadastro não encontrado. É necessário falar com um diácono para se cadastrar antes de realizar empréstimos.');
+          this.isLoading = false;
+          this.step = 1;
+          this.cdr.detectChanges();
+          return;
+        }
+
+        // Armazenar nome e telefone para exibição e envio
+        this.memberName = member.nome;
+        this.memberPhone = phone;
+        this.step = 3;
+        this.loadAvailableBooks();
+      },
+      error: (err) => {
+        console.error('Error finding member by phone:', err);
+        this.notificationService.showError('Cadastro não encontrado. É necessário falar com um diácono para se cadastrar antes de realizar empréstimos.');
+        this.isLoading = false;
+        this.step = 1;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   loadAvailableBooks(): void {
@@ -72,12 +161,14 @@ export class EmprestimoPublicoComponent implements OnInit {
       next: (books) => {
         this.availableBooks = books;
         this.isLoadingBooks = false;
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading books:', err);
         this.notificationService.showError('Erro ao carregar livros disponíveis.');
         this.isLoadingBooks = false;
+        this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
@@ -93,7 +184,12 @@ export class EmprestimoPublicoComponent implements OnInit {
 
   onSubmit(): void {
     if (this.loanForm.invalid) {
-      this.notificationService.showError('Por favor, preencha todos os campos corretamente.');
+      this.notificationService.showError('Por favor, selecione um livro.');
+      return;
+    }
+
+    if (!this.memberPhone) {
+      this.notificationService.showError('Erro: Telefone não encontrado. Por favor, tente novamente.');
       return;
     }
 
@@ -104,7 +200,7 @@ export class EmprestimoPublicoComponent implements OnInit {
     const formData = this.loanForm.getRawValue();
     const createLoanDTO: CreateLoanDTO = {
       bookId: formData.bookId,
-      memberCpf: formData.cpf
+      memberPhone: this.memberPhone
     };
 
     this.loanService.create(createLoanDTO).subscribe({
@@ -114,15 +210,13 @@ export class EmprestimoPublicoComponent implements OnInit {
         this.successMessage = `Empréstimo registrado com sucesso! Data de devolução: ${dataFormatada}`;
         this.notificationService.showSuccess(this.successMessage);
         this.isLoading = false;
-        this.loanForm.reset();
-        this.selectedBook = null;
+        this.resetForm();
         this.cdr.detectChanges();
-        this.loadAvailableBooks();
       },
       error: (err) => {
         console.error('Error creating loan:', err);
         if (err.status === 404) {
-          this.errorMessage = 'CPF não encontrado na base de membros. É necessário falar com um diácono para se cadastrar antes de realizar empréstimos.';
+          this.errorMessage = 'Telefone não encontrado na base de membros. É necessário falar com um diácono para se cadastrar antes de realizar empréstimos.';
           this.notificationService.showError(this.errorMessage);
         } else {
           const errorMsg = err.error?.message || 'Erro ao criar empréstimo. Tente novamente.';
@@ -133,6 +227,19 @@ export class EmprestimoPublicoComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  resetForm(): void {
+    this.loanForm.reset();
+    this.selectedBook = null;
+    this.step = 1;
+    this.phone = '';
+    this.code = '';
+    this.memberName = '';
+    this.memberPhone = '';
+    this.availableBooks = [];
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 
   getBookImageUrl(book: BookDTO): string {

@@ -2,65 +2,68 @@
   <div class="reset-card">
     <div class="reset-header">
       <h1>Esqueci minha senha</h1>
-      <p>Informe seu CPF e telefone para receber um código de verificação</p>
+      <p>Informe seu telefone celular para receber um código de verificação</p>
     </div>
 
-    @if (success) {
-      <div class="success-message">
-        <p>✓ Verifique seu WhatsApp. Você receberá um código de verificação em instantes.</p>
-        <p class="redirect-message">Redirecionando...</p>
-      </div>
-    } @else {
-      <form [formGroup]="resetForm" (ngSubmit)="onSubmit()" class="reset-form">
-        <div *ngIf="error" class="error-message">
-          {{ error }}
-        </div>
+    @if (step === 1) {
+      <form (ngSubmit)="requestCode()" class="reset-form">
+        @if (error) {
+          <div class="error-message">
+            {{ error }}
+          </div>
+        }
 
         <div class="form-group">
-          <label for="cpf">CPF</label>
-          <input
-            id="cpf"
-            type="text"
-            formControlName="cpf"
-            placeholder="000.000.000-00"
-            (input)="formatCPF($event)"
-            maxlength="14"
-            [class.error]="resetForm.get('cpf')?.invalid && resetForm.get('cpf')?.touched"
-          />
-          <span *ngIf="resetForm.get('cpf')?.hasError('required') && resetForm.get('cpf')?.touched" class="field-error">
-            CPF é obrigatório
-          </span>
-          <span *ngIf="resetForm.get('cpf')?.hasError('invalidCpf') && resetForm.get('cpf')?.touched" class="field-error">
-            CPF inválido
-          </span>
-        </div>
-
-        <div class="form-group">
-          <label for="telefone">Telefone/Celular</label>
-          <input
-            id="telefone"
-            type="text"
-            formControlName="telefone"
+          <label for="phone">Telefone Celular *</label>
+          <input 
+            id="phone" 
+            type="text" 
+            [(ngModel)]="phone" 
+            name="phone" 
+            [mask]="'(00) 00000-0000'"
+            [dropSpecialCharacters]="false"
+            class="form-control"
             placeholder="(00) 00000-0000"
-            (input)="formatPhone($event)"
-            maxlength="15"
-            [class.error]="resetForm.get('telefone')?.invalid && resetForm.get('telefone')?.touched"
-          />
-          <span *ngIf="resetForm.get('telefone')?.hasError('required') && resetForm.get('telefone')?.touched" class="field-error">
-            Telefone é obrigatório
-          </span>
-          <span *ngIf="resetForm.get('telefone')?.hasError('invalidPhone') && resetForm.get('telefone')?.touched" class="field-error">
-            Telefone inválido
-          </span>
+            [disabled]="isLoading"
+            required>
         </div>
 
-        <button
-          type="submit"
-          class="btn-submit"
-          [disabled]="loading || resetForm.invalid"
-        >
-          <span *ngIf="!loading">Enviar código</span>
-          <span *ngIf="loading">Enviando...</span>
+        <button type="submit" class="btn-submit" [disabled]="isLoading || !isPhoneValid()">
+          {{ isLoading ? 'Enviando...' : 'Receber Código' }}
+        </button>
+      </form>
+    }
+
+    @if (step === 2) {
+      <form (ngSubmit)="validateCode()" class="reset-form">
+        @if (error) {
+          <div class="error-message">
+            {{ error }}
+          </div>
+        }
+
+        <div class="alert-info">
+          Código enviado para <strong>{{ phone }}</strong>
+          <a (click)="step = 1; code = ''; error = ''" class="change-number">Alterar</a>
+        </div>
+
+        <div class="form-group">
+          <label for="code">Código de Verificação *</label>
+          <input 
+            id="code" 
+            type="text" 
+            [(ngModel)]="code" 
+            name="code" 
+            [mask]="'000000'"
+            class="form-control code-input"
+            placeholder="XXXXXX"
+            maxlength="6"
+            [disabled]="isLoading"
+            required>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="isLoading || !code || code.length !== 6">
+          {{ isLoading ? 'Validando...' : 'Redefinir Senha' }}
         </button>
       </form>
     }

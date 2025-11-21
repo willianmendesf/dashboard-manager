@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateLoanDTO {
-    private Long bookId;
-    private String memberPhone; // Telefone do membro (em vez de CPF por LGPD)
+public class OtpValidateResponseDTO {
+    private String token;
+    private String phone;
+    private String message;
 }
 
