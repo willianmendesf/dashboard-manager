@@ -217,6 +217,44 @@ public class VisitorImportService {
                 }
             }
             
+            // Idade (coluna 8)
+            Cell ageCell = row.getCell(8);
+            if (ageCell != null) {
+                try {
+                    String ageStr = getCellValueAsString(ageCell);
+                    if (ageStr != null && !ageStr.trim().isEmpty()) {
+                        visitor.setAge(Integer.parseInt(ageStr.trim()));
+                    }
+                } catch (NumberFormatException e) {
+                    log.warn("Invalid age format at row {}: {}", rowNumber, getCellValueAsString(ageCell));
+                }
+            }
+            
+            // ID Visitante Principal (coluna 9)
+            Cell mainVisitorIdCell = row.getCell(9);
+            if (mainVisitorIdCell != null) {
+                try {
+                    String mainVisitorIdStr = getCellValueAsString(mainVisitorIdCell);
+                    if (mainVisitorIdStr != null && !mainVisitorIdStr.trim().isEmpty()) {
+                        Long mainVisitorId = Long.parseLong(mainVisitorIdStr.trim());
+                        VisitorEntity mainVisitor = repository.findById(mainVisitorId).orElse(null);
+                        if (mainVisitor != null) {
+                            visitor.setMainVisitor(mainVisitor);
+                        } else {
+                            result.addError(rowNumber, "Visitante principal com ID " + mainVisitorId + " não encontrado");
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    log.warn("Invalid mainVisitorId format at row {}: {}", rowNumber, getCellValueAsString(mainVisitorIdCell));
+                }
+            }
+            
+            // Vínculo (coluna 10)
+            String relationship = getCellValueAsString(row.getCell(10));
+            if (relationship != null && !relationship.trim().isEmpty()) {
+                visitor.setRelationship(relationship.trim());
+            }
+            
             return visitor;
         } catch (Exception e) {
             log.error("Error parsing row {}: {}", rowNumber, e.getMessage(), e);
@@ -285,6 +323,35 @@ public class VisitorImportService {
                 if (!estado.isEmpty()) {
                     visitor.setEstado(estado.toUpperCase());
                 }
+            }
+            
+            // Idade (coluna 8)
+            if (values.length > 8 && values[8] != null && !values[8].trim().isEmpty()) {
+                try {
+                    visitor.setAge(Integer.parseInt(values[8].trim()));
+                } catch (NumberFormatException e) {
+                    log.warn("Invalid age format at row {}: {}", rowNumber, values[8]);
+                }
+            }
+            
+            // ID Visitante Principal (coluna 9)
+            if (values.length > 9 && values[9] != null && !values[9].trim().isEmpty()) {
+                try {
+                    Long mainVisitorId = Long.parseLong(values[9].trim());
+                    VisitorEntity mainVisitor = repository.findById(mainVisitorId).orElse(null);
+                    if (mainVisitor != null) {
+                        visitor.setMainVisitor(mainVisitor);
+                    } else {
+                        result.addError(rowNumber, "Visitante principal com ID " + mainVisitorId + " não encontrado");
+                    }
+                } catch (NumberFormatException e) {
+                    log.warn("Invalid mainVisitorId format at row {}: {}", rowNumber, values[9]);
+                }
+            }
+            
+            // Vínculo (coluna 10)
+            if (values.length > 10 && values[10] != null && !values[10].trim().isEmpty()) {
+                visitor.setRelationship(values[10].trim());
             }
             
             return visitor;
@@ -432,7 +499,8 @@ public class VisitorImportService {
             Row headerRow = sheet.createRow(0);
             String[] headers = {
                 "Nome Completo", "Data Visita", "Telefone", "Já Frequenta Igreja?", 
-                "Nome da Igreja", "Está à Procura de Igreja?", "É de SP?", "Estado"
+                "Nome da Igreja", "Está à Procura de Igreja?", "É de SP?", "Estado",
+                "Idade", "ID Visitante Principal", "Vínculo"
             };
             
             CellStyle headerStyle = workbook.createCellStyle();

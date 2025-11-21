@@ -44,6 +44,9 @@ public class VisitorDTO {
     }
     private String estado;
     private String fotoUrl;
+    private Integer age;
+    private Long mainVisitorId;
+    private String relationship;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -60,6 +63,9 @@ public class VisitorDTO {
         this.eDeSP = visitor.getEDeSP();
         this.estado = visitor.getEstado();
         this.fotoUrl = visitor.getFotoUrl();
+        this.age = visitor.getAge();
+        this.mainVisitorId = visitor.getMainVisitor() != null ? visitor.getMainVisitor().getId() : null;
+        this.relationship = visitor.getRelationship();
         this.createdAt = visitor.getCreatedAt();
         this.updatedAt = visitor.getUpdatedAt();
     }

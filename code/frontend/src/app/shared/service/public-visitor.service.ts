@@ -25,8 +25,22 @@ export interface VisitorDTO {
   eDeSP?: boolean;
   estado?: string;
   fotoUrl?: string;
+  age?: number;
+  mainVisitorId?: number;
+  relationship?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AccompanyingVisitorDTO {
+  nomeCompleto: string;
+  age?: number;
+  relationship: string;
+}
+
+export interface VisitorGroupRequestDTO {
+  mainVisitor: CreateVisitorDTO;
+  accompanyingVisitors: AccompanyingVisitorDTO[];
 }
 
 @Injectable({
@@ -44,6 +58,10 @@ export class PublicVisitorService {
 
   create(visitor: CreateVisitorDTO): Observable<VisitorDTO> {
     return this.http.post<VisitorDTO>(this.apiUrl, visitor);
+  }
+
+  createGroup(data: VisitorGroupRequestDTO): Observable<VisitorDTO> {
+    return this.http.post<VisitorDTO>(`${this.apiUrl}/group`, data);
   }
 }
 

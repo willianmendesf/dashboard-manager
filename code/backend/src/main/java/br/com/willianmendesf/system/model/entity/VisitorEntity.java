@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -47,6 +48,19 @@ public class VisitorEntity {
 
     @Column(name = "foto_url", length = 500)
     private String fotoUrl;
+
+    @Column(name = "age")
+    private Integer age;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "main_visitor_id")
+    private VisitorEntity mainVisitor; // O "Chefe" da família/grupo
+
+    @Column(name = "relationship_to_main", length = 50)
+    private String relationship; // Ex: "Cônjuge", "Filho", "Amigo"
+
+    @OneToMany(mappedBy = "mainVisitor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<VisitorEntity> accompanyingVisitors;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
