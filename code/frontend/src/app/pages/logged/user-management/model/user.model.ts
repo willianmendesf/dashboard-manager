@@ -11,7 +11,6 @@ interface User {
   fotoUrl?: string;
   enabled?: boolean;
   profileId?: number;
-  cpf?: string;
   telefone?: string;
   novaSenha?: string;
   confirmarSenha?: string;

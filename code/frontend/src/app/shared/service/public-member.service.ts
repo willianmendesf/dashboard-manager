@@ -22,9 +22,7 @@ export interface MemberDTO {
   nascimento?: string;
   idade?: number;
   estadoCivil?: string;
-  cpf?: string;
-  rg?: string;
-  conjugueCPF?: string;
+  conjugueTelefone?: string;
   fotoUrl?: string;
   cep?: string;
   logradouro?: string;
@@ -52,8 +50,7 @@ export interface UpdateMemberDTO {
   nascimento?: string;
   idade?: number;
   estadoCivil?: boolean;
-  rg?: string;
-  conjugueCPF?: string;
+  conjugueTelefone?: string;
   tipoCadastro?: string;
   grupos?: string;
   rede?: string;
@@ -68,18 +65,18 @@ export class PublicMemberService {
   private apiUrl = environment.apiUrl;
   private http = inject(HttpClient);
 
-  getMemberByCpf(cpf: string): Observable<MemberDTO> {
-    const cleanCpf = cpf.replace(/\D/g, '');
+  getMemberByPhone(phone: string): Observable<MemberDTO> {
+    const cleanPhone = phone.replace(/\D/g, '');
     return this.http.get<MemberDTO>(
-      `${this.apiUrl}public/members/cpf/${cleanCpf}`,
+      `${this.apiUrl}public/members/by-phone/${cleanPhone}`,
       { withCredentials: false }
     );
   }
 
-  updateMemberByCpf(cpf: string, memberData: UpdateMemberDTO): Observable<MemberDTO> {
-    const cleanCpf = cpf.replace(/\D/g, '');
+  updateMemberByPhone(phone: string, memberData: UpdateMemberDTO): Observable<MemberDTO> {
+    const cleanPhone = phone.replace(/\D/g, '');
     return this.http.put<MemberDTO>(
-      `${this.apiUrl}public/members/cpf/${cleanCpf}`,
+      `${this.apiUrl}public/members/by-phone/${cleanPhone}`,
       memberData,
       { withCredentials: false }
     );

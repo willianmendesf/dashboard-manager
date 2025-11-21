@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface LoanRepository extends JpaRepository<LoanEntity, Long> {
     
-    List<LoanEntity> findByMemberCpf(String memberCpf);
+    List<LoanEntity> findByMemberPhone(String memberPhone);
     
     @Query("SELECT l FROM LoanEntity l WHERE l.devolvido = false")
     List<LoanEntity> findActiveLoans();

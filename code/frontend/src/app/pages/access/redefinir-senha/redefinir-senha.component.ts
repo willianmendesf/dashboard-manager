@@ -17,7 +17,7 @@ export class RedefinirSenhaComponent implements OnInit {
   loading = false;
   success = false;
   error = '';
-  cpf: string = '';
+  telefone: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -26,7 +26,7 @@ export class RedefinirSenhaComponent implements OnInit {
     private route: ActivatedRoute
   ) {
     this.resetForm = this.fb.group({
-      cpf: [{value: '', disabled: true}],
+      telefone: [{value: '', disabled: true}],
       codigo: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       novaSenha: ['', [Validators.required, Validators.minLength(6), this.passwordStrengthValidator]],
       confirmarSenha: ['', [Validators.required]]
@@ -34,11 +34,11 @@ export class RedefinirSenhaComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Obter CPF da query string
+    // Obter telefone da query string
     this.route.queryParams.subscribe(params => {
-      this.cpf = params['cpf'] || '';
-      if (this.cpf) {
-        this.resetForm.patchValue({ cpf: this.formatCPFValue(this.cpf) });
+      this.telefone = params['telefone'] || '';
+      if (this.telefone) {
+        this.resetForm.patchValue({ telefone: this.formatTelefoneValue(this.telefone) });
       }
     });
   }
@@ -53,7 +53,7 @@ export class RedefinirSenhaComponent implements OnInit {
     this.success = false;
 
     const request = {
-      cpf: this.cpf.replace(/\D/g, ''),
+      telefone: this.telefone.replace(/\D/g, ''),
       codigo: this.resetForm.get('codigo')?.value,
       novaSenha: this.resetForm.get('novaSenha')?.value
     };
@@ -102,12 +102,14 @@ export class RedefinirSenhaComponent implements OnInit {
     }
   }
 
-  formatCPFValue(cpf: string): string {
-    const numbers = cpf.replace(/\D/g, '');
+  formatTelefoneValue(telefone: string): string {
+    const numbers = telefone.replace(/\D/g, '');
     if (numbers.length === 11) {
-      return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (numbers.length === 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     }
-    return cpf;
+    return telefone;
   }
 
   formatCode(event: any): void {

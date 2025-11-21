@@ -382,9 +382,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     const memberData: any = {
       nome: member.nome || '',
       email: member.email || '',
-      cpf: member.cpf || null,
-      rg: member.rg || null,
-      conjugueCPF: member.conjugueCPF || null,
+      conjugueTelefone: member.conjugueTelefone || null,
       comungante: member.comungante !== undefined ? member.comungante : null,
       intercessor: member.intercessor !== undefined ? member.intercessor : false,
       tipoCadastro: (member.tipoCadastro && typeof member.tipoCadastro === 'string' && member.tipoCadastro.trim()) ? member.tipoCadastro.trim() : null,
@@ -537,10 +535,10 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       });
   }
   
-  isValidCpf(cpf: string | null | undefined): boolean {
-    if (!cpf) return false;
-    const cleanCpf = cpf.replace(/\D/g, '');
-    return cleanCpf.length === 11;
+  isValidTelefone(telefone: string | null | undefined): boolean {
+    if (!telefone) return false;
+    const cleanTelefone = telefone.replace(/\D/g, '');
+    return cleanTelefone.length >= 10 && cleanTelefone.length <= 11;
   }
 
   getWhatsAppIcon(): SafeHtml {
@@ -573,8 +571,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       const searchLower = this.searchTerm.toLowerCase();
       const matchesSearch = !this.searchTerm || 
                             (member.nome && member.nome.toLowerCase().includes(searchLower)) ||
-                            (member.email && member.email.toLowerCase().includes(searchLower)) ||
-                            (member.cpf && member.cpf.toLowerCase().includes(searchLower));
+                            (member.email && member.email.toLowerCase().includes(searchLower));
       const matchesTipoCadastro = !this.tipoCadastroFilter || 
                                    this.tipoCadastroFilter === '' || 
                                    (member.tipoCadastro && member.tipoCadastro === this.tipoCadastroFilter);
@@ -620,9 +617,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       this.isEditing = !!member;
       this.currentMember = member ? { ...member } : {
         nome: '',
-        cpf: '',
-        rg: '',
-        conjugueCPF: '',
+        conjugueTelefone: '',
         comungante: null,
         intercessor: false,
         child: false,

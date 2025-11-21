@@ -171,49 +171,25 @@
       </div>
 
       <div class="form-section">
-        <h4 class="section-title">Documentos</h4>
+        <h4 class="section-title">Relacionamento</h4>
         <div class="form-grid">
-          <div class="form-group">
-            <label>CPF</label>
-            <input
-              type="text"
-              [(ngModel)]="currentMember.cpf"
-              name="cpf"
-              class="form-control"
-              mask="000.000.000-00"
-              placeholder="000.000.000-00"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>RG</label>
-            <input
-              type="text"
-              [(ngModel)]="currentMember.rg"
-              name="rg"
-              class="form-control"
-              mask="00.000.000-0"
-              placeholder="00.000.000-0"
-            />
-          </div>
-
           @if (currentMember.estadoCivil) {
             <div class="form-group">
-              <label>CPF do Cônjuge</label>
+              <label>Telefone do Cônjuge</label>
               <input
                 type="text"
-                [(ngModel)]="currentMember.conjugueCPF"
-                name="conjugueCPF"
+                [(ngModel)]="currentMember.conjugueTelefone"
+                name="conjugueTelefone"
                 class="form-control"
-                mask="000.000.000-00"
-                placeholder="000.000.000-00"
+                mask="(00) 00000-0000"
+                placeholder="(00) 00000-0000"
               />
             </div>
           }
           
-          @if (currentMember.estadoCivil && isValidCpf(currentMember.conjugueCPF)) {
+          @if (currentMember.estadoCivil && isValidTelefone(currentMember.conjugueTelefone)) {
             <div class="form-group" style="grid-column: 1 / -1;">
-              <app-spouse-preview [cpf]="currentMember.conjugueCPF"></app-spouse-preview>
+              <app-spouse-preview [telefone]="currentMember.conjugueTelefone"></app-spouse-preview>
             </div>
           }
         </div>
@@ -539,27 +515,23 @@
       </div>
 
       <div class="detail-section">
-        <h4 class="section-title">Documentos</h4>
+        <h4 class="section-title">Relacionamento</h4>
         <div class="details-grid">
-          <div class="detail-item">
-            <label>CPF</label>
-            <span>{{ viewingMember.cpf || 'Não informado' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>RG</label>
-            <span>{{ viewingMember.rg || 'Não informado' }}</span>
-          </div>
-          @if (viewingMember.conjugueCPF) {
+          @if (viewingMember.conjugueTelefone) {
             <div class="detail-item">
-              <label>CPF do Cônjuge</label>
-              <span>{{ viewingMember.conjugueCPF }}</span>
+              <label>Telefone do Cônjuge</label>
+              <span>{{ viewingMember.conjugueTelefone }}</span>
             </div>
-            @if (isValidCpf(viewingMember.conjugueCPF)) {
+            @if (isValidTelefone(viewingMember.conjugueTelefone)) {
               <div class="detail-item" style="grid-column: 1 / -1;">
                 <label>Informações do Cônjuge</label>
-                <app-spouse-preview [cpf]="viewingMember.conjugueCPF"></app-spouse-preview>
+                <app-spouse-preview [telefone]="viewingMember.conjugueTelefone"></app-spouse-preview>
               </div>
             }
+          } @else {
+            <div class="detail-item">
+              <span>Nenhum relacionamento cadastrado</span>
+            </div>
           }
         </div>
       </div>

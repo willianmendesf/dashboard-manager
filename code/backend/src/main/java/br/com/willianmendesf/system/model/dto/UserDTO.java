@@ -14,7 +14,6 @@ public class UserDTO {
     private String username;
     private String name;
     private String email;
-    private String cpf;
     private String telefone;
     private String password; // Only used for creation/update
     private String novaSenha; // Only used for update (optional)

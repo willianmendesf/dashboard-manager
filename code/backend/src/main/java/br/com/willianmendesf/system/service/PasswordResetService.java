@@ -6,7 +6,7 @@ import br.com.willianmendesf.system.model.WhatsappSender;
 import br.com.willianmendesf.system.model.enums.WhatsappMessageType;
 import br.com.willianmendesf.system.repository.MemberRepository;
 import br.com.willianmendesf.system.repository.UserRepository;
-import br.com.willianmendesf.system.service.utils.CPFUtil;
+import br.com.willianmendesf.system.service.utils.PhoneUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,31 +29,24 @@ public class PasswordResetService {
 
     /**
      * Solicita reset de senha via WhatsApp
-     * Valida CPF e telefone, gera OTP e envia via WhatsApp
+     * Valida telefone, gera OTP e envia via WhatsApp
      */
     @Transactional
-    public void solicitarResetSenha(String cpf, String telefone) {
-        // Normalizar CPF
-        String cpfNormalizado = CPFUtil.validateAndFormatCPF(cpf);
+    public void solicitarResetSenha(String telefone) {
+        // Sanitizar e validar telefone
+        String telefoneNormalizado = PhoneUtil.sanitizeAndValidate(telefone);
+        if (telefoneNormalizado == null) {
+            log.warn("Password reset requested with invalid phone: {}", telefone);
+            return; // Retorna silenciosamente para não expor informações
+        }
         
-        // Buscar membro pelo CPF
-        MemberEntity member = memberRepository.findByCpf(cpfNormalizado);
+        // Buscar membro pelo telefone
+        MemberEntity member = memberRepository.findByTelefoneOrCelular(telefoneNormalizado);
         
         // Security: Sempre retornar sucesso mesmo se não encontrar (evita enumeração)
         if (member == null) {
-            log.warn("Password reset requested for non-existent CPF: {}", cpfNormalizado);
+            log.warn("Password reset requested for non-existent phone: {}", telefoneNormalizado);
             return; // Retorna silenciosamente para não expor informações
-        }
-
-        // Validar telefone (pode ser celular ou telefone)
-        String telefoneNormalizado = normalizarTelefone(telefone);
-        String celularNormalizado = member.getCelular() != null ? normalizarTelefone(member.getCelular()) : null;
-        String telefoneNormalizadoMember = member.getTelefone() != null ? normalizarTelefone(member.getTelefone()) : null;
-
-        if (!telefoneNormalizado.equals(celularNormalizado) && 
-            !telefoneNormalizado.equals(telefoneNormalizadoMember)) {
-            log.warn("Password reset requested with invalid phone for CPF: {}", cpfNormalizado);
-            return; // Retorna silenciosamente
         }
 
         // Buscar usuário pelo email do membro
@@ -61,7 +54,7 @@ public class PasswordResetService {
             .orElse(null);
 
         if (user == null) {
-            log.warn("Password reset requested for member without user account: {}", cpfNormalizado);
+            log.warn("Password reset requested for member without user account: {}", telefoneNormalizado);
             return; // Retorna silenciosamente
         }
 
@@ -78,26 +71,29 @@ public class PasswordResetService {
         String numeroWhatsApp = member.getCelular() != null ? member.getCelular() : member.getTelefone();
         enviarCodigoWhatsApp(numeroWhatsApp, otp, member.getNome());
 
-        log.info("Password reset code sent to user: {} (CPF: {})", user.getUsername(), cpfNormalizado);
+        log.info("Password reset code sent to user: {} (phone: {})", user.getUsername(), telefoneNormalizado);
     }
 
     /**
      * Redefine a senha usando o código OTP
      */
     @Transactional
-    public void redefinirSenha(String cpf, String codigo, String novaSenha) {
-        // Normalizar CPF
-        String cpfNormalizado = CPFUtil.validateAndFormatCPF(cpf);
+    public void redefinirSenha(String telefone, String codigo, String novaSenha) {
+        // Sanitizar e validar telefone
+        String telefoneNormalizado = PhoneUtil.sanitizeAndValidate(telefone);
+        if (telefoneNormalizado == null) {
+            throw new IllegalArgumentException("Telefone inválido");
+        }
         
-        // Buscar membro pelo CPF
-        MemberEntity member = memberRepository.findByCpf(cpfNormalizado);
+        // Buscar membro pelo telefone
+        MemberEntity member = memberRepository.findByTelefoneOrCelular(telefoneNormalizado);
         if (member == null) {
-            throw new IllegalArgumentException("CPF não encontrado");
+            throw new IllegalArgumentException("Telefone não encontrado");
         }
 
         // Buscar usuário pelo email do membro
         User user = userRepository.findByEmail(member.getEmail())
-            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado para este CPF"));
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado para este telefone"));
 
         // Validar expiração
         if (user.getCodigoResetExpiracao() == null || 
@@ -122,7 +118,7 @@ public class PasswordResetService {
         user.setCodigoResetExpiracao(null);
         userRepository.save(user);
 
-        log.info("Password reset successfully for user: {} (CPF: {})", user.getUsername(), cpfNormalizado);
+        log.info("Password reset successfully for user: {} (phone: {})", user.getUsername(), telefoneNormalizado);
     }
 
     /**
@@ -133,13 +129,6 @@ public class PasswordResetService {
         return String.valueOf(code);
     }
 
-    /**
-     * Normaliza telefone removendo caracteres especiais
-     */
-    private String normalizarTelefone(String telefone) {
-        if (telefone == null) return null;
-        return telefone.replaceAll("[^0-9]", "");
-    }
 
     /**
      * Envia código OTP via WhatsApp

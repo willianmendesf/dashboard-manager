@@ -9,7 +9,7 @@ export interface LoanDTO {
   bookId?: number;
   bookTitulo?: string;
   bookFotoUrl?: string;
-  memberCpf?: string;
+  memberPhone?: string;
   memberNome?: string;
   memberFotoUrl?: string;
   memberCelular?: string;
@@ -23,7 +23,7 @@ export interface LoanDTO {
 
 export interface CreateLoanDTO {
   bookId: number;
-  memberCpf: string;
+  memberPhone: string;
 }
 
 @Injectable({
