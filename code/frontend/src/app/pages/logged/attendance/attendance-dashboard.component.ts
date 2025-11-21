@@ -573,7 +573,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       _original: memberItem,
       foto: memberItem.member.fotoUrl || null,
       nome: memberItem.member.nome || '-',
-      status: memberItem.isPresent ? 'Presente' : 'Ausente',
+      status: memberItem.isPresent ? '✅' : '❌',
       whatsapp: this.utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone),
       presenca: memberItem.isPresent,
       isLoading: memberItem.isLoading || false
