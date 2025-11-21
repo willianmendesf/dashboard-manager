@@ -1,16 +1,12 @@
-<div class="public-update-container">
-  <div class="public-update-card">
-    <div class="header">
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
       <h1>Empréstimo de Livros</h1>
       <p class="subtitle">Realize o empréstimo de um livro informando seu CPF</p>
-      <div class="header-actions">
-        <button type="button" class="btn-link" (click)="goToLanding()">
-          ← Voltar
-        </button>
-      </div>
+      <a routerLink="/landing" class="back-link">← Voltar</a>
     </div>
 
-    <form [formGroup]="loanForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="loanForm" (ngSubmit)="onSubmit()" class="auth-form">
       <div class="form-group">
         <label for="cpf">CPF *</label>
         <input
@@ -83,7 +79,7 @@
 
       <button
         type="submit"
-        class="btn-primary"
+        class="btn-primary btn-block"
         [disabled]="loanForm.invalid || isLoading || isLoadingBooks"
       >
         @if (isLoading) {
