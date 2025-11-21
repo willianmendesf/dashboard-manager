@@ -23,6 +23,7 @@ export interface MemberDTO {
   idade?: number;
   estadoCivil?: string;
   conjugueTelefone?: string;
+  child?: boolean;
   fotoUrl?: string;
   cep?: string;
   logradouro?: string;

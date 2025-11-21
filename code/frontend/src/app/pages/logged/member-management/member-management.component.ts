@@ -13,6 +13,8 @@ import { environment } from '../../../../environments/environment';
 import { Member } from './model/member.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { SpousePreviewComponent } from './components/spouse-preview.component';
+import { ParentPreviewComponent } from './components/parent-preview.component';
+import { ChildrenPreviewComponent } from './components/children-preview.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { GroupService, GroupDTO } from '../../../shared/service/group.service';
@@ -24,7 +26,7 @@ import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
   standalone: true,
   templateUrl: './member-management.html',
   styleUrl: './member-management.scss',
-  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe, DataTableComponent, NgxMaskDirective, SpousePreviewComponent],
+  imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DatePipe, DataTableComponent, NgxMaskDirective, SpousePreviewComponent, ParentPreviewComponent, ChildrenPreviewComponent],
   providers: [provideNgxMask()]
 })
 export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -383,6 +385,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       nome: member.nome || '',
       email: member.email || '',
       conjugueTelefone: member.conjugueTelefone || null,
+      telefonePai: member.telefonePai || null,
+      telefoneMae: member.telefoneMae || null,
       comungante: member.comungante !== undefined ? member.comungante : null,
       intercessor: member.intercessor !== undefined ? member.intercessor : false,
       tipoCadastro: (member.tipoCadastro && typeof member.tipoCadastro === 'string' && member.tipoCadastro.trim()) ? member.tipoCadastro.trim() : null,
@@ -618,6 +622,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       this.currentMember = member ? { ...member } : {
         nome: '',
         conjugueTelefone: '',
+        telefonePai: '',
+        telefoneMae: '',
         comungante: null,
         intercessor: false,
         child: false,
@@ -1024,6 +1030,29 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
    */
   getNormalizedPhotoUrl(fotoUrl: string | null | undefined): string {
     return buildProfileImageUrl(fotoUrl);
+  }
+
+  /**
+   * Obtém o telefone do membro para busca reversa de filhos
+   * Prioriza: celular > telefone > comercial
+   */
+  getMemberTelefoneForChildren(): string | null {
+    if (!this.viewingMember) {
+      return null;
+    }
+    
+    // Prioriza celular, depois telefone, depois comercial
+    if (this.viewingMember.celular && this.viewingMember.celular.trim()) {
+      return this.viewingMember.celular;
+    }
+    if (this.viewingMember.telefone && this.viewingMember.telefone.trim()) {
+      return this.viewingMember.telefone;
+    }
+    if (this.viewingMember.comercial && this.viewingMember.comercial.trim()) {
+      return this.viewingMember.comercial;
+    }
+    
+    return null;
   }
 }
 

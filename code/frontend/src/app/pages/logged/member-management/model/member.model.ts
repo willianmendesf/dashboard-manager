@@ -4,6 +4,8 @@ export interface Member {
   id: number;
   nome: string;
   conjugueTelefone?: string;
+  telefonePai?: string;
+  telefoneMae?: string;
   comungante?: boolean;
   intercessor: boolean;
   child?: boolean;

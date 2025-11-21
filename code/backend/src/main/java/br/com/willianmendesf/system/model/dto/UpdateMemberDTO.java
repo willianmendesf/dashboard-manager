@@ -30,6 +30,8 @@ public class UpdateMemberDTO {
     private Integer idade;
     private Boolean estadoCivil;
     private String conjugueTelefone;
+    private String telefonePai;
+    private String telefoneMae;
     private Boolean child;
     private String tipoCadastro;
     private List<Long> groupIds;

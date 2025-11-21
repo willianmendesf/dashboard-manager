@@ -1,38 +1,33 @@
 import { Component, Input, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of, Subject, takeUntil } from 'rxjs';
 import { buildProfileImageUrl } from '../../../../shared/utils/image-url-builder';
-import { UtilsService } from '../../../../shared/services/utils.service';
-import { MessageIcons } from '../../../../shared/lib/utils/icons';
 
-interface MemberSpouseDTO {
+interface MemberChildDTO {
   nomeCompleto: string;
   fotoUrl?: string;
   celular?: string;
 }
 
 @Component({
-  selector: 'app-spouse-preview',
+  selector: 'app-children-preview',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './spouse-preview.component.html',
-  styleUrl: './spouse-preview.component.scss'
+  templateUrl: './children-preview.component.html',
+  styleUrl: './children-preview.component.scss'
 })
-export class SpousePreviewComponent implements OnInit, OnDestroy {
+export class ChildrenPreviewComponent implements OnInit, OnDestroy {
   private _telefone: string = '';
-  conjugue: MemberSpouseDTO | null = null;
+  children: MemberChildDTO[] = [];
   isLoading = false;
   hasError = false;
   
   private destroy$ = new Subject<void>();
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
-  private utilsService = inject(UtilsService);
-  private sanitizer = inject(DomSanitizer);
   
   @Input() 
   set telefone(value: string) {
@@ -40,9 +35,9 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
       this._telefone = value;
       const cleanTelefone = value ? value.replace(/\D/g, '') : '';
       if (cleanTelefone.length >= 10) {
-        this.searchSpouse(cleanTelefone);
+        this.searchChildren(cleanTelefone);
       } else {
-        this.conjugue = null;
+        this.children = [];
         this.isLoading = false;
         this.hasError = false;
         this.cdr.detectChanges();
@@ -59,54 +54,54 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     if (this._telefone) {
       const cleanTelefone = this._telefone.replace(/\D/g, '');
       if (cleanTelefone.length >= 10) {
-        this.searchSpouse(cleanTelefone);
+        this.searchChildren(cleanTelefone);
       } else {
         this.cdr.detectChanges();
       }
     }
   }
   
-  searchSpouse(telefone: string) {
+  searchChildren(telefone: string) {
     if (!telefone || telefone.replace(/\D/g, '').length < 10) {
       return;
     }
     
     this.isLoading = true;
     this.hasError = false;
-    this.conjugue = null;
+    this.children = [];
     
     const cleanTelefone = telefone.replace(/\D/g, '');
-    const url = `${environment.apiUrl}members/telefone/${cleanTelefone}/spouse`;
-    console.log('[SpousePreview] Searching spouse for telefone:', cleanTelefone);
+    const url = `${environment.apiUrl}members/telefone/${cleanTelefone}/children`;
+    console.log('[ChildrenPreview] Searching children for telefone:', cleanTelefone);
     
-    this.http.get<MemberSpouseDTO>(url, { 
+    this.http.get<MemberChildDTO[]>(url, { 
       withCredentials: true 
     })
     .pipe(
       timeout(5000),
       catchError((err) => {
-        console.error('[SpousePreview] Error loading spouse:', err);
-        return of(null);
+        console.error('[ChildrenPreview] Error loading children:', err);
+        return of([]);
       }),
       takeUntil(this.destroy$)
     )
     .subscribe({
       next: (data) => {
-        if (data && data.nomeCompleto) {
-          console.log('[SpousePreview] Spouse found:', data);
-          this.conjugue = data;
+        if (data && Array.isArray(data) && data.length > 0) {
+          console.log('[ChildrenPreview] Children found:', data);
+          this.children = data;
           this.hasError = false;
         } else {
-          console.warn('[SpousePreview] No spouse data returned');
-          this.conjugue = null;
-          this.hasError = true;
+          console.log('[ChildrenPreview] No children found');
+          this.children = [];
+          this.hasError = false;
         }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('[SpousePreview] Subscribe error:', err);
-        this.conjugue = null;
+        console.error('[ChildrenPreview] Subscribe error:', err);
+        this.children = [];
         this.isLoading = false;
         this.hasError = true;
         this.cdr.detectChanges();
@@ -129,18 +124,9 @@ export class SpousePreviewComponent implements OnInit, OnDestroy {
     return buildProfileImageUrl(fotoUrl);
   }
 
-  getWhatsAppIcon(): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(
-      MessageIcons.whatsapp({ size: 20, color: '#25D366' })
-    );
-  }
-
-  getWhatsAppLink(phone: string | null | undefined): string | null {
-    return this.utilsService.getWhatsAppLink(phone);
-  }
-
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }
 }
+

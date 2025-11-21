@@ -3,6 +3,7 @@ package br.com.willianmendesf.system.controller;
 import br.com.willianmendesf.system.model.dto.ImportResultDTO;
 import br.com.willianmendesf.system.model.dto.MemberDTO;
 import br.com.willianmendesf.system.model.dto.MemberSpouseDTO;
+import br.com.willianmendesf.system.model.dto.MemberChildrenDTO;
 import br.com.willianmendesf.system.model.entity.MemberEntity;
 import br.com.willianmendesf.system.repository.MemberRepository;
 import br.com.willianmendesf.system.repository.GroupRepository;
@@ -62,6 +63,33 @@ public class MemberController {
         } catch (Exception e) {
             log.error("Error getting spouse by telefone: {}", telefone, e);
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/telefone/{telefone}/parent")
+    @PreAuthorize("hasAuthority('READ_MEMBERS')")
+    public ResponseEntity<MemberSpouseDTO> getParentByTelefone(@PathVariable String telefone) {
+        try {
+            MemberSpouseDTO parent = service.getParentByTelefone(telefone);
+            if (parent == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(parent);
+        } catch (Exception e) {
+            log.error("Error getting parent by telefone: {}", telefone, e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/telefone/{telefone}/children")
+    @PreAuthorize("hasAuthority('READ_MEMBERS')")
+    public ResponseEntity<List<MemberChildrenDTO>> getChildrenByTelefone(@PathVariable String telefone) {
+        try {
+            List<MemberChildrenDTO> children = service.getChildrenByTelefone(telefone);
+            return ResponseEntity.ok(children);
+        } catch (Exception e) {
+            log.error("Error getting children by telefone: {}", telefone, e);
+            return ResponseEntity.ok(new java.util.ArrayList<>());
         }
     }
 

@@ -192,6 +192,46 @@
               <app-spouse-preview [telefone]="currentMember.conjugueTelefone"></app-spouse-preview>
             </div>
           }
+          
+          @if (currentMember.child) {
+            <div class="form-group">
+              <label>Telefone do Pai</label>
+              <input
+                type="text"
+                [(ngModel)]="currentMember.telefonePai"
+                name="telefonePai"
+                class="form-control"
+                mask="(00) 00000-0000"
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label>Telefone da Mãe</label>
+              <input
+                type="text"
+                [(ngModel)]="currentMember.telefoneMae"
+                name="telefoneMae"
+                class="form-control"
+                mask="(00) 00000-0000"
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+          }
+          
+          @if (currentMember.child && isValidTelefone(currentMember.telefonePai)) {
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>Informações do Pai</label>
+              <app-parent-preview [telefone]="currentMember.telefonePai"></app-parent-preview>
+            </div>
+          }
+          
+          @if (currentMember.child && isValidTelefone(currentMember.telefoneMae)) {
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>Informações da Mãe</label>
+              <app-parent-preview [telefone]="currentMember.telefoneMae"></app-parent-preview>
+            </div>
+          }
         </div>
       </div>
 
@@ -411,7 +451,7 @@
         </div>
       </div>
 
-      @if (availableGroups.length > 0) {
+      @if (availableGroups.length > 0 && !currentMember.child) {
         <div class="form-section">
           <h4 class="section-title">Grupos de Voluntariado</h4>
           <div class="groups-checkbox-list">
@@ -528,7 +568,44 @@
                 <app-spouse-preview [telefone]="viewingMember.conjugueTelefone"></app-spouse-preview>
               </div>
             }
+          }
+          
+          @if (viewingMember.child) {
+            @if (viewingMember.telefonePai) {
+              <div class="detail-item">
+                <label>Telefone do Pai</label>
+                <span>{{ viewingMember.telefonePai }}</span>
+              </div>
+              @if (isValidTelefone(viewingMember.telefonePai)) {
+                <div class="detail-item" style="grid-column: 1 / -1;">
+                  <label>Informações do Pai</label>
+                  <app-parent-preview [telefone]="viewingMember.telefonePai"></app-parent-preview>
+                </div>
+              }
+            }
+            
+            @if (viewingMember.telefoneMae) {
+              <div class="detail-item">
+                <label>Telefone da Mãe</label>
+                <span>{{ viewingMember.telefoneMae }}</span>
+              </div>
+              @if (isValidTelefone(viewingMember.telefoneMae)) {
+                <div class="detail-item" style="grid-column: 1 / -1;">
+                  <label>Informações da Mãe</label>
+                  <app-parent-preview [telefone]="viewingMember.telefoneMae"></app-parent-preview>
+                </div>
+              }
+            }
           } @else {
+            @if (getMemberTelefoneForChildren()) {
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <label>Filhos</label>
+                <app-children-preview [telefone]="getMemberTelefoneForChildren()!"></app-children-preview>
+              </div>
+            }
+          }
+          
+          @if (!viewingMember.conjugueTelefone && !viewingMember.child && !getMemberTelefoneForChildren()) {
             <div class="detail-item">
               <span>Nenhum relacionamento cadastrado</span>
             </div>
@@ -652,7 +729,7 @@
         </div>
       </div>
 
-      @if (viewingMember.id && memberEnrollments.get(viewingMember.id)) {
+      @if (viewingMember.id && memberEnrollments.get(viewingMember.id) && !viewingMember.child) {
         @if (getMemberApprovedGroups(viewingMember.id).length > 0) {
           <div class="detail-section">
             <h4 class="section-title">Grupos de Voluntariado</h4>
