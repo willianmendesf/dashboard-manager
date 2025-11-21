@@ -64,9 +64,9 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   tableColumns: TableColumn[] = [
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
-    { key: 'status', label: 'Status', sortable: false, width: '120px' },
-    { key: 'whatsapp', label: '', width: '50px', align: 'center' },
-    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' }
+    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' },
+    { key: 'status', label: 'Status', sortable: false, width: '120px', align: 'center' },
+    { key: 'whatsapp', label: 'whatsapp', width: '50px', align: 'center' },
   ];
 
   // Chart
