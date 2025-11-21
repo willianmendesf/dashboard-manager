@@ -269,7 +269,7 @@
             </div>
           }
 
-          @if (availableGroups.length > 0) {
+          @if (availableGroups.length > 0 && !foundMember.child) {
             <div class="form-group">
               <label>Grupos de Voluntariado</label>
               <div class="groups-checkbox-list">

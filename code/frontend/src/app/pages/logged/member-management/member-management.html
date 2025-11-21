@@ -451,7 +451,7 @@
         </div>
       </div>
 
-      @if (availableGroups.length > 0) {
+      @if (availableGroups.length > 0 && !currentMember.child) {
         <div class="form-section">
           <h4 class="section-title">Grupos de Voluntariado</h4>
           <div class="groups-checkbox-list">
@@ -729,7 +729,7 @@
         </div>
       </div>
 
-      @if (viewingMember.id && memberEnrollments.get(viewingMember.id)) {
+      @if (viewingMember.id && memberEnrollments.get(viewingMember.id) && !viewingMember.child) {
         @if (getMemberApprovedGroups(viewingMember.id).length > 0) {
           <div class="detail-section">
             <h4 class="section-title">Grupos de Voluntariado</h4>
