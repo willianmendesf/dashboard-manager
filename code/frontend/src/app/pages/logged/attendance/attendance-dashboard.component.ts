@@ -43,6 +43,7 @@ interface MemberWithAttendance {
 })
 export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
+  private chartRefresh$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
   public utilsService = inject(UtilsService);
@@ -164,6 +165,16 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     this.loadSavedPreferences();
     this.loadTotalMembers();
     this.loadEvents();
+    
+    // Configurar debounce para atualização automática do gráfico
+    this.chartRefresh$
+      .pipe(
+        debounceTime(800),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(() => {
+        this.loadChartData();
+      });
   }
 
   loadSavedPreferences(): void {
@@ -252,6 +263,11 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   loadChartData() {
     if (!this.chartStartDate || !this.chartEndDate) {
       this.calculateDefaultDateRange();
+    }
+
+    // Não recarregar se já estiver carregando (evita múltiplas chamadas simultâneas)
+    if (this.loading) {
+      return;
     }
 
     this.loading = true;
@@ -602,6 +618,10 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
           member.isPresent = response.isPresent;
           member.isLoading = false;
           this.updateTableData();
+          
+          // Atualizar gráfico em tempo real se a data do evento estiver no intervalo do gráfico
+          this.refreshChartIfNeeded();
+          
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -613,6 +633,22 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  private refreshChartIfNeeded() {
+    // Verificar se a data do evento selecionado está dentro do intervalo do gráfico
+    if (!this.selectedDate || !this.chartStartDate || !this.chartEndDate) {
+      return;
+    }
+
+    const eventDate = new Date(this.selectedDate);
+    const startDate = new Date(this.chartStartDate);
+    const endDate = new Date(this.chartEndDate);
+    
+    // Se a data do evento está dentro do intervalo do gráfico, disparar atualização
+    if (eventDate >= startDate && eventDate <= endDate) {
+      this.chartRefresh$.next();
+    }
   }
 
   getWhatsAppIcon(): SafeHtml {
