@@ -32,9 +32,6 @@ public class User implements UserDetails {
     @Column(name = "email", unique = true, nullable = false, length = 200)
     private String email;
 
-    @Column(name = "cpf", unique = true, length = 14)
-    private String cpf;
-
     @Column(name = "telefone", unique = true, length = 20)
     private String telefone;
 

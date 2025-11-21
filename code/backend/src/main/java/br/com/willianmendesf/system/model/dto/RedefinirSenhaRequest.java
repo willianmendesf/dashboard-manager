@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RedefinirSenhaRequest {
-    private String cpf;
+    private String telefone;
     private String codigo; // OTP de 6 dígitos
     private String novaSenha;
 }

@@ -54,13 +54,6 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado.");
         }
         
-        // Validate CPF if provided
-        if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
-            if (userRepository.existsByCpf(userDTO.getCpf())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
-            }
-        }
-        
         // Validate telefone if provided
         if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
             if (userRepository.existsByTelefone(userDTO.getTelefone())) {
@@ -82,7 +75,6 @@ public class UserService {
         user.setUsername(userDTO.getUsername());
         user.setName(userDTO.getName());
         user.setEmail(userDTO.getEmail());
-        user.setCpf(userDTO.getCpf());
         user.setTelefone(userDTO.getTelefone());
         user.setPassword(passwordEncoder.encode(userDTO.getPassword() != null ? userDTO.getPassword() : "changeme"));
         user.setEnabled(userDTO.getEnabled() != null ? userDTO.getEnabled() : true);
@@ -181,23 +173,9 @@ public class UserService {
             log.warn("User {} attempted to change profile of Root user {}. Ignored.", loggedUser.getUsername(), user.getUsername());
         }
 
-        // WRITE-ONCE LOGIC: If user is editing themselves, don't allow changing CPF/Telefone if they already exist
-        // Only allow setting them if they're currently null/empty
+        // WRITE-ONCE LOGIC: If user is editing themselves, don't allow changing Telefone if it already exists
+        // Only allow setting it if it's currently null/empty
         if (isEditingSelf) {
-            // CPF: Only update if current value is null/empty (write-once)
-            if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
-                if (user.getCpf() != null && !user.getCpf().trim().isEmpty()) {
-                    // CPF already exists, ignore the update (write-once protection)
-                    log.debug("User {} attempted to change their CPF. Ignored (write-once protection).", loggedUser.getUsername());
-                } else {
-                    // CPF is empty, allow setting it (first time)
-                    if (userRepository.existsByCpf(userDTO.getCpf())) {
-                        throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
-                    }
-                    user.setCpf(userDTO.getCpf());
-                }
-            }
-            
             // Telefone: Only update if current value is null/empty (write-once)
             if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
                 if (user.getTelefone() != null && !user.getTelefone().trim().isEmpty()) {
@@ -213,14 +191,6 @@ public class UserService {
             }
         } else {
             // Admin editing another user: Allow changes with validation
-            // Update CPF if provided and validate uniqueness
-            if (userDTO.getCpf() != null && !userDTO.getCpf().trim().isEmpty()) {
-                if (!userDTO.getCpf().equals(user.getCpf()) && userRepository.existsByCpfAndIdNot(userDTO.getCpf(), id)) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado.");
-                }
-                user.setCpf(userDTO.getCpf());
-            }
-            
             // Update telefone if provided and validate uniqueness
             if (userDTO.getTelefone() != null && !userDTO.getTelefone().trim().isEmpty()) {
                 if (!userDTO.getTelefone().equals(user.getTelefone()) && userRepository.existsByTelefoneAndIdNot(userDTO.getTelefone(), id)) {
@@ -277,7 +247,6 @@ public class UserService {
         dto.setUsername(user.getUsername());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
-        dto.setCpf(user.getCpf());
         dto.setTelefone(user.getTelefone());
         dto.setEnabled(user.getEnabled());
         

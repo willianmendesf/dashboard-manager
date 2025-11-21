@@ -71,21 +71,6 @@
         </div>
 
         <form [formGroup]="editForm" (ngSubmit)="onSave()">
-          <!-- CPF (Read-only) -->
-          <div class="form-group">
-            <label for="edit-cpf">CPF</label>
-            <input
-              id="edit-cpf"
-              type="text"
-              formControlName="cpf"
-              class="form-control"
-              readonly
-            />
-            <small class="form-text text-muted">
-              O CPF não pode ser alterado após o cadastro.
-            </small>
-          </div>
-
           <div class="form-group">
             <label for="nome">Nome Completo *</label>
             <input
@@ -243,51 +228,41 @@
                 id="estadoCivil"
                 formControlName="estadoCivil"
                 class="form-control"
-                [disabled]="hasConjugueCPF"
+                [disabled]="hasConjugueTelefone"
               >
                 <option [value]="false">Solteiro</option>
                 <option [value]="true">Casado</option>
               </select>
-              @if (hasConjugueCPF) {
+              @if (hasConjugueTelefone) {
                 <small class="form-text text-muted">
-                  O estado civil não pode ser alterado após informar o CPF do cônjuge.
+                  O estado civil não pode ser alterado após informar o telefone do cônjuge.
                 </small>
               }
-            </div>
-
-            <div class="form-group">
-              <label for="rg">RG</label>
-              <input
-                id="rg"
-                type="text"
-                formControlName="rg"
-                class="form-control"
-              />
             </div>
           </div>
 
-          @if (editForm.get('estadoCivil')?.value || hasConjugueCPF) {
+          @if (editForm.get('estadoCivil')?.value || hasConjugueTelefone) {
             <div class="form-group">
-              <label for="conjugueCPF">CPF do Cônjuge</label>
+              <label for="conjugueTelefone">Telefone do Cônjuge</label>
               <input
-                id="conjugueCPF"
+                id="conjugueTelefone"
                 type="text"
-                formControlName="conjugueCPF"
+                formControlName="conjugueTelefone"
                 class="form-control"
-                placeholder="000.000.000-00"
-                [mask]="'000.000.000-00'"
+                placeholder="(00) 00000-0000"
+                mask="(00) 00000-0000"
                 [dropSpecialCharacters]="false"
-                [disabled]="hasConjugueCPF"
+                [disabled]="hasConjugueTelefone"
               />
-              @if (hasConjugueCPF) {
+              @if (hasConjugueTelefone) {
                 <small class="form-text text-muted">
-                  O CPF do cônjuge não pode ser alterado após ser informado.
+                  O telefone do cônjuge não pode ser alterado após ser informado.
                 </small>
               }
-              @if (editForm.get('conjugueCPF')?.invalid && editForm.get('conjugueCPF')?.touched && !hasConjugueCPF) {
+              @if (editForm.get('conjugueTelefone')?.invalid && editForm.get('conjugueTelefone')?.touched && !hasConjugueTelefone) {
                 <small class="error-text">
-                  @if (editForm.get('conjugueCPF')?.hasError('invalidCpf')) {
-                    CPF inválido. Deve conter 11 dígitos no formato 000.000.000-00
+                  @if (editForm.get('conjugueTelefone')?.hasError('invalidTelefone')) {
+                    Telefone inválido. Deve conter 10 ou 11 dígitos.
                   }
                 </small>
               }

@@ -119,14 +119,14 @@ public class AuthController {
     /**
      * POST /api/v1/auth/solicitar-reset
      * Solicita reset de senha via WhatsApp
-     * Recebe CPF e telefone, valida e envia código OTP
+     * Recebe telefone, valida e envia código OTP
      */
     @PostMapping("/solicitar-reset")
     public ResponseEntity<Map<String, String>> solicitarResetSenha(
             @RequestBody br.com.willianmendesf.system.model.dto.SolicitarResetSenhaRequest request) {
         
         try {
-            passwordResetService.solicitarResetSenha(request.getCpf(), request.getTelefone());
+            passwordResetService.solicitarResetSenha(request.getTelefone());
             
             // Sempre retornar sucesso genérico (segurança)
             Map<String, String> response = new java.util.HashMap<>();
@@ -151,7 +151,7 @@ public class AuthController {
         
         try {
             passwordResetService.redefinirSenha(
-                request.getCpf(), 
+                request.getTelefone(), 
                 request.getCodigo(), 
                 request.getNovaSenha()
             );

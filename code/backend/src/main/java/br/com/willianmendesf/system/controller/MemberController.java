@@ -9,8 +9,6 @@ import br.com.willianmendesf.system.repository.GroupRepository;
 import br.com.willianmendesf.system.service.MemberImportService;
 import br.com.willianmendesf.system.service.MemberService;
 import br.com.willianmendesf.system.service.storage.StorageService;
-import br.com.willianmendesf.system.service.utils.CPFUtil;
-import br.com.willianmendesf.system.service.utils.RGUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -52,24 +50,17 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/cpf/{cpf}")
+    @GetMapping("/telefone/{telefone}/spouse")
     @PreAuthorize("hasAuthority('READ_MEMBERS')")
-    public ResponseEntity<MemberEntity> getByCPF(@PathVariable String cpf) {
-        MemberEntity response = service.getByCPF(cpf);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/cpf/{cpf}/spouse")
-    @PreAuthorize("hasAuthority('READ_MEMBERS')")
-    public ResponseEntity<MemberSpouseDTO> getSpouseByCpf(@PathVariable String cpf) {
+    public ResponseEntity<MemberSpouseDTO> getSpouseByTelefone(@PathVariable String telefone) {
         try {
-            MemberSpouseDTO spouse = service.getSpouseByCpf(cpf);
+            MemberSpouseDTO spouse = service.getSpouseByTelefone(telefone);
             if (spouse == null) {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok(spouse);
         } catch (Exception e) {
-            log.error("Error getting spouse by CPF: {}", cpf, e);
+            log.error("Error getting spouse by telefone: {}", telefone, e);
             return ResponseEntity.notFound().build();
         }
     }
@@ -78,19 +69,6 @@ public class MemberController {
     @PreAuthorize("hasAuthority('WRITE_MEMBERS')")
     public ResponseEntity<MemberDTO> create(@RequestBody MemberEntity member) {
         try {
-            if (member.getCpf() != null && !member.getCpf().trim().isEmpty()) {
-                var cpf = CPFUtil.validateAndFormatCPF(member.getCpf());
-                MemberEntity existMember = service.getByCPF(cpf);
-                if (existMember != null) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(new MemberDTO(existMember));
-                }
-                member.setCpf(cpf);
-            }
-            if (member.getRg() != null && !member.getRg().trim().isEmpty()) {
-                member.setRg(RGUtil.validateAndFormatRG(member.getRg()));
-            }
-            
             if (member.getGroups() != null && !member.getGroups().isEmpty()) {
                 var groupIds = member.getGroups().stream()
                     .map(g -> g.getId())

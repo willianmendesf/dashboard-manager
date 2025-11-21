@@ -23,7 +23,7 @@ export interface LoanDTO {
 
 export interface CreateLoanDTO {
   bookId: number;
-  memberPhone: string; // Telefone do membro (em vez de CPF por LGPD)
+  memberPhone: string;
 }
 
 @Injectable({
