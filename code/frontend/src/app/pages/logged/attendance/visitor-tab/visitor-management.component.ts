@@ -361,8 +361,15 @@ export class VisitorManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: (visitors) => {
-          this.visitors = visitors;
-          this.filteredVisitors = [...visitors];
+          // Ordenar visitantes por dataVisita (mais recente primeiro)
+          const sortedVisitors = [...visitors].sort((a, b) => {
+            const dateA = a.dataVisita ? new Date(a.dataVisita).getTime() : 0;
+            const dateB = b.dataVisita ? new Date(b.dataVisita).getTime() : 0;
+            return dateB - dateA; // Ordem decrescente (mais recente primeiro)
+          });
+          
+          this.visitors = sortedVisitors;
+          this.filteredVisitors = [...sortedVisitors];
           this.updateTableData();
           this.isLoading = false;
           this.cdr.detectChanges();
