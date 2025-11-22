@@ -474,8 +474,9 @@
   100% { transform: rotate(360deg); }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 999px) {
   .tabs-header {
+    display: block !important;
     flex-direction: column;
   }
 
@@ -499,9 +500,10 @@
             }
 
             .date-range-controls {
-              flex-direction: column;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
               gap: 12px;
-              width: 100%;
 
               .date-input-group {
                 width: 100%;

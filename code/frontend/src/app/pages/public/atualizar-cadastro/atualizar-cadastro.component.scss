@@ -37,12 +37,15 @@
   .subtitle {
     font-size: 14px;
     color: #666;
-  }
+  }    
+}
+
+.back-link-container {
+  text-align: right;
+  padding-bottom: 20px;
+  font-size: 14px;
 
   .back-link {
-    position: absolute;
-    top: 0;
-    right: 0;
     font-size: 14px;
     color: #667eea;
     text-decoration: none;

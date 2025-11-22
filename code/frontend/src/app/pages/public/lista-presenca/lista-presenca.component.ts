@@ -7,7 +7,6 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventService, Event } from '../../../shared/service/event.service';
 import { AttendanceService, MemberAttendance } from '../../../shared/service/attendance.service';
-import { ApiService } from '../../../shared/service/api.service';
 import { UtilsService } from '../../../shared/services/utils.service';
 import { MessageIcons } from '../../../shared/lib/utils/icons';
 import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
@@ -22,11 +21,11 @@ interface MemberWithAttendance {
 @Component({
   selector: 'app-lista-presenca',
   standalone: true,
-  templateUrl: './attendance-checkin.component.html',
-  styleUrl: './attendance-checkin.component.scss',
+  templateUrl: './lista-presenca.component.html',
+  styleUrl: './lista-presenca.component.scss',
   imports: [CommonModule, FormsModule, DataTableComponent]
 })
-export class AttendanceCheckinComponent implements OnInit, OnDestroy {
+export class ListaPresencaComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
@@ -46,15 +45,14 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
   tableColumns: TableColumn[] = [
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
-    { key: 'status', label: 'Status', sortable: false, width: '120px' },
-    { key: 'whatsapp', label: '', width: '50px', align: 'center' },
-    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' }
+    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' },
+    { key: 'status', label: 'Status', sortable: false, width: '120px', align: 'center' },
+    { key: 'whatsapp', label: 'Whatsapp', width: '50px', align: 'center' },
   ];
 
   constructor(
     private eventService: EventService,
     private attendanceService: AttendanceService,
-    private apiService: ApiService,
     private router: Router
   ) {}
 
@@ -187,7 +185,7 @@ export class AttendanceCheckinComponent implements OnInit, OnDestroy {
       _original: memberItem,
       foto: memberItem.member.fotoUrl || null,
       nome: memberItem.member.nome || '-',
-      status: memberItem.isPresent ? 'Presente' : 'Ausente',
+      status: memberItem.isPresent ? '✅' : '❌',
       whatsapp: this.utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone),
       presenca: memberItem.isPresent,
       isLoading: memberItem.isLoading || false

@@ -1,9 +1,11 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.exception.MembersException;
+import br.com.willianmendesf.system.model.dto.AccompanyingVisitorDTO;
 import br.com.willianmendesf.system.model.dto.CreateVisitorDTO;
 import br.com.willianmendesf.system.model.dto.UpdateVisitorDTO;
 import br.com.willianmendesf.system.model.dto.VisitorDTO;
+import br.com.willianmendesf.system.model.dto.VisitorGroupRequestDTO;
 import br.com.willianmendesf.system.model.dto.VisitorStatsDTO;
 import br.com.willianmendesf.system.model.entity.VisitorEntity;
 import br.com.willianmendesf.system.repository.VisitorRepository;
@@ -76,6 +78,61 @@ public class VisitorService {
         } catch (Exception e) {
             log.error("Error creating visitor", e);
             throw new MembersException("Erro ao criar visitante: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public VisitorDTO createGroup(VisitorGroupRequestDTO dto) {
+        try {
+            log.info("Creating visitor group with main visitor: {}", dto.getMainVisitor() != null ? dto.getMainVisitor().getNomeCompleto() : "null");
+            
+            if (dto.getMainVisitor() == null) {
+                throw new MembersException("Visitante principal é obrigatório");
+            }
+            
+            // Passo 1: Salvar o visitante principal
+            VisitorDTO mainVisitorDTO = create(dto.getMainVisitor());
+            VisitorEntity mainVisitorEntity = repository.findById(mainVisitorDTO.getId())
+                    .orElseThrow(() -> new MembersException("Erro ao recuperar visitante principal salvo"));
+            
+            log.info("Main visitor created with ID: {}", mainVisitorEntity.getId());
+            
+            // Passo 2: Salvar os acompanhantes
+            if (dto.getAccompanyingVisitors() != null && !dto.getAccompanyingVisitors().isEmpty()) {
+                for (AccompanyingVisitorDTO accompanyingDTO : dto.getAccompanyingVisitors()) {
+                    if (accompanyingDTO.getNomeCompleto() == null || accompanyingDTO.getNomeCompleto().trim().isEmpty()) {
+                        log.warn("Skipping accompanying visitor with empty name");
+                        continue;
+                    }
+                    
+                    VisitorEntity accompanyingEntity = new VisitorEntity();
+                    accompanyingEntity.setNomeCompleto(accompanyingDTO.getNomeCompleto().trim());
+                    accompanyingEntity.setAge(accompanyingDTO.getAge());
+                    accompanyingEntity.setDataVisita(mainVisitorEntity.getDataVisita()); // Copiar data do principal
+                    accompanyingEntity.setMainVisitor(mainVisitorEntity);
+                    accompanyingEntity.setRelationship(accompanyingDTO.getRelationship());
+                    
+                    // Copiar dados comuns do principal se necessário
+                    accompanyingEntity.setTelefone(mainVisitorEntity.getTelefone());
+                    accompanyingEntity.setJaFrequentaIgreja(mainVisitorEntity.getJaFrequentaIgreja());
+                    accompanyingEntity.setNomeIgreja(mainVisitorEntity.getNomeIgreja());
+                    accompanyingEntity.setProcuraIgreja(mainVisitorEntity.getProcuraIgreja());
+                    accompanyingEntity.setEDeSP(mainVisitorEntity.getEDeSP());
+                    accompanyingEntity.setEstado(mainVisitorEntity.getEstado());
+                    
+                    VisitorEntity savedAccompanying = repository.save(accompanyingEntity);
+                    log.info("Accompanying visitor created with ID: {}, name: {}, relationship: {}", 
+                            savedAccompanying.getId(), savedAccompanying.getNomeCompleto(), savedAccompanying.getRelationship());
+                }
+            }
+            
+            log.info("Visitor group created successfully. Main visitor ID: {}", mainVisitorEntity.getId());
+            return mainVisitorDTO;
+        } catch (MembersException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error creating visitor group", e);
+            throw new MembersException("Erro ao criar grupo de visitantes: " + e.getMessage(), e);
         }
     }
 

@@ -133,6 +133,65 @@
           </div>
         }
 
+        <div class="form-group">
+          <label class="switch-label">
+            <input type="checkbox" [formControl]="isAccompaniedControl" [disabled]="isLoading">
+            <span>Está acompanhado?</span>
+          </label>
+        </div>
+
+        @if (isAccompaniedControl.value) {
+          <div class="accompanying-section">
+            <h3>Acompanhantes</h3>
+            
+            <div formArrayName="accompanyingVisitors">
+              @for (item of accompanyingControls; track $index) {
+                <div [formGroupName]="$index" class="visitor-row">
+                  <div class="form-group">
+                    <label>Nome *</label>
+                    <input formControlName="nomeCompleto" type="text" class="form-control" [disabled]="isLoading">
+                    @if (item.get('nomeCompleto')?.invalid && item.get('nomeCompleto')?.touched) {
+                      <small class="error-text">Nome é obrigatório</small>
+                    }
+                  </div>
+                  
+                  <!-- <div class="form-group small-width">
+                    <label>Idade</label>
+                    <input formControlName="age" type="number" class="form-control" [disabled]="isLoading" min="0" max="150">
+                  </div> -->
+
+                  <div class="form-group">
+                    <label>Vínculo *</label>
+                    <select formControlName="relationship" class="form-control" [disabled]="isLoading">
+                      <option value="">Selecione</option>
+                      <option value="Amigo(a)">Amigo(a)</option>
+                      <option value="Filho(a)">Filho(a)</option>
+                      <option value="Esposo(a)">Esposo(a)</option>
+                      <option value="Irmão(ã)">Irmão(ã)</option>
+                      <option value="Vizinho(a)">Vizinho(a)</option>
+                      <option value="Conhecido(a)">Conhecido(a)</option>
+                      <option value="Parente">Parente</option>
+                      <option value="Familiar">Familiar</option>
+                      <option value="Outro">Outro</option>
+                    </select>
+                    @if (item.get('relationship')?.invalid && item.get('relationship')?.touched) {
+                      <small class="error-text">Vínculo é obrigatório</small>
+                    }
+                  </div>
+
+                  <button type="button" (click)="removeAccompanying($index)" class="btn-icon-danger" [disabled]="isLoading" title="Remover">
+                    Remover
+                  </button>
+                </div>
+              }
+            </div>
+
+            <button type="button" (click)="addAccompanying()" class="btn-secondary btn-sm" [disabled]="isLoading">
+              + Adicionar Pessoa
+            </button>
+          </div>
+        }
+
         <button
           type="submit"
           class="btn-primary"

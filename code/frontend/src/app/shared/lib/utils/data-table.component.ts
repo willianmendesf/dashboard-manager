@@ -41,6 +41,7 @@ export class DataTableComponent implements OnChanges, OnInit, AfterContentInit {
   @Input() hoverable: boolean = true;
   @Input() enablePagination: boolean = true;
   @Input() pageSizeOptions: number[] = [10, 20, 50, 100];
+  @Input() preservePage: boolean = false;
   
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChange = new EventEmitter<{ column: string; direction: 'asc' | 'desc' }>();
@@ -130,8 +131,18 @@ export class DataTableComponent implements OnChanges, OnInit, AfterContentInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data']) {
+      const previousTotalItems = this.totalItems;
       this.totalItems = this.data?.length || 0;
-      this.currentPage = 1; // Reset para a página 1 quando os dados mudarem
+      
+      if (this.preservePage) {
+        const maxPages = Math.ceil(this.totalItems / this.pageSize) || 1;
+        if (this.currentPage > maxPages) {
+          this.currentPage = maxPages;
+        }
+      } else {
+        this.currentPage = 1;
+      }
+      
       this.refreshTable();
     }
   }
