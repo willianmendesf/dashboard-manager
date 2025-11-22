@@ -146,6 +146,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   showVisitorsSeparate: boolean = false;
   showAbsences: boolean = false;
   showAverage: boolean = true;
+  averagePeriodType: 'monthly' | 'bimonthly' | 'quarterly' | 'semester' | 'annual' | 'full' = 'full';
 
   // Data cache
   visitorStats: VisitorStats[] = [];
@@ -209,6 +210,9 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
             }
             if (preference.periodType) {
               this.periodType = preference.periodType;
+            }
+            if (preference.averagePeriodType) {
+              this.averagePeriodType = preference.averagePeriodType;
             }
           }
           
@@ -302,6 +306,95 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+  calculateAverageByPeriod(
+    sortedDates: string[],
+    presenceData: number[]
+  ): number[] {
+    if (this.averagePeriodType === 'full') {
+      // Calculate overall average
+      const sum = presenceData.reduce((acc, val) => acc + val, 0);
+      const average = presenceData.length > 0 ? sum / presenceData.length : 0;
+      return new Array(presenceData.length).fill(average);
+    }
+
+    // Group data by period
+    const periodMap = new Map<string, { dates: string[]; values: number[] }>();
+
+    sortedDates.forEach((date, index) => {
+      const dateObj = new Date(date);
+      let periodKey: string;
+
+      switch (this.averagePeriodType) {
+        case 'monthly':
+          periodKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
+          break;
+        case 'bimonthly':
+          const bimonth = Math.floor(dateObj.getMonth() / 2);
+          periodKey = `${dateObj.getFullYear()}-B${bimonth}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor(dateObj.getMonth() / 3);
+          periodKey = `${dateObj.getFullYear()}-Q${quarter}`;
+          break;
+        case 'semester':
+          const semester = Math.floor(dateObj.getMonth() / 6);
+          periodKey = `${dateObj.getFullYear()}-S${semester}`;
+          break;
+        case 'annual':
+          periodKey = `${dateObj.getFullYear()}`;
+          break;
+        default:
+          periodKey = 'full';
+      }
+
+      if (!periodMap.has(periodKey)) {
+        periodMap.set(periodKey, { dates: [], values: [] });
+      }
+      const period = periodMap.get(periodKey)!;
+      period.dates.push(date);
+      period.values.push(presenceData[index]);
+    });
+
+    // Calculate average for each period
+    const periodAverages = new Map<string, number>();
+    periodMap.forEach((period, key) => {
+      const sum = period.values.reduce((acc, val) => acc + val, 0);
+      const average = period.values.length > 0 ? sum / period.values.length : 0;
+      periodAverages.set(key, average);
+    });
+
+    // Create result array with average for each date
+    return sortedDates.map((date, index) => {
+      const dateObj = new Date(date);
+      let periodKey: string;
+
+      switch (this.averagePeriodType) {
+        case 'monthly':
+          periodKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
+          break;
+        case 'bimonthly':
+          const bimonth = Math.floor(dateObj.getMonth() / 2);
+          periodKey = `${dateObj.getFullYear()}-B${bimonth}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor(dateObj.getMonth() / 3);
+          periodKey = `${dateObj.getFullYear()}-Q${quarter}`;
+          break;
+        case 'semester':
+          const semester = Math.floor(dateObj.getMonth() / 6);
+          periodKey = `${dateObj.getFullYear()}-S${semester}`;
+          break;
+        case 'annual':
+          periodKey = `${dateObj.getFullYear()}`;
+          break;
+        default:
+          periodKey = 'full';
+      }
+
+      return periodAverages.get(periodKey) || 0;
+    });
+  }
+
   updateChartData(stats: AttendanceStats) {
     // Create maps for presence and visitor data
     const presenceMap = new Map<string, number>();
@@ -364,7 +457,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
 
     // Average data
     const averageData = this.showAverage 
-      ? new Array(presenceData.length).fill(stats.periodAverage)
+      ? this.calculateAverageByPeriod(sortedDates, presenceData)
       : null;
 
     // Build datasets array
@@ -451,6 +544,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     this.showAverage = true;
     this.defaultIntervalMonths = 3;
     this.periodType = 'months';
+    this.averagePeriodType = 'full';
     this.calculateDefaultDateRange();
     
     // Deletar preferências salvas
@@ -477,7 +571,8 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       showAbsences: this.showAbsences,
       showAverage: this.showAverage,
       defaultIntervalMonths: this.defaultIntervalMonths,
-      periodType: this.periodType
+      periodType: this.periodType,
+      averagePeriodType: this.averagePeriodType
     };
 
     this.userPreferenceService.saveAttendanceChartPreference(preference)
