@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -159,7 +159,8 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private apiService: ApiService,
     private userPreferenceService: UserPreferenceService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
@@ -579,11 +580,19 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => {
-          this.notificationService.showSuccess('Preferências salvas como padrão com sucesso!');
+          // Garantir que a notificação seja exibida dentro da zona do Angular
+          this.ngZone.run(() => {
+            this.notificationService.showSuccess('Preferências salvas como padrão com sucesso!');
+            this.cdr.markForCheck();
+          });
         },
         error: (err) => {
           console.error('Error saving preferences:', err);
-          this.notificationService.showError('Erro ao salvar preferências.');
+          // Garantir que a notificação seja exibida dentro da zona do Angular
+          this.ngZone.run(() => {
+            this.notificationService.showError('Erro ao salvar preferências.');
+            this.cdr.markForCheck();
+          });
         }
       });
   }
