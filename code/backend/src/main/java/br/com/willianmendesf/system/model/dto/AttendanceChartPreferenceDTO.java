@@ -19,5 +19,6 @@ public class AttendanceChartPreferenceDTO {
     private Boolean showAverage;
     private Integer defaultIntervalMonths;
     private String periodType; // 'weeks', 'months', 'years'
+    private String averagePeriodType; // 'monthly', 'bimonthly', 'quarterly', 'semester', 'annual', 'full'
 }
 

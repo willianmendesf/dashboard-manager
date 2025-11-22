@@ -18,6 +18,7 @@ export interface AttendanceChartPreference {
   showAverage?: boolean;
   defaultIntervalMonths?: number;
   periodType?: 'weeks' | 'months' | 'years';
+  averagePeriodType?: 'monthly' | 'bimonthly' | 'quarterly' | 'semester' | 'annual' | 'full';
 }
 
 @Injectable({
