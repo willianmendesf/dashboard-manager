@@ -112,13 +112,36 @@ public class VisitorService {
                     accompanyingEntity.setMainVisitor(mainVisitorEntity);
                     accompanyingEntity.setRelationship(accompanyingDTO.getRelationship());
                     
-                    // Copiar dados comuns do principal se necessário
-                    accompanyingEntity.setTelefone(mainVisitorEntity.getTelefone());
-                    accompanyingEntity.setJaFrequentaIgreja(mainVisitorEntity.getJaFrequentaIgreja());
-                    accompanyingEntity.setNomeIgreja(mainVisitorEntity.getNomeIgreja());
-                    accompanyingEntity.setProcuraIgreja(mainVisitorEntity.getProcuraIgreja());
-                    accompanyingEntity.setEDeSP(mainVisitorEntity.getEDeSP());
-                    accompanyingEntity.setEstado(mainVisitorEntity.getEstado());
+                    // Usar dados do DTO se fornecidos, caso contrário copiar do principal
+                    accompanyingEntity.setTelefone(accompanyingDTO.getTelefone() != null && !accompanyingDTO.getTelefone().trim().isEmpty() 
+                        ? accompanyingDTO.getTelefone().trim() 
+                        : mainVisitorEntity.getTelefone());
+                    accompanyingEntity.setJaFrequentaIgreja(accompanyingDTO.getJaFrequentaIgreja() != null && !accompanyingDTO.getJaFrequentaIgreja().trim().isEmpty() 
+                        ? accompanyingDTO.getJaFrequentaIgreja() 
+                        : mainVisitorEntity.getJaFrequentaIgreja());
+                    accompanyingEntity.setNomeIgreja(accompanyingDTO.getNomeIgreja() != null && !accompanyingDTO.getNomeIgreja().trim().isEmpty() 
+                        ? accompanyingDTO.getNomeIgreja().trim() 
+                        : mainVisitorEntity.getNomeIgreja());
+                    accompanyingEntity.setProcuraIgreja(accompanyingDTO.getProcuraIgreja() != null && !accompanyingDTO.getProcuraIgreja().trim().isEmpty() 
+                        ? accompanyingDTO.getProcuraIgreja() 
+                        : mainVisitorEntity.getProcuraIgreja());
+                    
+                    // Para eDeSP e estado, usar do DTO se fornecido, senão copiar do principal
+                    Boolean accompanyingEDeSP = accompanyingDTO.getEDeSP() != null 
+                        ? accompanyingDTO.getEDeSP() 
+                        : mainVisitorEntity.getEDeSP();
+                    accompanyingEntity.setEDeSP(accompanyingEDeSP);
+                    
+                    if (Boolean.FALSE.equals(accompanyingEDeSP)) {
+                        // Se não é de SP, usar estado do DTO ou do principal
+                        String accompanyingEstado = accompanyingDTO.getEstado() != null && !accompanyingDTO.getEstado().trim().isEmpty() 
+                            ? accompanyingDTO.getEstado().trim().toUpperCase() 
+                            : (mainVisitorEntity.getEstado() != null ? mainVisitorEntity.getEstado() : null);
+                        accompanyingEntity.setEstado(accompanyingEstado);
+                    } else {
+                        // Se for SP, sempre limpar estado
+                        accompanyingEntity.setEstado(null);
+                    }
                     
                     VisitorEntity savedAccompanying = repository.save(accompanyingEntity);
                     log.info("Accompanying visitor created with ID: {}, name: {}, relationship: {}", 
