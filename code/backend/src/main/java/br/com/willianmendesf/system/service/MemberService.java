@@ -229,6 +229,7 @@ public class MemberService {
             originalMember.setComungante(member.getComungante());
             originalMember.setIntercessor(member.getIntercessor());
             if (member.getChild() != null) originalMember.setChild(member.getChild());
+            originalMember.setHasChildren(member.getHasChildren() != null ? member.getHasChildren() : false);
             if (member.getTipoCadastro() != null && !member.getTipoCadastro().trim().isEmpty()) {
                 originalMember.setTipoCadastro(member.getTipoCadastro().trim());
             } else {

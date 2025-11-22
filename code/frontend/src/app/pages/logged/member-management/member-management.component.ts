@@ -293,7 +293,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
                 fotoUrl: member.fotoUrl || null,
                 groupEnrollments: member.groupEnrollments || [],
                 estadoCivil: estadoCivilBoolean,
-                child: member.child !== undefined ? member.child : false
+                child: member.child !== undefined ? member.child : false,
+                hasChildren: member.hasChildren !== undefined ? member.hasChildren : false
               };
             });
             // Carregar enrollments para todos os membros
@@ -408,7 +409,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       lgpdAceitoEm: member.lgpdAceitoEm ? member.lgpdAceitoEm : null,
       rede: member.rede || null,
       fotoUrl: (member as any).fotoUrl || null,
-      hasChildren: member.hasChildren !== undefined ? member.hasChildren : false
+      hasChildren: typeof member.hasChildren === 'boolean' ? member.hasChildren : false
     };
     
     // NÃO enviar groups - grupos são gerenciados via enrollments
@@ -436,7 +437,7 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     }
     
     const fieldsToAlwaysInclude = ['nome', 'email', 'estadoCivil', 'intercessor', 
-                                    'comungante', 'tipoCadastro', 'lgpd', 'lgpdAceitoEm'];
+                                    'comungante', 'tipoCadastro', 'lgpd', 'lgpdAceitoEm', 'hasChildren', 'child'];
     
     Object.keys(memberData).forEach(key => {
       const value = memberData[key];
@@ -931,6 +932,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
           } else {
             member.estadoCivil = false; // default para Solteiro
           }
+          // Garantir que hasChildren seja boolean
+          member.hasChildren = typeof member.hasChildren === 'boolean' ? member.hasChildren : (member.hasChildren === true || member.hasChildren === 'true');
           this.loadMemberEnrollments(memberId);
           this.openMemberModal(member);
         },

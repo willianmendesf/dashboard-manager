@@ -186,6 +186,24 @@
                   mask="(00) 00000-0000"
                   placeholder="(00) 00000-0000"
                 />
+
+              @if (!currentMember.child && currentMember.estadoCivil && getMemberTelefoneForChildrenEdit()) {
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <div class="checkbox-container">
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="currentMember.hasChildren"
+                        name="hasChildren"
+                        id="hasChildren"
+                      />
+                      <span class="checkbox-custom"></span>
+                      <span class="checkbox-text">Tem Filhos</span>
+                    </label>
+                    <!--<small class="checkbox-hint">Marque esta opção se deseja exibir os filhos cadastrados na visualização do membro</small>-->
+                  </div>
+                </div>
+              }
               </div>
               
               @if (isValidTelefone(currentMember.conjugueTelefone)) {
@@ -233,19 +251,6 @@
                   <app-parent-preview [telefone]="currentMember.telefoneMae"></app-parent-preview>
                 </div>
               }
-            }
-            
-            @if (!currentMember.child && currentMember.estadoCivil && getMemberTelefoneForChildrenEdit()) {
-              <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    [(ngModel)]="currentMember.hasChildren"
-                    name="hasChildren"
-                  />
-                  <span>Tem Filhos</span>
-                </label>
-              </div>
             }
           </div>
         </div>
