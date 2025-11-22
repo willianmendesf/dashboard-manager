@@ -36,6 +36,12 @@ export interface AccompanyingVisitorDTO {
   nomeCompleto: string;
   age?: number;
   relationship: string;
+  telefone?: string;
+  jaFrequentaIgreja?: string;
+  nomeIgreja?: string;
+  procuraIgreja?: string;
+  eDeSP?: boolean;
+  estado?: string;
 }
 
 export interface VisitorGroupRequestDTO {

@@ -93,10 +93,15 @@ public class SecurityConfig {
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 // Portal público de atualização cadastral, visitantes e empréstimos
-                // Usar servletPath para garantir que funcione com context-path /api/v1
+                // Adicionar matchers explícitos para garantir que funcionem com context-path /api/v1
+                .requestMatchers("/public/**").permitAll()
+                // Matcher adicional usando servletPath e requestURI para garantir compatibilidade
                 .requestMatchers(request -> {
-                    String path = request.getServletPath();
-                    return path != null && path.startsWith("/public/");
+                    String servletPath = request.getServletPath();
+                    String requestURI = request.getRequestURI();
+                    // Verificar servletPath (sem context-path) ou requestURI (com context-path)
+                    return (servletPath != null && servletPath.startsWith("/public/")) ||
+                           (requestURI != null && requestURI.contains("/public/"));
                 }).permitAll()
                 .requestMatchers("/configurations/FAVICON_URL").permitAll() // Favicon (público)
                 .requestMatchers("/configurations/LOGO_URL").permitAll() // Logo (público)

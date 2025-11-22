@@ -53,7 +53,7 @@ export class AdicionarVisitantesComponent implements OnInit {
 
     this.visitorForm.get('eDeSP')?.valueChanges.subscribe(value => {
       const estadoControl = this.visitorForm.get('estado');
-      const boolValue = value === true || value === 'true' || value === 1;
+      const boolValue = value === true;
       
       if (boolValue === false) {
         estadoControl?.setValidators([Validators.required]);
@@ -79,7 +79,7 @@ export class AdicionarVisitantesComponent implements OnInit {
 
   get eDeSP(): boolean {
     const value = this.visitorForm.get('eDeSP')?.value;
-    return value === true || value === 'true' || value === 1;
+    return value === true;
   }
 
   get jaFrequentaIgreja(): string {
@@ -98,9 +98,81 @@ export class AdicionarVisitantesComponent implements OnInit {
     const accompanyingForm = this.fb.group({
       nomeCompleto: ['', [Validators.required]],
       age: [null],
-      relationship: ['', [Validators.required]]
+      relationship: ['', [Validators.required]],
+      copyFromHost: [false],
+      telefone: [''],
+      jaFrequentaIgreja: [''],
+      nomeIgreja: [''],
+      procuraIgreja: [''],
+      eDeSP: [true],
+      estado: ['SP']
     });
+
+    // Configurar validação condicional para nomeIgreja
+    accompanyingForm.get('jaFrequentaIgreja')?.valueChanges.subscribe(value => {
+      const nomeIgrejaControl = accompanyingForm.get('nomeIgreja');
+      if (value === 'Sim') {
+        nomeIgrejaControl?.setValidators([Validators.required]);
+      } else {
+        nomeIgrejaControl?.clearValidators();
+        nomeIgrejaControl?.setValue('');
+      }
+      nomeIgrejaControl?.updateValueAndValidity();
+    });
+
+    // Configurar validação condicional para estado
+    accompanyingForm.get('eDeSP')?.valueChanges.subscribe(value => {
+      const estadoControl = accompanyingForm.get('estado');
+      const boolValue = value === true;
+      
+      if (boolValue === false) {
+        estadoControl?.setValidators([Validators.required]);
+        estadoControl?.setValue('');
+      } else {
+        estadoControl?.clearValidators();
+        estadoControl?.setValue('SP');
+      }
+      estadoControl?.updateValueAndValidity();
+    });
+
+    // Configurar lógica de cópia quando checkbox mudar
+    accompanyingForm.get('copyFromHost')?.valueChanges.subscribe(shouldCopy => {
+      if (shouldCopy) {
+        this.copyHostDataToAccompanying((this.visitorForm.get('accompanyingVisitors') as FormArray).length - 1);
+      }
+    });
+
     (this.visitorForm.get('accompanyingVisitors') as FormArray).push(accompanyingForm);
+  }
+
+  copyHostDataToAccompanying(index: number): void {
+    const accompanyingArray = this.visitorForm.get('accompanyingVisitors') as FormArray;
+    const accompanyingForm = accompanyingArray.at(index) as FormGroup;
+    const mainVisitorData = this.visitorForm.value;
+
+    if (accompanyingForm) {
+      accompanyingForm.patchValue({
+        telefone: mainVisitorData.telefone || '',
+        jaFrequentaIgreja: mainVisitorData.jaFrequentaIgreja || '',
+        nomeIgreja: mainVisitorData.nomeIgreja || '',
+        procuraIgreja: mainVisitorData.procuraIgreja || '',
+        eDeSP: mainVisitorData.eDeSP !== undefined ? mainVisitorData.eDeSP : true,
+        estado: mainVisitorData.eDeSP === false ? (mainVisitorData.estado || '') : 'SP'
+      });
+    }
+  }
+
+  getAccompanyingEDeSP(index: number): boolean {
+    const accompanyingArray = this.visitorForm.get('accompanyingVisitors') as FormArray;
+    const accompanyingForm = accompanyingArray.at(index) as FormGroup;
+    const value = accompanyingForm?.get('eDeSP')?.value;
+    return value === true;
+  }
+
+  getAccompanyingJaFrequentaIgreja(index: number): string {
+    const accompanyingArray = this.visitorForm.get('accompanyingVisitors') as FormArray;
+    const accompanyingForm = accompanyingArray.at(index) as FormGroup;
+    return accompanyingForm?.get('jaFrequentaIgreja')?.value || '';
   }
 
   removeAccompanying(index: number): void {
@@ -162,6 +234,25 @@ export class AdicionarVisitantesComponent implements OnInit {
               if (!isNaN(ageNum) && ageNum > 0) {
                 accompanying.age = ageNum;
               }
+            }
+            // Incluir todos os campos opcionais se fornecidos
+            if (acc.telefone && acc.telefone.trim() !== '') {
+              accompanying.telefone = acc.telefone.trim();
+            }
+            if (acc.jaFrequentaIgreja && acc.jaFrequentaIgreja.trim() !== '') {
+              accompanying.jaFrequentaIgreja = acc.jaFrequentaIgreja;
+            }
+            if (acc.nomeIgreja && acc.nomeIgreja.trim() !== '') {
+              accompanying.nomeIgreja = acc.nomeIgreja.trim();
+            }
+            if (acc.procuraIgreja && acc.procuraIgreja.trim() !== '') {
+              accompanying.procuraIgreja = acc.procuraIgreja;
+            }
+            if (acc.eDeSP !== undefined) {
+              accompanying.eDeSP = acc.eDeSP === true || acc.eDeSP === 'true' || acc.eDeSP === 1;
+            }
+            if (acc.estado && acc.estado.trim() !== '') {
+              accompanying.estado = acc.estado.trim().toUpperCase();
             }
             return accompanying;
           })
