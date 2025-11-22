@@ -265,11 +265,6 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       this.calculateDefaultDateRange();
     }
 
-    // Não recarregar se já estiver carregando (evita múltiplas chamadas simultâneas)
-    if (this.loading) {
-      return;
-    }
-
     this.loading = true;
     
     // Prepare observables
@@ -498,6 +493,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+
   loadEvents() {
     this.loading = true;
     this.eventService.getAll(this.selectedDate)
@@ -589,7 +585,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       _original: memberItem,
       foto: memberItem.member.fotoUrl || null,
       nome: memberItem.member.nome || '-',
-      status: memberItem.isPresent ? '✅' : '❌',
+      status: memberItem.isPresent ? 'Presente' : 'Ausente',
       whatsapp: this.utilsService.getWhatsAppLink(memberItem.member.celular || memberItem.member.telefone),
       presenca: memberItem.isPresent,
       isLoading: memberItem.isLoading || false
