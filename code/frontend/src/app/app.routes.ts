@@ -14,7 +14,7 @@ import { AuthGuard } from './shared/guards/auth.guard';
 import { PermissionGuard } from './shared/guards/permission.guard';
 
 import { AtualizarCadastroComponent } from './pages/public/atualizar-cadastro/atualizar-cadastro.component';
-import { GroupManagementComponent } from './pages/logged/group-management/group-management.component';
+import { GroupManagementComponent } from './pages/logged/volunteering/volunteering.component';
 import { AdicionarVisitantesComponent } from './pages/public/adicionar-visitantes/adicionar-visitantes.component';
 import { VisitorManagementComponent } from './pages/logged/visitor-management/visitor-management.component';
 import { NotFoundComponent } from './pages/logged/not-found/not-found.component';
@@ -73,7 +73,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   { 
-    path: 'group-management', 
+    path: 'volunteering', 
     component: GroupManagementComponent,
     canActivate: [AuthGuard]
   },
