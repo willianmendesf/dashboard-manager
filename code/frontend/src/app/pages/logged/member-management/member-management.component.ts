@@ -407,7 +407,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
       lgpd: typeof member.lgpd === 'boolean' ? member.lgpd : (member.lgpd === 'true' ? true : (member.lgpd === 'false' ? false : null)),
       lgpdAceitoEm: member.lgpdAceitoEm ? member.lgpdAceitoEm : null,
       rede: member.rede || null,
-      fotoUrl: (member as any).fotoUrl || null
+      fotoUrl: (member as any).fotoUrl || null,
+      hasChildren: member.hasChildren !== undefined ? member.hasChildren : false
     };
     
     // NÃO enviar groups - grupos são gerenciados via enrollments
@@ -545,6 +546,15 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     return cleanTelefone.length >= 10 && cleanTelefone.length <= 11;
   }
 
+  onEstadoCivilChange(newValue: boolean): void {
+    // Se mudou para solteiro (false), limpar o telefone do cônjuge
+    if (newValue === false) {
+      this.currentMember.conjugueTelefone = '';
+      // Forçar detecção de mudanças para atualizar a UI
+      this.cdr.detectChanges();
+    }
+  }
+
   getWhatsAppIcon(): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(
       MessageIcons.whatsapp({ size: 20, color: '#25D366' })
@@ -645,7 +655,8 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
         lgpd: null,
         lgpdAceitoEm: null,
         rede: '',
-        version: null
+        version: null,
+        hasChildren: false
       };
       // Carregar grupos aprovados dos enrollments
       if (member?.id) {
@@ -1050,6 +1061,29 @@ export class MemberManagementComponent implements OnInit, AfterViewInit, OnDestr
     }
     if (this.viewingMember.comercial && this.viewingMember.comercial.trim()) {
       return this.viewingMember.comercial;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Obtém o telefone do membro atual para busca reversa de filhos (modal de edição)
+   * Prioriza: celular > telefone > comercial
+   */
+  getMemberTelefoneForChildrenEdit(): string | null {
+    if (!this.currentMember) {
+      return null;
+    }
+    
+    // Prioriza celular, depois telefone, depois comercial
+    if (this.currentMember.celular && this.currentMember.celular.trim()) {
+      return this.currentMember.celular;
+    }
+    if (this.currentMember.telefone && this.currentMember.telefone.trim()) {
+      return this.currentMember.telefone;
+    }
+    if (this.currentMember.comercial && this.currentMember.comercial.trim()) {
+      return this.currentMember.comercial;
     }
     
     return null;

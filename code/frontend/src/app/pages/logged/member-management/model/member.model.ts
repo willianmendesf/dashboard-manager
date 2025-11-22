@@ -32,4 +32,5 @@ export interface Member {
   rede?: string;
   version?: number;
   fotoUrl?: string;
+  hasChildren?: boolean;
 }

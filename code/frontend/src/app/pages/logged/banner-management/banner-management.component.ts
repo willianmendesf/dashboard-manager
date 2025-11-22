@@ -343,12 +343,12 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
 
   saveConfig(): void {
     if (this.currentConfig.startTime >= this.currentConfig.endTime) {
-      this.notificationService.showError('Horário de início deve ser anterior ao horário de fim');
+      this.notificationService.showError('Horário de início deve ser anterior ao horário de fim para o vídeo');
       return;
     }
 
     if (this.currentConfig.type === 'VIDEO_YOUTUBE' && !this.currentConfig.youtubeUrl?.trim()) {
-      this.notificationService.showError('URL do YouTube é obrigatória para vídeos');
+      this.notificationService.showError('URL do YouTube é obrigatória para o vídeo');
       return;
     }
 
@@ -357,7 +357,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.notificationService.showSuccess('Configuração atualizada com sucesso');
+            this.notificationService.showSuccess('Vídeo atualizado com sucesso');
             this.closeConfigModal();
             // Recarregar após fechar modal para garantir atualização
             setTimeout(() => {
@@ -365,8 +365,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
             }, 100);
           },
           error: (error) => {
-            console.error('Erro ao atualizar configuração:', error);
-            this.notificationService.showError('Erro ao atualizar configuração');
+            console.error('Erro ao atualizar vídeo:', error);
+            this.notificationService.showError('Erro ao atualizar vídeo');
           }
         });
     } else {
@@ -374,7 +374,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.notificationService.showSuccess('Configuração criada com sucesso');
+            this.notificationService.showSuccess('Vídeo criado com sucesso');
             this.closeConfigModal();
             // Recarregar após fechar modal para garantir atualização
             setTimeout(() => {
@@ -382,8 +382,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
             }, 100);
           },
           error: (error) => {
-            console.error('Erro ao criar configuração:', error);
-            this.notificationService.showError('Erro ao criar configuração');
+            console.error('Erro ao criar vídeo:', error);
+            this.notificationService.showError('Erro ao criar vídeo');
           }
         });
     }
@@ -393,12 +393,12 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     if (!config.id) return;
     
     const action = config.isActive ? 'desativar' : 'ativar';
-    if (confirm(`Tem certeza que deseja ${action} esta configuração?`)) {
+    if (confirm(`Tem certeza que deseja ${action} este Vídeo?`)) {
       this.bannerService.toggleConfigActive(config.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (updatedConfig) => {
-            this.notificationService.showSuccess(`Configuração ${action === 'ativar' ? 'ativada' : 'desativada'} com sucesso`);
+            this.notificationService.showSuccess(`Vídeo ${action === 'ativar' ? 'ativado' : 'desativado'} com sucesso`);
             // Atualizar na lista imediatamente
             const index = this.configs.findIndex(c => c.id === config.id);
             if (index !== -1) {
@@ -411,20 +411,20 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
             }, 100);
           },
           error: (error) => {
-            console.error(`Erro ao ${action} configuração:`, error);
-            this.notificationService.showError(`Erro ao ${action} configuração`);
+            console.error(`Erro ao ${action} vídeo:`, error);
+            this.notificationService.showError(`Erro ao ${action} vídeo`);
           }
         });
     }
   }
 
   deleteConfig(id: number): void {
-    if (confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE esta configuração? Esta ação não pode ser desfeita.')) {
+    if (confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE este Vídeo? Esta ação não pode ser desfeita.')) {
       this.bannerService.deleteConfig(id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.notificationService.showSuccess('Configuração excluída com sucesso');
+            this.notificationService.showSuccess('Vídeo excluído com sucesso');
             // Remover da lista imediatamente para feedback visual
             this.configs = this.configs.filter(config => config.id !== id);
             this.cdr.detectChanges();
@@ -434,8 +434,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
             }, 100);
           },
           error: (error) => {
-            console.error('Erro ao excluir configuração:', error);
-            this.notificationService.showError('Erro ao excluir configuração');
+            console.error('Erro ao excluir vídeo:', error);
+            this.notificationService.showError('Erro ao excluir vídeo');
           }
         });
     }
