@@ -36,11 +36,21 @@ public class PublicVisitorController {
     public ResponseEntity<VisitorDTO> createVisitorGroup(@RequestBody VisitorGroupRequestDTO dto) {
         try {
             log.info("Public request to create visitor group");
+            log.info("Received DTO - mainVisitor: {}, accompanyingVisitors count: {}", 
+                    dto.getMainVisitor() != null ? dto.getMainVisitor().getNomeCompleto() : "null",
+                    dto.getAccompanyingVisitors() != null ? dto.getAccompanyingVisitors().size() : 0);
+            
+            if (dto.getMainVisitor() == null) {
+                log.error("Main visitor is null");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            
             VisitorDTO visitor = visitorService.createGroup(dto);
             log.info("Created visitor group with main visitor ID: {}", visitor.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(visitor);
         } catch (Exception e) {
             log.error("Error creating visitor group: {}", e.getMessage(), e);
+            log.error("Exception type: {}, cause: {}", e.getClass().getName(), e.getCause());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }

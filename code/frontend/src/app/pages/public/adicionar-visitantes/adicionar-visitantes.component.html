@@ -20,7 +20,6 @@
             formControlName="nomeCompleto"
             class="form-control"
             placeholder="Digite o nome completo"
-            [disabled]="isLoading"
           />
           @if (visitorForm.get('nomeCompleto')?.invalid && visitorForm.get('nomeCompleto')?.touched) {
             <small class="error-text">Nome completo é obrigatório</small>
@@ -34,7 +33,6 @@
             type="date"
             formControlName="dataVisita"
             class="form-control"
-            [disabled]="isLoading"
           />
           @if (visitorForm.get('dataVisita')?.invalid && visitorForm.get('dataVisita')?.touched) {
             <small class="error-text">Data é obrigatória</small>
@@ -51,7 +49,6 @@
             placeholder="(00) 00000-0000"
             [mask]="'(00) 00000-0000'"
             [dropSpecialCharacters]="false"
-            [disabled]="isLoading"
           />
         </div>
 
@@ -61,7 +58,6 @@
             id="jaFrequentaIgreja"
             formControlName="jaFrequentaIgreja"
             class="form-control"
-            [disabled]="isLoading"
           >
             <option value="">Selecione</option>
             <option value="Sim">Sim</option>
@@ -78,7 +74,6 @@
               formControlName="nomeIgreja"
               class="form-control"
               placeholder="Digite o nome da igreja"
-              [disabled]="isLoading"
             />
             @if (visitorForm.get('nomeIgreja')?.invalid && visitorForm.get('nomeIgreja')?.touched) {
               <small class="error-text">Nome da igreja é obrigatório</small>
@@ -92,7 +87,6 @@
             id="procuraIgreja"
             formControlName="procuraIgreja"
             class="form-control"
-            [disabled]="isLoading"
           >
             <option value="">Selecione</option>
             <option value="Sim">Sim</option>
@@ -106,7 +100,6 @@
             id="eDeSP"
             formControlName="eDeSP"
             class="form-control"
-            [disabled]="isLoading"
           >
             <option [value]="true">Sim</option>
             <option [value]="false">Não</option>
@@ -120,7 +113,6 @@
               id="estado"
               formControlName="estado"
               class="form-control"
-              [disabled]="isLoading"
             >
               <option value="">Selecione o estado</option>
               @for (estado of estadosBR; track estado) {
@@ -135,7 +127,7 @@
 
         <div class="form-group">
           <label class="switch-label">
-            <input type="checkbox" [formControl]="isAccompaniedControl" [disabled]="isLoading">
+            <input type="checkbox" [formControl]="isAccompaniedControl">
             <span>Está acompanhado?</span>
           </label>
         </div>
@@ -149,7 +141,7 @@
                 <div [formGroupName]="$index" class="visitor-row">
                   <div class="form-group">
                     <label>Nome *</label>
-                    <input formControlName="nomeCompleto" type="text" class="form-control" [disabled]="isLoading">
+                    <input formControlName="nomeCompleto" type="text" class="form-control">
                     @if (item.get('nomeCompleto')?.invalid && item.get('nomeCompleto')?.touched) {
                       <small class="error-text">Nome é obrigatório</small>
                     }
@@ -162,7 +154,7 @@
 
                   <div class="form-group">
                     <label>Vínculo *</label>
-                    <select formControlName="relationship" class="form-control" [disabled]="isLoading">
+                    <select formControlName="relationship" class="form-control">
                       <option value="">Selecione</option>
                       <option value="Amigo(a)">Amigo(a)</option>
                       <option value="Filho(a)">Filho(a)</option>
@@ -179,14 +171,14 @@
                     }
                   </div>
 
-                  <button type="button" (click)="removeAccompanying($index)" class="btn-icon-danger" [disabled]="isLoading" title="Remover">
+                  <button type="button" (click)="removeAccompanying($index)" class="btn-icon-danger" title="Remover">
                     Remover
                   </button>
                 </div>
               }
             </div>
 
-            <button type="button" (click)="addAccompanying()" class="btn-secondary btn-sm" [disabled]="isLoading">
+            <button type="button" (click)="addAccompanying()" class="btn-secondary btn-sm">
               + Adicionar Pessoa
             </button>
           </div>
@@ -195,7 +187,7 @@
         <button
           type="submit"
           class="btn-primary"
-          [disabled]="visitorForm.invalid || isLoading"
+          [disabled]="visitorForm.invalid || visitorForm.disabled"
         >
           @if (isLoading) {
             Enviando...

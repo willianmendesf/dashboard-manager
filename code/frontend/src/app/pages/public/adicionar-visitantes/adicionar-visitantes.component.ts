@@ -114,20 +114,32 @@ export class AdicionarVisitantesComponent implements OnInit {
       return;
     }
 
+    // Get form values BEFORE disabling (disabled controls don't appear in form.value)
+    const formValue = this.visitorForm.getRawValue();
+    
     this.isLoading = true;
-    const formValue = this.visitorForm.value;
+    // Disable all form controls while loading
+    this.visitorForm.disable();
 
     const eDeSPValue = formValue.eDeSP !== undefined ? formValue.eDeSP : true;
     const estadoValue = eDeSPValue === true 
       ? 'SP' 
       : (formValue.estado && formValue.estado.trim() !== '' ? formValue.estado.trim().toUpperCase() : undefined);
 
+    // Validate required fields
+    if (!formValue.nomeCompleto || typeof formValue.nomeCompleto !== 'string' || formValue.nomeCompleto.trim() === '') {
+      this.notificationService.showError('Nome completo é obrigatório.');
+      this.isLoading = false;
+      this.visitorForm.enable();
+      return;
+    }
+
     const mainVisitorData: CreateVisitorDTO = {
       nomeCompleto: formValue.nomeCompleto.trim(),
       dataVisita: formValue.dataVisita,
-      telefone: formValue.telefone || undefined,
+      telefone: formValue.telefone ? formValue.telefone.trim() : undefined,
       jaFrequentaIgreja: formValue.jaFrequentaIgreja || undefined,
-      nomeIgreja: formValue.nomeIgreja ? formValue.nomeIgreja.trim() : undefined,
+      nomeIgreja: formValue.nomeIgreja && formValue.nomeIgreja.trim() ? formValue.nomeIgreja.trim() : undefined,
       procuraIgreja: formValue.procuraIgreja || undefined,
       eDeSP: eDeSPValue,
       estado: estadoValue
@@ -137,11 +149,22 @@ export class AdicionarVisitantesComponent implements OnInit {
     if (formValue.isAccompanied && formValue.accompanyingVisitors && formValue.accompanyingVisitors.length > 0) {
       const groupData: VisitorGroupRequestDTO = {
         mainVisitor: mainVisitorData,
-        accompanyingVisitors: formValue.accompanyingVisitors.map((acc: any) => ({
-          nomeCompleto: acc.nomeCompleto.trim(),
-          age: acc.age ? parseInt(acc.age) : undefined,
-          relationship: acc.relationship
-        }))
+        accompanyingVisitors: formValue.accompanyingVisitors
+          .filter((acc: any) => acc && acc.nomeCompleto && typeof acc.nomeCompleto === 'string' && acc.nomeCompleto.trim() !== '')
+          .map((acc: any) => {
+            const accompanying: any = {
+              nomeCompleto: acc.nomeCompleto.trim(),
+              relationship: acc.relationship || ''
+            };
+            // Only include age if it's a valid number
+            if (acc.age && acc.age.toString().trim() !== '') {
+              const ageNum = parseInt(acc.age.toString().trim());
+              if (!isNaN(ageNum) && ageNum > 0) {
+                accompanying.age = ageNum;
+              }
+            }
+            return accompanying;
+          })
       };
 
       console.log('Sending visitor group data:', JSON.stringify(groupData, null, 2));
@@ -151,12 +174,14 @@ export class AdicionarVisitantesComponent implements OnInit {
           this.notificationService.showSuccess('Visitante e acompanhantes cadastrados com sucesso!');
           this.resetForm();
           this.isLoading = false;
+          this.visitorForm.enable();
         },
         error: (error) => {
           console.error('Error creating visitor group:', error);
           const errorMessage = error?.error?.message || 'Erro ao cadastrar visitante e acompanhantes. Tente novamente.';
           this.notificationService.showError(errorMessage);
           this.isLoading = false;
+          this.visitorForm.enable();
         }
       });
     } else {
@@ -168,12 +193,14 @@ export class AdicionarVisitantesComponent implements OnInit {
           this.notificationService.showSuccess('Visitante cadastrado com sucesso!');
           this.resetForm();
           this.isLoading = false;
+          this.visitorForm.enable();
         },
         error: (error) => {
           console.error('Error creating visitor:', error);
           const errorMessage = error?.error?.message || 'Erro ao cadastrar visitante. Tente novamente.';
           this.notificationService.showError(errorMessage);
           this.isLoading = false;
+          this.visitorForm.enable();
         }
       });
     }
