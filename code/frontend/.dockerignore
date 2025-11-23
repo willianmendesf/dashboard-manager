@@ -1,0 +1,35 @@
+# Dependências - devem ser instaladas dentro do container
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build artifacts - serão gerados dentro do container
+dist
+.angular
+
+# Arquivos de desenvolvimento
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de ambiente (se houver)
+.env.local
+.env.development
+
+# Logs
+logs
+*.log
+
+# Arquivos temporários
+tmp
+temp
+.cache
+
