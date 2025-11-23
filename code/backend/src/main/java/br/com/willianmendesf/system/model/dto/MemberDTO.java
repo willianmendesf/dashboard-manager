@@ -39,6 +39,7 @@ public class MemberDTO {
     private String estado;
     private Boolean lgpd;
     private LocalDate lgpdAceitoEm;
+    private Boolean hasChildren;
     
     @Deprecated
     private List<Long> groupIds;
@@ -72,6 +73,7 @@ public class MemberDTO {
         this.estado = member.getEstado();
         this.lgpd = member.getLgpd();
         this.lgpdAceitoEm = member.getLgpdAceitoEm();
+        this.hasChildren = member.getHasChildren() != null ? member.getHasChildren() : false;
         
         // Manter groupIds para compatibilidade (deprecated)
         this.groupIds = member.getGroups() != null && !member.getGroups().isEmpty()

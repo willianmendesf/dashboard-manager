@@ -82,10 +82,10 @@ export class SidebarComponent implements OnInit {
       permission: null
     },
     { 
-      path: '/group-management', 
-      label: 'Grupos', 
+      path: '/volunteering', 
+      label: 'Voluntariado', 
       icon: this.getSafeIcon(() => NavigationIcons.groups({ size: 20, color: 'currentColor' })),
-      exact: true,
+      exact: false,
       permission: 'READ_MEMBERS'
     },
     { 

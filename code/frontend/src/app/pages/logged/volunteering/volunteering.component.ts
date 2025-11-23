@@ -16,11 +16,11 @@ import { buildProfileImageUrl } from '../../../shared/utils/image-url-builder';
 import { UtilsService } from '../../../shared/services/utils.service';
 
 @Component({
-  selector: 'app-group-management',
+  selector: 'app-volunteering',
   standalone: true,
   imports: [CommonModule, FormsModule, PageTitleComponent, ModalComponent, DataTableComponent],
-  templateUrl: './group-management.component.html',
-  styleUrl: './group-management.component.scss'
+  templateUrl: './volunteering.component.html',
+  styleUrl: './volunteering.component.scss'
 })
 export class GroupManagementComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();

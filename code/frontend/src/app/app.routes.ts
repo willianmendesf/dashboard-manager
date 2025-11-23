@@ -14,7 +14,7 @@ import { AuthGuard } from './shared/guards/auth.guard';
 import { PermissionGuard } from './shared/guards/permission.guard';
 
 import { AtualizarCadastroComponent } from './pages/public/atualizar-cadastro/atualizar-cadastro.component';
-import { GroupManagementComponent } from './pages/logged/group-management/group-management.component';
+import { GroupManagementComponent } from './pages/logged/volunteering/volunteering.component';
 import { AdicionarVisitantesComponent } from './pages/public/adicionar-visitantes/adicionar-visitantes.component';
 import { VisitorManagementComponent } from './pages/logged/visitor-management/visitor-management.component';
 import { NotFoundComponent } from './pages/logged/not-found/not-found.component';
@@ -23,7 +23,7 @@ import { EmprestimoPublicoComponent } from './pages/public/emprestimo-publico/em
 import { LoansComponent } from './pages/logged/loans/loans.component';
 import { MuralDigitalComponent } from './pages/public/mural-digital/mural-digital.component';
 import { BannerManagementComponent } from './pages/logged/banner-management/banner-management.component';
-import { AttendanceCheckinComponent } from './pages/public/attendance-checkin/attendance-checkin.component';
+import { ListaPresencaComponent } from './pages/public/lista-presenca/lista-presenca.component';
 import { AttendanceDashboardComponent } from './pages/logged/attendance/attendance-dashboard.component';
 
 export const routes: Routes = [
@@ -36,7 +36,7 @@ export const routes: Routes = [
   { path: 'adicionar-visitantes', component: AdicionarVisitantesComponent },
   { path: 'emprestimo', component: EmprestimoPublicoComponent },
   { path: 'mural', component: MuralDigitalComponent },
-  { path: 'lista-presenca', component: AttendanceCheckinComponent },
+  { path: 'lista-presenca', component: ListaPresencaComponent },
   { 
     path: 'meu-perfil', 
     component: MyProfileComponent,
@@ -73,7 +73,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   { 
-    path: 'group-management', 
+    path: 'volunteering', 
     component: GroupManagementComponent,
     canActivate: [AuthGuard]
   },

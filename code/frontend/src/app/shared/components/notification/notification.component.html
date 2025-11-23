@@ -1,6 +1,6 @@
 <div class="notification-container">
   <div 
-    *ngFor="let notification of notifications" 
+    *ngFor="let notification of notifications; trackBy: trackByNotificationId" 
     class="toast-notification" 
     [ngClass]="'toast-' + notification.type"
   >

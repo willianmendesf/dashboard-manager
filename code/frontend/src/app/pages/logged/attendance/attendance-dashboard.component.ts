@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -43,6 +43,7 @@ interface MemberWithAttendance {
 })
 export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
+  private chartRefresh$ = new Subject<void>();
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
   public utilsService = inject(UtilsService);
@@ -63,9 +64,9 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   tableColumns: TableColumn[] = [
     { key: 'foto', label: '', width: '60px', align: 'center' },
     { key: 'nome', label: 'Nome', sortable: true },
-    { key: 'status', label: 'Status', sortable: false, width: '120px' },
-    { key: 'whatsapp', label: '', width: '50px', align: 'center' },
-    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' }
+    { key: 'presenca', label: 'Presença', sortable: false, width: '120px', align: 'center' },
+    { key: 'status', label: 'Status', sortable: false, width: '120px', align: 'center' },
+    { key: 'whatsapp', label: 'whatsapp', width: '50px', align: 'center' },
   ];
 
   // Chart
@@ -145,6 +146,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   showVisitorsSeparate: boolean = false;
   showAbsences: boolean = false;
   showAverage: boolean = true;
+  averagePeriodType: 'monthly' | 'bimonthly' | 'quarterly' | 'semester' | 'annual' | 'full' = 'full';
 
   // Data cache
   visitorStats: VisitorStats[] = [];
@@ -157,13 +159,24 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private apiService: ApiService,
     private userPreferenceService: UserPreferenceService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
     this.loadSavedPreferences();
     this.loadTotalMembers();
     this.loadEvents();
+    
+    // Configurar debounce para atualização automática do gráfico
+    this.chartRefresh$
+      .pipe(
+        debounceTime(800),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(() => {
+        this.loadChartData();
+      });
   }
 
   loadSavedPreferences(): void {
@@ -198,6 +211,9 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
             }
             if (preference.periodType) {
               this.periodType = preference.periodType;
+            }
+            if (preference.averagePeriodType) {
+              this.averagePeriodType = preference.averagePeriodType;
             }
           }
           
@@ -291,6 +307,95 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+  calculateAverageByPeriod(
+    sortedDates: string[],
+    presenceData: number[]
+  ): number[] {
+    if (this.averagePeriodType === 'full') {
+      // Calculate overall average
+      const sum = presenceData.reduce((acc, val) => acc + val, 0);
+      const average = presenceData.length > 0 ? sum / presenceData.length : 0;
+      return new Array(presenceData.length).fill(average);
+    }
+
+    // Group data by period
+    const periodMap = new Map<string, { dates: string[]; values: number[] }>();
+
+    sortedDates.forEach((date, index) => {
+      const dateObj = new Date(date);
+      let periodKey: string;
+
+      switch (this.averagePeriodType) {
+        case 'monthly':
+          periodKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
+          break;
+        case 'bimonthly':
+          const bimonth = Math.floor(dateObj.getMonth() / 2);
+          periodKey = `${dateObj.getFullYear()}-B${bimonth}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor(dateObj.getMonth() / 3);
+          periodKey = `${dateObj.getFullYear()}-Q${quarter}`;
+          break;
+        case 'semester':
+          const semester = Math.floor(dateObj.getMonth() / 6);
+          periodKey = `${dateObj.getFullYear()}-S${semester}`;
+          break;
+        case 'annual':
+          periodKey = `${dateObj.getFullYear()}`;
+          break;
+        default:
+          periodKey = 'full';
+      }
+
+      if (!periodMap.has(periodKey)) {
+        periodMap.set(periodKey, { dates: [], values: [] });
+      }
+      const period = periodMap.get(periodKey)!;
+      period.dates.push(date);
+      period.values.push(presenceData[index]);
+    });
+
+    // Calculate average for each period
+    const periodAverages = new Map<string, number>();
+    periodMap.forEach((period, key) => {
+      const sum = period.values.reduce((acc, val) => acc + val, 0);
+      const average = period.values.length > 0 ? sum / period.values.length : 0;
+      periodAverages.set(key, average);
+    });
+
+    // Create result array with average for each date
+    return sortedDates.map((date, index) => {
+      const dateObj = new Date(date);
+      let periodKey: string;
+
+      switch (this.averagePeriodType) {
+        case 'monthly':
+          periodKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
+          break;
+        case 'bimonthly':
+          const bimonth = Math.floor(dateObj.getMonth() / 2);
+          periodKey = `${dateObj.getFullYear()}-B${bimonth}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor(dateObj.getMonth() / 3);
+          periodKey = `${dateObj.getFullYear()}-Q${quarter}`;
+          break;
+        case 'semester':
+          const semester = Math.floor(dateObj.getMonth() / 6);
+          periodKey = `${dateObj.getFullYear()}-S${semester}`;
+          break;
+        case 'annual':
+          periodKey = `${dateObj.getFullYear()}`;
+          break;
+        default:
+          periodKey = 'full';
+      }
+
+      return periodAverages.get(periodKey) || 0;
+    });
+  }
+
   updateChartData(stats: AttendanceStats) {
     // Create maps for presence and visitor data
     const presenceMap = new Map<string, number>();
@@ -353,7 +458,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
 
     // Average data
     const averageData = this.showAverage 
-      ? new Array(presenceData.length).fill(stats.periodAverage)
+      ? this.calculateAverageByPeriod(sortedDates, presenceData)
       : null;
 
     // Build datasets array
@@ -440,6 +545,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
     this.showAverage = true;
     this.defaultIntervalMonths = 3;
     this.periodType = 'months';
+    this.averagePeriodType = 'full';
     this.calculateDefaultDateRange();
     
     // Deletar preferências salvas
@@ -466,21 +572,31 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       showAbsences: this.showAbsences,
       showAverage: this.showAverage,
       defaultIntervalMonths: this.defaultIntervalMonths,
-      periodType: this.periodType
+      periodType: this.periodType,
+      averagePeriodType: this.averagePeriodType
     };
 
     this.userPreferenceService.saveAttendanceChartPreference(preference)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: () => {
-          this.notificationService.showSuccess('Preferências salvas como padrão com sucesso!');
+          // Garantir que a notificação seja exibida dentro da zona do Angular
+          this.ngZone.run(() => {
+            this.notificationService.showSuccess('Preferências salvas como padrão com sucesso!');
+            this.cdr.markForCheck();
+          });
         },
         error: (err) => {
           console.error('Error saving preferences:', err);
-          this.notificationService.showError('Erro ao salvar preferências.');
+          // Garantir que a notificação seja exibida dentro da zona do Angular
+          this.ngZone.run(() => {
+            this.notificationService.showError('Erro ao salvar preferências.');
+            this.cdr.markForCheck();
+          });
         }
       });
   }
+
 
   loadEvents() {
     this.loading = true;
@@ -602,6 +718,10 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
           member.isPresent = response.isPresent;
           member.isLoading = false;
           this.updateTableData();
+          
+          // Atualizar gráfico em tempo real se a data do evento estiver no intervalo do gráfico
+          this.refreshChartIfNeeded();
+          
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -613,6 +733,22 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  private refreshChartIfNeeded() {
+    // Verificar se a data do evento selecionado está dentro do intervalo do gráfico
+    if (!this.selectedDate || !this.chartStartDate || !this.chartEndDate) {
+      return;
+    }
+
+    const eventDate = new Date(this.selectedDate);
+    const startDate = new Date(this.chartStartDate);
+    const endDate = new Date(this.chartEndDate);
+    
+    // Se a data do evento está dentro do intervalo do gráfico, disparar atualização
+    if (eventDate >= startDate && eventDate <= endDate) {
+      this.chartRefresh$.next();
+    }
   }
 
   getWhatsAppIcon(): SafeHtml {

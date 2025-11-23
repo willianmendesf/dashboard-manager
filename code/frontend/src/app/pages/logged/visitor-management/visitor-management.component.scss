@@ -29,10 +29,10 @@
           align-items: center;
           gap: 20px;
           flex-wrap: wrap;
-          padding: 16px;
+          padding: 12px !important;
           background: #f8f9fa;
-          border-radius: 10px;
-          border: 1px solid #e9ecef;
+          border-radius: 8px !important;
+          border: 1px solid #e9ecef !important;
 
           .control-group {
             .checkbox-label {
@@ -51,10 +51,6 @@
                 height: 20px;
                 accent-color: #3b82f6;
                 border-radius: 4px;
-              }
-
-              &:hover {
-                color: #3b82f6;
               }
             }
           }

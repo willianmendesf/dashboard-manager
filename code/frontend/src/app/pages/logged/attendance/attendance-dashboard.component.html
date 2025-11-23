@@ -126,6 +126,24 @@
                     <span>Mostrar média</span>
                   </label>
                 </div>
+                @if (showAverage) {
+                  <div class="control-group">
+                    <label for="averagePeriodType">Período da média:</label>
+                    <select
+                      id="averagePeriodType"
+                      [(ngModel)]="averagePeriodType"
+                      (change)="onChartOptionChange()"
+                      class="form-control"
+                    >
+                      <option value="full">Período Completo</option>
+                      <option value="monthly">Mensal</option>
+                      <option value="bimonthly">Bimestral</option>
+                      <option value="quarterly">Trimestral</option>
+                      <option value="semester">Semestral</option>
+                      <option value="annual">Anual</option>
+                    </select>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -202,6 +220,7 @@
           [striped]="true"
           [hoverable]="true"
           [enablePagination]="true"
+          [preservePage]="true"
         >
           <ng-template #rowTemplate let-row let-column="column">
             @if (column.key === 'foto') {

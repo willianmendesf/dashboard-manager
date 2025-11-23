@@ -30,6 +30,25 @@
     gap: 8px;
     flex-wrap: wrap;
   }
+
+  @media (max-width: 999px) {
+    .status-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .status-indicator {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+      gap: 8px;
+    }
+  }
   
   .status-badge {
     display: inline-flex;
@@ -78,6 +97,7 @@
   .status-actions {
     display: flex;
     align-items: center;
+    flex-direction: row-reverse;
     gap: 16px;
     flex-wrap: wrap;
   }

@@ -1,9 +1,11 @@
 package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.exception.MembersException;
+import br.com.willianmendesf.system.model.dto.AccompanyingVisitorDTO;
 import br.com.willianmendesf.system.model.dto.CreateVisitorDTO;
 import br.com.willianmendesf.system.model.dto.UpdateVisitorDTO;
 import br.com.willianmendesf.system.model.dto.VisitorDTO;
+import br.com.willianmendesf.system.model.dto.VisitorGroupRequestDTO;
 import br.com.willianmendesf.system.model.dto.VisitorStatsDTO;
 import br.com.willianmendesf.system.model.entity.VisitorEntity;
 import br.com.willianmendesf.system.repository.VisitorRepository;
@@ -76,6 +78,84 @@ public class VisitorService {
         } catch (Exception e) {
             log.error("Error creating visitor", e);
             throw new MembersException("Erro ao criar visitante: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public VisitorDTO createGroup(VisitorGroupRequestDTO dto) {
+        try {
+            log.info("Creating visitor group with main visitor: {}", dto.getMainVisitor() != null ? dto.getMainVisitor().getNomeCompleto() : "null");
+            
+            if (dto.getMainVisitor() == null) {
+                throw new MembersException("Visitante principal é obrigatório");
+            }
+            
+            // Passo 1: Salvar o visitante principal
+            VisitorDTO mainVisitorDTO = create(dto.getMainVisitor());
+            VisitorEntity mainVisitorEntity = repository.findById(mainVisitorDTO.getId())
+                    .orElseThrow(() -> new MembersException("Erro ao recuperar visitante principal salvo"));
+            
+            log.info("Main visitor created with ID: {}", mainVisitorEntity.getId());
+            
+            // Passo 2: Salvar os acompanhantes
+            if (dto.getAccompanyingVisitors() != null && !dto.getAccompanyingVisitors().isEmpty()) {
+                for (AccompanyingVisitorDTO accompanyingDTO : dto.getAccompanyingVisitors()) {
+                    if (accompanyingDTO.getNomeCompleto() == null || accompanyingDTO.getNomeCompleto().trim().isEmpty()) {
+                        log.warn("Skipping accompanying visitor with empty name");
+                        continue;
+                    }
+                    
+                    VisitorEntity accompanyingEntity = new VisitorEntity();
+                    accompanyingEntity.setNomeCompleto(accompanyingDTO.getNomeCompleto().trim());
+                    accompanyingEntity.setAge(accompanyingDTO.getAge());
+                    accompanyingEntity.setDataVisita(mainVisitorEntity.getDataVisita()); // Copiar data do principal
+                    accompanyingEntity.setMainVisitor(mainVisitorEntity);
+                    accompanyingEntity.setRelationship(accompanyingDTO.getRelationship());
+                    
+                    // Usar dados do DTO se fornecidos, caso contrário copiar do principal
+                    accompanyingEntity.setTelefone(accompanyingDTO.getTelefone() != null && !accompanyingDTO.getTelefone().trim().isEmpty() 
+                        ? accompanyingDTO.getTelefone().trim() 
+                        : mainVisitorEntity.getTelefone());
+                    accompanyingEntity.setJaFrequentaIgreja(accompanyingDTO.getJaFrequentaIgreja() != null && !accompanyingDTO.getJaFrequentaIgreja().trim().isEmpty() 
+                        ? accompanyingDTO.getJaFrequentaIgreja() 
+                        : mainVisitorEntity.getJaFrequentaIgreja());
+                    accompanyingEntity.setNomeIgreja(accompanyingDTO.getNomeIgreja() != null && !accompanyingDTO.getNomeIgreja().trim().isEmpty() 
+                        ? accompanyingDTO.getNomeIgreja().trim() 
+                        : mainVisitorEntity.getNomeIgreja());
+                    accompanyingEntity.setProcuraIgreja(accompanyingDTO.getProcuraIgreja() != null && !accompanyingDTO.getProcuraIgreja().trim().isEmpty() 
+                        ? accompanyingDTO.getProcuraIgreja() 
+                        : mainVisitorEntity.getProcuraIgreja());
+                    
+                    // Para eDeSP e estado, usar do DTO se fornecido, senão copiar do principal
+                    Boolean accompanyingEDeSP = accompanyingDTO.getEDeSP() != null 
+                        ? accompanyingDTO.getEDeSP() 
+                        : mainVisitorEntity.getEDeSP();
+                    accompanyingEntity.setEDeSP(accompanyingEDeSP);
+                    
+                    if (Boolean.FALSE.equals(accompanyingEDeSP)) {
+                        // Se não é de SP, usar estado do DTO ou do principal
+                        String accompanyingEstado = accompanyingDTO.getEstado() != null && !accompanyingDTO.getEstado().trim().isEmpty() 
+                            ? accompanyingDTO.getEstado().trim().toUpperCase() 
+                            : (mainVisitorEntity.getEstado() != null ? mainVisitorEntity.getEstado() : null);
+                        accompanyingEntity.setEstado(accompanyingEstado);
+                    } else {
+                        // Se for SP, sempre limpar estado
+                        accompanyingEntity.setEstado(null);
+                    }
+                    
+                    VisitorEntity savedAccompanying = repository.save(accompanyingEntity);
+                    log.info("Accompanying visitor created with ID: {}, name: {}, relationship: {}", 
+                            savedAccompanying.getId(), savedAccompanying.getNomeCompleto(), savedAccompanying.getRelationship());
+                }
+            }
+            
+            log.info("Visitor group created successfully. Main visitor ID: {}", mainVisitorEntity.getId());
+            return mainVisitorDTO;
+        } catch (MembersException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error creating visitor group", e);
+            throw new MembersException("Erro ao criar grupo de visitantes: " + e.getMessage(), e);
         }
     }
 

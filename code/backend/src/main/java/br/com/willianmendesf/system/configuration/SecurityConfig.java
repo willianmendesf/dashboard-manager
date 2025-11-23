@@ -92,11 +92,17 @@ public class SecurityConfig {
                 .requestMatchers("/emergency/**").permitAll()
                 .requestMatchers("/usuarios/registro").permitAll()
                 .requestMatchers("/files/**").permitAll()
-                .requestMatchers("/public/**").permitAll() // Portal público de atualização cadastral, visitantes e empréstimos
+                // Portal público de atualização cadastral, visitantes e empréstimos
+                // Adicionar matchers explícitos para garantir que funcionem com context-path /api/v1
+                .requestMatchers("/public/**").permitAll()
+                // Matcher adicional usando servletPath e requestURI para garantir compatibilidade
                 .requestMatchers(request -> {
-                    String path = request.getServletPath();
-                    return path != null && path.startsWith("/public/");
-                }).permitAll() // Garantir que todas as rotas /public/** sejam públicas (usando servletPath)
+                    String servletPath = request.getServletPath();
+                    String requestURI = request.getRequestURI();
+                    // Verificar servletPath (sem context-path) ou requestURI (com context-path)
+                    return (servletPath != null && servletPath.startsWith("/public/")) ||
+                           (requestURI != null && requestURI.contains("/public/"));
+                }).permitAll()
                 .requestMatchers("/configurations/FAVICON_URL").permitAll() // Favicon (público)
                 .requestMatchers("/configurations/LOGO_URL").permitAll() // Logo (público)
                 .requestMatchers("/enrollments/request").permitAll() // Solicitação de participação em grupos (público)

@@ -1,4 +1,4 @@
-<div class="attendance-checkin-container">
+<div class="lista-presenca-container">
   <div class="header-section">
     <div class="header">
       <h1>Lista de Presença</h1>
@@ -91,6 +91,7 @@
       [striped]="true"
       [hoverable]="true"
       [enablePagination]="true"
+      [preservePage]="true"
     >
       <ng-template #rowTemplate let-row let-column="column">
         @if (column.key === 'foto') {
