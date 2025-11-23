@@ -47,11 +47,28 @@ public class WhatsappConnectionService {
     public Map<String, Object> getStatus() {
         try {
             ResponseEntity<String> response = whatsappSenderService.sendGetRequest(STATUS_ENDPOINT);
+            
+            // Verificar status code da resposta
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.warn("Status code não OK ao verificar status do WhatsApp: {} - Body: {}", 
+                    response.getStatusCode(), 
+                    response.getBody() != null ? response.getBody().substring(0, Math.min(200, response.getBody().length())) : "null");
+                return createErrorStatus("API retornou status code: " + response.getStatusCode());
+            }
+            
             String jsonResponse = response.getBody();
             
-            if (jsonResponse == null) {
+            if (jsonResponse == null || jsonResponse.trim().isEmpty()) {
                 log.warn("Resposta vazia ao verificar status do WhatsApp");
                 return createErrorStatus("Resposta vazia da API");
+            }
+            
+            // Verificar se a resposta parece ser JSON (não HTML ou outro formato)
+            String trimmedResponse = jsonResponse.trim();
+            if (!trimmedResponse.startsWith("{") && !trimmedResponse.startsWith("[")) {
+                log.error("Resposta da API não é JSON válido. Primeiros caracteres: {}...", 
+                    trimmedResponse.substring(0, Math.min(100, trimmedResponse.length())));
+                return createErrorStatus("API retornou resposta em formato não-JSON");
             }
             
             return parseStatusResponse(jsonResponse);
@@ -80,22 +97,41 @@ public class WhatsappConnectionService {
             log.info("Iniciando reconexão manual ao WhatsApp...");
             
             ResponseEntity<String> response = whatsappSenderService.sendGetRequest(RECONNECT_ENDPOINT);
-            String jsonResponse = response.getBody();
             
-            if (jsonResponse != null && response.getStatusCode().is2xxSuccessful()) {
-                log.info("Reconexão manual realizada com sucesso");
-                return Map.of(
-                    "success", true,
-                    "message", "Reconexão realizada com sucesso",
-                    "timestamp", lastReconnectAttempt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                );
-            } else {
-                log.warn("Reconexão manual retornou resposta inválida");
+            // Verificar status code
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                String bodyPreview = response.getBody() != null ? 
+                    response.getBody().substring(0, Math.min(200, response.getBody().length())) : "null";
+                log.warn("Reconexão manual retornou status code não OK: {} - Body: {}", 
+                    response.getStatusCode(), bodyPreview);
                 return Map.of(
                     "success", false,
-                    "message", "Resposta inválida da API"
+                    "message", "API retornou status code: " + response.getStatusCode()
                 );
             }
+            
+            String jsonResponse = response.getBody();
+            
+            // Verificar se a resposta parece ser válida
+            if (jsonResponse != null) {
+                String trimmed = jsonResponse.trim();
+                // Se começar com '<', provavelmente é HTML (erro)
+                if (trimmed.startsWith("<")) {
+                    log.warn("Reconexão retornou HTML em vez de JSON. Primeiros caracteres: {}...", 
+                        trimmed.substring(0, Math.min(200, trimmed.length())));
+                    return Map.of(
+                        "success", false,
+                        "message", "API retornou resposta em formato não-JSON"
+                    );
+                }
+            }
+            
+            log.info("Reconexão manual realizada com sucesso");
+            return Map.of(
+                "success", true,
+                "message", "Reconexão realizada com sucesso",
+                "timestamp", lastReconnectAttempt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
         } catch (Exception e) {
             log.error("Erro ao reconectar ao WhatsApp: {}", e.getMessage(), e);
             return Map.of(
@@ -187,6 +223,14 @@ public class WhatsappConnectionService {
      */
     private Map<String, Object> parseStatusResponse(String jsonResponse) {
         try {
+            // Validação adicional: garantir que não é HTML
+            String trimmed = jsonResponse.trim();
+            if (trimmed.startsWith("<")) {
+                log.error("Resposta parece ser HTML em vez de JSON. Primeiros caracteres: {}...", 
+                    trimmed.substring(0, Math.min(200, trimmed.length())));
+                return createErrorStatus("API retornou HTML em vez de JSON (possível erro 404 ou página de erro)");
+            }
+            
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(jsonResponse);
             JsonNode results = root.path("results");
@@ -200,6 +244,10 @@ public class WhatsappConnectionService {
             }
             
             return status;
+        } catch (com.fasterxml.jackson.core.JsonParseException e) {
+            log.error("Erro ao fazer parse da resposta de status (não é JSON válido). Primeiros caracteres da resposta: {}...", 
+                jsonResponse != null ? jsonResponse.substring(0, Math.min(200, jsonResponse.length())) : "null");
+            return createErrorStatus("Resposta não é JSON válido: " + e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao fazer parse da resposta de status: {}", e.getMessage(), e);
             return createErrorStatus("Erro ao processar resposta: " + e.getMessage());

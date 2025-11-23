@@ -2,8 +2,8 @@ package br.com.willianmendesf.system.service;
 
 import br.com.willianmendesf.system.model.entity.SystemConfiguration;
 import br.com.willianmendesf.system.repository.SystemConfigurationRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +18,18 @@ import br.com.willianmendesf.system.service.utils.WhatsappSenderService;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class ConfigService {
 
     private final SystemConfigurationRepository repository;
-    private final WhatsappSenderService whatsappSenderService; // Adicionar esta linha
+    private final WhatsappSenderService whatsappSenderService;
+    
+    // Construtor com @Lazy para quebrar dependência circular
+    public ConfigService(
+            SystemConfigurationRepository repository,
+            @Lazy WhatsappSenderService whatsappSenderService) {
+        this.repository = repository;
+        this.whatsappSenderService = whatsappSenderService;
+    }
     
     // In-memory cache to avoid repeated database queries
     private final Map<String, String> cache = new ConcurrentHashMap<>();
@@ -173,7 +180,7 @@ public class ConfigService {
      */
     @Transactional
     public void setAll(Map<String, String> configurations) {
-        boolean shouldInvalidateWhatsAppCache = false;
+        final boolean[] shouldInvalidateWhatsAppCache = {false};
         
         configurations.forEach((key, value) -> {
             Optional<SystemConfiguration> configOpt = repository.findByKey(key);
@@ -201,14 +208,14 @@ public class ConfigService {
             if (key.equals("API_WTZ_URL") || 
                 key.equals("WHATSAPP_API_USERNAME") || 
                 key.equals("WHATSAPP_API_PASSWORD")) {
-                shouldInvalidateWhatsAppCache = true;
+                shouldInvalidateWhatsAppCache[0] = true;
             }
         });
         
         log.info("{} configurations updated", configurations.size());
         
         // Invalidar cache do WhatsApp se necessário
-        if (shouldInvalidateWhatsAppCache) {
+        if (shouldInvalidateWhatsAppCache[0]) {
             whatsappSenderService.invalidateCache();
             log.info("Cache do WhatsApp invalidado devido à atualização de configurações relacionadas");
         }
