@@ -7,6 +7,8 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.component';
 import { ModalComponent } from '../../../shared/modules/modal/modal.component';
 import { environment } from '../../../../environments/environment';
+import { ActionIcons } from '../../../shared/lib/utils/icons';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-banner-management',
@@ -19,6 +21,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
   private bannerService = inject(BannerService);
   private notificationService = inject(NotificationService);
   private cdr = inject(ChangeDetectorRef);
+  private sanitizer = inject(DomSanitizer);
   private destroy$ = new Subject<void>();
 
   // Tabs
@@ -443,6 +446,15 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
 
   getConfigTypeLabel(type: string): string {
     return type === 'VIDEO_YOUTUBE' ? 'Vídeo YouTube' : 'Slide de Imagens';
+  }
+
+  getIcon(iconName: 'edit' | 'delete'): SafeHtml {
+    const icons = {
+      edit: ActionIcons.edit({ size: 16, color: 'currentColor' }),
+      delete: ActionIcons.delete({ size: 16, color: 'currentColor' })
+    };
+    const html = icons[iconName] || '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 }
 

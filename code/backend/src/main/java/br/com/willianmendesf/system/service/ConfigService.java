@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import br.com.willianmendesf.system.service.utils.WhatsappSenderService;
 
 @Service
 @Slf4j
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConfigService {
 
     private final SystemConfigurationRepository repository;
+    private final WhatsappSenderService whatsappSenderService; // Adicionar esta linha
     
     // In-memory cache to avoid repeated database queries
     private final Map<String, String> cache = new ConcurrentHashMap<>();
@@ -151,6 +153,14 @@ public class ConfigService {
             cache.put(key, value);
             log.info("Configuration updated: {} = {}", key, 
                 "PASSWORD".equals(config.getType()) ? "***" : value);
+            
+            // Invalidar cache do WhatsApp se a configuração for relacionada
+            if (key.equals("API_WTZ_URL") || 
+                key.equals("WHATSAPP_API_USERNAME") || 
+                key.equals("WHATSAPP_API_PASSWORD")) {
+                whatsappSenderService.invalidateCache();
+                log.info("Cache do WhatsApp invalidado devido à atualização de {}", key);
+            }
         } catch (org.springframework.dao.InvalidDataAccessResourceUsageException e) {
             log.error("Configuration table does not exist. Please ensure the database schema is initialized.");
             throw new RuntimeException("Configuration table does not exist. Please restart the application after Hibernate creates the table.", e);
@@ -163,6 +173,8 @@ public class ConfigService {
      */
     @Transactional
     public void setAll(Map<String, String> configurations) {
+        boolean shouldInvalidateWhatsAppCache = false;
+        
         configurations.forEach((key, value) -> {
             Optional<SystemConfiguration> configOpt = repository.findByKey(key);
             SystemConfiguration config;
@@ -184,8 +196,22 @@ public class ConfigService {
             
             repository.save(config);
             cache.put(key, value);
+            
+            // Verificar se alguma configuração do WhatsApp foi atualizada
+            if (key.equals("API_WTZ_URL") || 
+                key.equals("WHATSAPP_API_USERNAME") || 
+                key.equals("WHATSAPP_API_PASSWORD")) {
+                shouldInvalidateWhatsAppCache = true;
+            }
         });
+        
         log.info("{} configurations updated", configurations.size());
+        
+        // Invalidar cache do WhatsApp se necessário
+        if (shouldInvalidateWhatsAppCache) {
+            whatsappSenderService.invalidateCache();
+            log.info("Cache do WhatsApp invalidado devido à atualização de configurações relacionadas");
+        }
     }
 
     /**
