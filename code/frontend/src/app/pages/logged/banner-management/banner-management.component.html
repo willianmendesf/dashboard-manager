@@ -35,8 +35,10 @@
     <div *ngFor="let image of images" class="image-card">
       <img [src]="getImageUrl(image.imageUrl)" [alt]="image.title || 'Imagem'" />
       <div class="image-actions">
-        <button (click)="openImageModal(image)" class="btn btn-sm">Editar</button>
-        <button (click)="deleteImage(image.id!)" class="btn btn-sm btn-danger">Excluir</button>
+        <div class="action-buttons">
+          <button class="btn-action edit" (click)="openImageModal(image)" title="Editar" [innerHTML]="getIcon('edit')" [attr.aria-label]="'Editar'"></button>
+          <button class="btn-action delete" (click)="deleteImage(image.id!)" title="Excluir" [innerHTML]="getIcon('delete')" [attr.aria-label]="'Excluir'"></button>
+        </div>
       </div>
       <div class="image-info">
         <p><strong>{{ image.title || 'Sem título' }}</strong></p>
@@ -95,14 +97,18 @@
             </span>
           </td>
           <td>
-            <button (click)="openConfigModal(config)" class="btn btn-sm">Editar</button>
-            <button 
-              (click)="toggleConfigActive(config)" 
-              [class]="config.isActive ? 'btn btn-sm btn-warning' : 'btn btn-sm btn-success'"
-              [title]="config.isActive ? 'Desativar' : 'Ativar'">
-              {{ config.isActive ? 'Desativar' : 'Ativar' }}
-            </button>
-            <button (click)="deleteConfig(config.id!)" class="btn btn-sm btn-danger">Excluir</button>
+            <div class="actions-cell">
+              <button 
+                (click)="toggleConfigActive(config)" 
+                [class]="config.isActive ? 'btn btn-sm btn-warning' : 'btn btn-sm btn-success'"
+                [title]="config.isActive ? 'Desativar' : 'Ativar'">
+                {{ config.isActive ? 'Desativar' : 'Ativar' }}
+              </button>
+              <div class="action-buttons">
+                <button class="btn-action edit" (click)="openConfigModal(config)" title="Editar" [innerHTML]="getIcon('edit')" [attr.aria-label]="'Editar'"></button>
+                <button class="btn-action delete" (click)="deleteConfig(config.id!)" title="Excluir" [innerHTML]="getIcon('delete')" [attr.aria-label]="'Excluir'"></button>
+              </div>
+            </div>
           </td>
         </tr>
       </tbody>

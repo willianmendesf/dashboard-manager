@@ -78,6 +78,8 @@
     display: flex;
     gap: 10px;
     justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
   .image-info {
@@ -422,5 +424,59 @@
 .badge-inactive {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.btn-action {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+  background: transparent;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+  
+  &.edit {
+    background: #EEF2FF;
+    color: #3730A3;
+    
+    &:hover {
+      background: #E0E7FF;
+      transform: scale(1.1);
+    }
+  }
+  
+  &.delete {
+    background: #FEF2F2;
+    color: #B91C1C;
+    
+    &:hover {
+      background: #FEE2E2;
+      transform: scale(1.1);
+    }
+  }
 }
 
