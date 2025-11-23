@@ -8,10 +8,12 @@ WORKDIR /app
 # Copia os arquivos de dependência
 COPY package.json package-lock.json ./
 
-# Instala as dependências
+# Instala as dependências dentro do container
+# IMPORTANTE: node_modules será instalado dentro do container, não copiado do host
 RUN npm install --legacy-peer-deps --no-fund
 
 # Copia o código-fonte restante
+# O arquivo .dockerignore garante que node_modules do host NÃO será copiado
 COPY . .
 
 # Compila a aplicação Angular para produção
