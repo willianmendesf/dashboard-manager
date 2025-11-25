@@ -151,7 +151,7 @@ Write-Host "  $IMAGES_VOLUME"
 Write-Host "  $FILES_VOLUME"
 Write-Host ""
 
-# Executar docker-compose up
+# Executar docker compose up
 Write-Host "Subindo containers Docker..." -ForegroundColor Green
 Write-Host ""
 
@@ -171,21 +171,21 @@ foreach ($arg in $dockerArgs) {
 }
 
 if ($dockerArgs.Count -eq 0) {
-    docker-compose up -d
+    docker compose up -d
 } elseif (-not $hasDetach) {
-    docker-compose up $dockerArgs -d
+    docker compose up $dockerArgs -d
 } else {
-    docker-compose up $dockerArgs
+    docker compose up $dockerArgs
 }
 
 Write-Host ""
 Write-Host "=== Containers iniciados ===" -ForegroundColor Green
 Write-Host ""
 Write-Host "Para ver os logs:"
-Write-Host "  docker-compose logs -f app"
+Write-Host "  docker compose logs -f app"
 Write-Host ""
 Write-Host "Para verificar o status:"
-Write-Host "  docker-compose ps"
+Write-Host "  docker compose ps"
 Write-Host ""
 Write-Host "Nota: docker-compose.override.yml foi criado automaticamente" -ForegroundColor Yellow
 Write-Host "Este arquivo pode ser deletado se necessário" -ForegroundColor Yellow
