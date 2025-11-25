@@ -189,7 +189,7 @@ echo -e "  ${IMAGES_VOLUME}"
 echo -e "  ${FILES_VOLUME}"
 echo ""
 
-# Executar docker-compose up
+# Executar docker compose up
 echo -e "${GREEN}Subindo containers Docker...${NC}"
 echo ""
 
@@ -202,21 +202,21 @@ for arg in "$@"; do
 done
 
 if [ $# -eq 0 ]; then
-    docker-compose up -d
+    docker compose up -d
 elif [ "$HAS_DETACH" = false ]; then
-    docker-compose up "$@" -d
+    docker compose up "$@" -d
 else
-    docker-compose up "$@"
+    docker compose up "$@"
 fi
 
 echo ""
 echo -e "${GREEN}=== Containers iniciados ===${NC}"
 echo ""
 echo "Para ver os logs:"
-echo "  docker-compose logs -f app"
+echo "  docker compose logs -f app"
 echo ""
 echo "Para verificar o status:"
-echo "  docker-compose ps"
+echo "  docker compose ps"
 echo ""
 echo -e "${YELLOW}Nota: docker-compose.override.yml foi criado automaticamente${NC}"
 echo -e "${YELLOW}Este arquivo pode ser deletado se necessário${NC}"

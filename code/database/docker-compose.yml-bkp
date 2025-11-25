@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # 1. Serviço de Banco de Dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: system_db
+    restart: always
+    environment:
+      # Cria o usuário da aplicação e a senha
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: vyHYPA7lYvBnP
+      # Cria o banco de dados da aplicação
+      MYSQL_DATABASE: system
+      # Define a senha para o usuário 'root' (necessário para o phpMyAdmin)
+      MYSQL_ROOT_PASSWORD: 5c77q3zSRn # Reutilizando a senha root anterior
+    ports:
+      # Mapeamento da porta do banco de dados (SQL_PORT)
+      - "${SQL_PORT:-3306}:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  # 2. Serviço da Aplicação (Exemplo PHP)
+  app:
+    # Substitua 'sua_imagem_app' pela imagem Docker da sua aplicação (Node, Python, Java, etc.)
+    image: php:8.2-apache # Exemplo
+    container_name: system_app
+    restart: always
+    depends_on:
+      - db
+    environment:
+      # Variáveis usadas pela SUA aplicação para se conectar ao banco de dados:
+      # SQL_HOST deve apontar para o NOME do serviço Docker do banco de dados (db)
+      SQL_HOST: db
+      SQL_PORT: 3306
+      SQL_DB: system
+      SQL_USER: appuser
+      SQL_PASS: vyHYPA7lYvBnP
+    # Mapeia a porta da aplicação (exemplo: 80 para Apache)
+    # Porta 80 é interna ao contêiner. A porta externa (host) pode ser alterada.
+    ports:
+      - "8000:80" 
+      # Agora a aplicação será acessível em http://localhost:8000
+    volumes:
+      # Exemplo: mapeia o código local para o diretório de serviço do Apache
+      - ./app:/var/www/html 
+
+  # 3. Serviço phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: system_phpmyadmin
+    restart: always
+    depends_on:
+      - db
+    environment:
+      # Configurações do phpMyAdmin para se conectar ao serviço 'db'
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: 5c77q3zSRn
+    ports:
+      - "8081:80" # Porta 8081, conforme solicitado anteriormente
+
+# Definição dos volumes para persistência de dados
+volumes:
+  db_data:

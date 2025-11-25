@@ -1,2 +1,3 @@
 # Docker Compose override file (gerado automaticamente)
 docker-compose.override.yml
+database/data/

@@ -17,7 +17,7 @@ services:
     # O script docker-compose-up.sh detecta o OS (Windows/Linux) e cria o override.yml
 
   web:
-    build:
+    build: 
       context: ./frontend
       dockerfile: Dockerfile
     ports:
@@ -31,4 +31,3 @@ services:
 networks:
   app-network:
     driver: bridge
-    external: true
