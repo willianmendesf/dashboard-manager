@@ -1,0 +1,8 @@
+version: '2.4'
+services:
+  app:
+    volumes:
+      # Bind mounts: mapeia diretórios do host para dentro do container
+      # OS: linux
+      - /opt/dashboard-manager/images:/opt/app/images
+      - /opt/dashboard-manager/files:/opt/app/files
