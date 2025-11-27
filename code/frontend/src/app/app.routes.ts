@@ -25,6 +25,7 @@ import { MuralDigitalComponent } from './pages/public/mural-digital/mural-digita
 import { BannerManagementComponent } from './pages/logged/banner-management/banner-management.component';
 import { ListaPresencaComponent } from './pages/public/lista-presenca/lista-presenca.component';
 import { AttendanceDashboardComponent } from './pages/logged/attendance/attendance-dashboard.component';
+import { ChannelSelectorComponent } from './pages/public/channel-selector/channel-selector.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/landing', pathMatch: 'full' },
@@ -35,6 +36,8 @@ export const routes: Routes = [
   { path: 'atualizar-cadastro', component: AtualizarCadastroComponent },
   { path: 'adicionar-visitantes', component: AdicionarVisitantesComponent },
   { path: 'emprestimo', component: EmprestimoPublicoComponent },
+  { path: 'mural/canal', component: ChannelSelectorComponent },
+  { path: 'mural/:channelId', component: MuralDigitalComponent },
   { path: 'mural', component: MuralDigitalComponent },
   { path: 'lista-presenca', component: ListaPresencaComponent },
   { 

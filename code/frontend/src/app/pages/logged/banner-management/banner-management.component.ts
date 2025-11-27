@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { BannerService, BannerConfigDTO, BannerImageDTO } from '../../../shared/service/banner.service';
+import { BannerService, BannerConfigDTO, BannerImageDTO, BannerChannelDTO } from '../../../shared/service/banner.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { PageTitleComponent } from '../../../shared/modules/pagetitle/pagetitle.component';
 import { ModalComponent } from '../../../shared/modules/modal/modal.component';
@@ -25,7 +25,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   // Tabs
-  activeTab: 'images' | 'schedules' = 'images';
+  activeTab: 'images' | 'schedules' | 'channels' = 'images';
 
   // Images
   images: BannerImageDTO[] = [];
@@ -48,12 +48,21 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     title: '',
     isActive: true,
     order: 0,
-    muted: false
+    muted: false,
+    isRecurring: true
   };
+
+  // Channels
+  channels: BannerChannelDTO[] = [];
+  isLoadingChannels = false;
+  showChannelModal = false;
+  isEditingChannel = false;
+  currentChannel: BannerChannelDTO = { name: '', description: '', isActive: true, displayOrder: 0 };
 
   ngOnInit(): void {
     this.loadImages();
     this.loadConfigs();
+    this.loadChannels();
   }
 
   ngOnDestroy(): void {
@@ -192,7 +201,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
         this.selectedFile,
         this.currentImage.title,
         this.currentImage.displayOrder,
-        this.currentImage.transitionDurationSeconds
+        this.currentImage.transitionDurationSeconds,
+        this.currentImage.channelIds
       )
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -325,7 +335,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
         title: '',
         isActive: true,
         order: 0,
-        muted: false
+        muted: false,
+        isRecurring: true
       };
     }
     this.showConfigModal = true;
@@ -340,7 +351,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
       title: '',
       isActive: true,
       order: 0,
-      muted: false
+      muted: false,
+      isRecurring: true
     };
   }
 
@@ -353,6 +365,15 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     if (this.currentConfig.type === 'VIDEO_YOUTUBE' && !this.currentConfig.youtubeUrl?.trim()) {
       this.notificationService.showError('URL do YouTube é obrigatória para o vídeo');
       return;
+    }
+
+    // Validação de data específica
+    if (this.currentConfig.isRecurring === false && !this.currentConfig.specificDate) {
+      this.notificationService.showError('Data específica é obrigatória quando não é recorrente');
+      return;
+    }
+    if (this.currentConfig.isRecurring === true && this.currentConfig.specificDate) {
+      this.currentConfig.specificDate = undefined; // Limpar data se for recorrente
     }
 
     if (this.isEditingConfig) {
@@ -444,6 +465,20 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  }
+
   getConfigTypeLabel(type: string): string {
     return type === 'VIDEO_YOUTUBE' ? 'Vídeo YouTube' : 'Slide de Imagens';
   }
@@ -455,6 +490,142 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     };
     const html = icons[iconName] || '';
     return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  // Channels Management
+  loadChannels(): void {
+    this.isLoadingChannels = true;
+    this.bannerService.getAllChannels()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (channels) => {
+          this.channels = channels ? [...channels] : [];
+          this.channels.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          this.isLoadingChannels = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Erro ao carregar canais:', error);
+          this.notificationService.showError('Erro ao carregar canais');
+          this.isLoadingChannels = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  openChannelModal(channel?: BannerChannelDTO): void {
+    this.isEditingChannel = !!channel;
+    this.currentChannel = channel ? { ...channel } : { name: '', description: '', isActive: true, displayOrder: 0 };
+    this.showChannelModal = true;
+  }
+
+  closeChannelModal(): void {
+    this.showChannelModal = false;
+    this.currentChannel = { name: '', description: '', isActive: true, displayOrder: 0 };
+  }
+
+  saveChannel(): void {
+    if (!this.currentChannel.name || this.currentChannel.name.trim() === '') {
+      this.notificationService.showError('Nome do canal é obrigatório');
+      return;
+    }
+
+    if (this.isEditingChannel) {
+      this.bannerService.updateChannel(this.currentChannel.id!, this.currentChannel)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Canal atualizado com sucesso');
+            this.closeChannelModal();
+            setTimeout(() => {
+              this.loadChannels();
+            }, 100);
+          },
+          error: (error) => {
+            console.error('Erro ao atualizar canal:', error);
+            this.notificationService.showError('Erro ao atualizar canal');
+          }
+        });
+    } else {
+      this.bannerService.createChannel(this.currentChannel)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Canal criado com sucesso');
+            this.closeChannelModal();
+            setTimeout(() => {
+              this.loadChannels();
+            }, 100);
+          },
+          error: (error) => {
+            console.error('Erro ao criar canal:', error);
+            this.notificationService.showError('Erro ao criar canal');
+          }
+        });
+    }
+  }
+
+  toggleChannelActive(channel: BannerChannelDTO): void {
+    if (!channel.id) return;
+    
+    const action = channel.isActive ? 'desativar' : 'ativar';
+    if (confirm(`Tem certeza que deseja ${action} este canal?`)) {
+      this.bannerService.toggleChannelActive(channel.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (updatedChannel) => {
+            this.notificationService.showSuccess(`Canal ${action === 'ativar' ? 'ativado' : 'desativado'} com sucesso`);
+            const index = this.channels.findIndex(c => c.id === channel.id);
+            if (index !== -1) {
+              this.channels[index] = updatedChannel;
+              this.cdr.detectChanges();
+            }
+            setTimeout(() => {
+              this.loadChannels();
+            }, 100);
+          },
+          error: (error) => {
+            console.error(`Erro ao ${action} canal:`, error);
+            this.notificationService.showError(`Erro ao ${action} canal`);
+          }
+        });
+    }
+  }
+
+  deleteChannel(id: number): void {
+    if (confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE este canal? Esta ação não pode ser desfeita.')) {
+      this.bannerService.deleteChannel(id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Canal excluído com sucesso');
+            this.channels = this.channels.filter(channel => channel.id !== id);
+            this.cdr.detectChanges();
+            setTimeout(() => {
+              this.loadChannels();
+            }, 100);
+          },
+          error: (error) => {
+            console.error('Erro ao excluir canal:', error);
+            this.notificationService.showError('Erro ao excluir canal');
+          }
+        });
+    }
+  }
+
+  isChannelSelected(channelId: number, channelIds?: number[]): boolean {
+    return channelIds ? channelIds.includes(channelId) : false;
+  }
+
+  toggleChannelSelection(channelId: number, channelIds?: number[]): number[] {
+    const ids = channelIds ? [...channelIds] : [];
+    const index = ids.indexOf(channelId);
+    if (index > -1) {
+      ids.splice(index, 1);
+    } else {
+      ids.push(channelId);
+    }
+    return ids;
   }
 }
 

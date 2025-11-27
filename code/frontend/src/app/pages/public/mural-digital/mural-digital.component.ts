@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BannerService, BannerCurrentStateDTO, BannerImageDTO } from '../../../shared/service/banner.service';
 import { interval, Subject } from 'rxjs';
@@ -19,6 +19,7 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   private bannerService = inject(BannerService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
@@ -39,9 +40,16 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   private slideTimeout: any = null;
   private progressInterval: any = null;
   private slideStartTime: number = 0;
+  private channelId: number | undefined;
 
   ngOnInit(): void {
-    this.loadCurrentState();
+    // Obter channelId da rota se disponível
+    this.route.params.subscribe(params => {
+      const channelIdParam = params['channelId'];
+      this.channelId = channelIdParam ? Number(channelIdParam) : undefined;
+      this.loadCurrentState();
+    });
+
     // Polling a cada 5 segundos
     interval(5000)
       .pipe(takeUntil(this.destroy$))
@@ -62,7 +70,7 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   }
 
   private loadCurrentState(): void {
-    this.bannerService.getCurrentState()
+    this.bannerService.getCurrentState(this.channelId)
       .pipe(
         catchError(error => {
           console.error('Erro ao carregar estado atual:', error);

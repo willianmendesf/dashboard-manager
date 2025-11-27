@@ -26,10 +26,11 @@ public class BannerImageController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_MEMBERS')")
-    public ResponseEntity<List<BannerImageDTO>> getAll() {
+    public ResponseEntity<List<BannerImageDTO>> getAll(
+            @RequestParam(required = false) Long channelId) {
         try {
-            log.info("Getting all banner images");
-            return ResponseEntity.ok(bannerService.getAllImages());
+            log.info("Getting all banner images for channelId: {}", channelId);
+            return ResponseEntity.ok(bannerService.getAllImages(channelId));
         } catch (Exception e) {
             log.error("Error getting all banner images", e);
             return ResponseEntity.internalServerError().build();
@@ -54,7 +55,8 @@ public class BannerImageController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "displayOrder", required = false, defaultValue = "0") Integer displayOrder,
-            @RequestParam(value = "transitionDurationSeconds", required = false, defaultValue = "10") Integer transitionDurationSeconds) {
+            @RequestParam(value = "transitionDurationSeconds", required = false, defaultValue = "10") Integer transitionDurationSeconds,
+            @RequestParam(value = "channelIds", required = false) List<Long> channelIds) {
         try {
             log.info("Uploading banner image");
 
@@ -85,6 +87,7 @@ public class BannerImageController {
             dto.setActive(true);
             dto.setDisplayOrder(displayOrder);
             dto.setTransitionDurationSeconds(transitionDurationSeconds);
+            dto.setChannelIds(channelIds);
 
             BannerImageDTO created = bannerService.createImage(dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
