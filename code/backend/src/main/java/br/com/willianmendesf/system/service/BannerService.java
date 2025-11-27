@@ -93,16 +93,8 @@ public class BannerService {
             // Retornar TODAS as configurações (ativas e inativas) ordenadas
             List<BannerConfig> configs = configRepository.findAll();
             
-            // Inicializar coleções lazy antes de criar DTOs para evitar ConcurrentModificationException
-            for (BannerConfig config : configs) {
-                if (config.getChannels() != null) {
-                    Hibernate.initialize(config.getChannels());
-                    // Acessar a coleção para garantir que está totalmente carregada
-                    config.getChannels().size();
-                }
-            }
-            
-            return configs.stream()
+            // Criar DTOs primeiro sem acessar canais
+            List<BannerConfigDTO> dtos = configs.stream()
                     .sorted((a, b) -> {
                         // Ordenar por: ativo primeiro, depois por order, depois por startTime
                         int activeCompare = Boolean.compare(b.getIsActive(), a.getIsActive());
@@ -114,6 +106,36 @@ public class BannerService {
                     })
                     .map(BannerConfigDTO::new)
                     .collect(Collectors.toList());
+            
+            // Carregar nomes dos canais de forma segura usando uma query separada
+            List<BannerChannel> allChannels = channelRepository.findAll();
+            for (int i = 0; i < configs.size(); i++) {
+                BannerConfig config = configs.get(i);
+                BannerConfigDTO dto = dtos.get(i);
+                
+                // Buscar canais associados usando uma query nativa para evitar problemas de lazy loading
+                try {
+                    List<Long> channelIds = configRepository.findChannelIdsByConfigId(config.getId());
+                    if (channelIds != null && !channelIds.isEmpty()) {
+                        dto.setChannelIds(channelIds);
+                        // Mapear IDs para nomes
+                        List<String> channelNames = allChannels.stream()
+                                .filter(ch -> channelIds.contains(ch.getId()))
+                                .map(BannerChannel::getName)
+                                .collect(Collectors.toList());
+                        dto.setChannelNames(channelNames);
+                    } else {
+                        // Se não tem canais específicos, está em todos
+                        dto.setChannelIds(null);
+                        dto.setChannelNames(List.of("Todos"));
+                    }
+                } catch (Exception e) {
+                    log.debug("Could not load channels for config {}: {}", config.getId(), e.getMessage());
+                    dto.setChannelNames(List.of("Todos")); // Default para "Todos" em caso de erro
+                }
+            }
+            
+            return dtos;
         } catch (ConcurrentModificationException e) {
             // Erro de concorrência - retornar lista vazia
             log.debug("Concurrent modification while loading configs, returning empty list");
@@ -130,13 +152,29 @@ public class BannerService {
             BannerConfig config = configRepository.findById(id)
                     .orElseThrow(() -> new BannerException("Configuração não encontrada com ID: " + id));
             
-            // Inicializar coleções lazy antes de criar DTO
-            if (config.getChannels() != null) {
-                Hibernate.initialize(config.getChannels());
-                config.getChannels().size();
+            BannerConfigDTO dto = new BannerConfigDTO(config);
+            
+            // Carregar nomes dos canais de forma segura
+            try {
+                List<Long> channelIds = configRepository.findChannelIdsByConfigId(id);
+                if (channelIds != null && !channelIds.isEmpty()) {
+                    dto.setChannelIds(channelIds);
+                    List<BannerChannel> allChannels = channelRepository.findAll();
+                    List<String> channelNames = allChannels.stream()
+                            .filter(ch -> channelIds.contains(ch.getId()))
+                            .map(BannerChannel::getName)
+                            .collect(Collectors.toList());
+                    dto.setChannelNames(channelNames);
+                } else {
+                    dto.setChannelIds(null);
+                    dto.setChannelNames(List.of("Todos"));
+                }
+            } catch (Exception e) {
+                log.debug("Could not load channels for config {}: {}", id, e.getMessage());
+                dto.setChannelNames(List.of("Todos"));
             }
             
-            return new BannerConfigDTO(config);
+            return dto;
         } catch (BannerException e) {
             throw e;
         } catch (Exception e) {

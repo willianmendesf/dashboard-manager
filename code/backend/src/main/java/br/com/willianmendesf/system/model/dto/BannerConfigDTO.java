@@ -28,6 +28,7 @@ public class BannerConfigDTO {
     private LocalDate specificDate;
     private Boolean isRecurring;
     private List<Long> channelIds;
+    private List<String> channelNames; // Nomes dos canais para exibição
 
     public BannerConfigDTO(BannerConfig config) {
         this.id = config.getId();

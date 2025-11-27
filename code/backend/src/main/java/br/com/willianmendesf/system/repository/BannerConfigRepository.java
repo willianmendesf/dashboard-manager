@@ -36,5 +36,8 @@ public interface BannerConfigRepository extends JpaRepository<BannerConfig, Long
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM banner_config_channels WHERE config_id = :configId", nativeQuery = true)
     void deleteConfigChannelAssociations(@Param("configId") Long configId);
+
+    @Query(value = "SELECT channel_id FROM banner_config_channels WHERE config_id = :configId", nativeQuery = true)
+    List<Long> findChannelIdsByConfigId(@Param("configId") Long configId);
 }
 

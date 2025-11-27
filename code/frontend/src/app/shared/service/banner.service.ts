@@ -30,6 +30,7 @@ export interface BannerConfigDTO {
   specificDate?: string;
   isRecurring?: boolean;
   channelIds?: number[];
+  channelNames?: string[]; // Nomes dos canais para exibição
 }
 
 export interface BannerImageDTO {

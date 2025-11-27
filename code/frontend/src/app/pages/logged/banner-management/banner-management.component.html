@@ -12,7 +12,7 @@
     [class.active]="activeTab === 'schedules'"
     (click)="activeTab = 'schedules'"
     class="tab-button">
-    Programação
+    Vídeo
   </button>
   <button 
     [class.active]="activeTab === 'channels'"
@@ -69,9 +69,9 @@
 <!-- Schedules Tab -->
 <div *ngIf="activeTab === 'schedules'" class="tab-content">
   <div class="section-header">
-    <h2>Programação de Horários</h2>
+    <h2>Vídeos</h2>
     <button (click)="openConfigModal()" class="btn btn-primary">
-      Adicionar Horário
+      Adicionar Vídeo
     </button>
   </div>
 
@@ -86,11 +86,11 @@
       <thead>
         <tr>
           <th>Título</th>
-          <th>Tipo</th>
           <th>Data</th>
           <th>Início</th>
           <th>Fim</th>
-          <th>URL/Config</th>
+          <th>URL do YouTube</th>
+          <th>Canais</th>
           <th>Áudio</th>
           <th>Ativo</th>
           <th>Ações</th>
@@ -99,7 +99,6 @@
       <tbody>
         <tr *ngFor="let config of configs">
           <td>{{ config.title || '-' }}</td>
-          <td>{{ getConfigTypeLabel(config.type) }}</td>
           <td>
             <span *ngIf="config.isRecurring === false && config.specificDate" class="specific-date">
               {{ formatDate(config.specificDate) }}
@@ -110,9 +109,17 @@
           </td>
           <td>{{ config.startTime }}</td>
           <td>{{ config.endTime }}</td>
+          <td>{{ config.youtubeUrl || '-' }}</td>
           <td>
-            <span *ngIf="config.type === 'VIDEO_YOUTUBE'">{{ config.youtubeUrl }}</span>
-            <span *ngIf="config.type === 'IMAGE_SLIDE'">-</span>
+            <span *ngIf="config.channelNames && config.channelNames.length === 1 && config.channelNames[0] === 'Todos'" class="all-channels">
+              Todos
+            </span>
+            <span *ngIf="config.channelNames && !(config.channelNames.length === 1 && config.channelNames[0] === 'Todos')" class="specific-channels">
+              {{ config.channelNames.join(', ') }}
+            </span>
+            <span *ngIf="!config.channelNames || config.channelNames.length === 0">
+              N/A
+            </span>
           </td>
           <td>{{ config.muted ? 'Mudo' : 'Ativo' }}</td>
           <td>
@@ -380,17 +387,9 @@
 <!-- Config Modal -->
 <app-modal 
   [isOpen]="showConfigModal"
-  [title]="isEditingConfig ? 'Editar Configuração' : 'Nova Configuração'"
+  [title]="isEditingConfig ? 'Editar Vídeo' : 'Novo Vídeo'"
   (close)="closeConfigModal()">
   <div class="modal-content">
-    <div class="form-group">
-      <label>Tipo *</label>
-      <select [(ngModel)]="currentConfig.type" class="form-control">
-        <option value="IMAGE_SLIDE">Slide de Imagens</option>
-        <option value="VIDEO_YOUTUBE">Vídeo YouTube</option>
-      </select>
-    </div>
-
     <div class="form-group">
       <label>Título</label>
       <input 
@@ -402,33 +401,17 @@
     </div>
 
     <div class="form-group">
-      <label>Horário de Início *</label>
-      <input 
-        type="time" 
-        [(ngModel)]="currentConfig.startTime"
-        class="form-control"
-        required />
-    </div>
-
-    <div class="form-group">
-      <label>Horário de Fim *</label>
-      <input 
-        type="time" 
-        [(ngModel)]="currentConfig.endTime"
-        class="form-control"
-        required />
-    </div>
-
-    <div class="form-group" *ngIf="currentConfig.type === 'VIDEO_YOUTUBE'">
       <label>URL do YouTube *</label>
       <input 
         type="text" 
         [(ngModel)]="currentConfig.youtubeUrl"
         class="form-control"
-        placeholder="https://www.youtube.com/watch?v=..." />
+        placeholder="https://www.youtube.com/watch?v=..."
+        required />
+      <small class="form-text">Cole o link completo do vídeo do YouTube</small>
     </div>
 
-    <div class="form-group" *ngIf="currentConfig.type === 'VIDEO_YOUTUBE'">
+    <div class="form-group">
       <label>
         <input 
           type="checkbox" 
@@ -437,14 +420,23 @@
       </label>
     </div>
 
-    <div class="form-group">
-      <label>Ordem de Prioridade</label>
-      <input 
-        type="number" 
-        [(ngModel)]="currentConfig.order"
-        class="form-control"
-        min="0" />
-      <small class="form-text">Em caso de horários sobrepostos, menor número tem prioridade</small>
+    <div class="form-group form-row">
+      <div class="form-group-half">
+        <label>Horário de Início *</label>
+        <input 
+          type="time" 
+          [(ngModel)]="currentConfig.startTime"
+          class="form-control"
+          required />
+      </div>
+      <div class="form-group-half">
+        <label>Horário de Fim *</label>
+        <input 
+          type="time" 
+          [(ngModel)]="currentConfig.endTime"
+          class="form-control"
+          required />
+      </div>
     </div>
 
     <div class="form-group">
@@ -465,6 +457,16 @@
         class="form-control"
         required />
       <small class="form-text">O vídeo será exibido apenas nesta data</small>
+    </div>
+
+    <div class="form-group">
+      <label>Ordem de Prioridade</label>
+      <input 
+        type="number" 
+        [(ngModel)]="currentConfig.order"
+        class="form-control"
+        min="0" />
+      <small class="form-text">Em caso de horários sobrepostos, menor número tem prioridade</small>
     </div>
 
     <div class="form-group">

@@ -42,7 +42,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
   showConfigModal = false;
   isEditingConfig = false;
   currentConfig: BannerConfigDTO = {
-    type: 'IMAGE_SLIDE',
+    type: 'VIDEO_YOUTUBE',
     startTime: '09:00',
     endTime: '10:00',
     title: '',
@@ -326,10 +326,12 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
     if (config) {
       this.isEditingConfig = true;
       this.currentConfig = { ...config };
+      // Garantir que o tipo sempre seja VIDEO_YOUTUBE
+      this.currentConfig.type = 'VIDEO_YOUTUBE';
     } else {
       this.isEditingConfig = false;
       this.currentConfig = {
-        type: 'IMAGE_SLIDE',
+        type: 'VIDEO_YOUTUBE',
         startTime: '09:00',
         endTime: '10:00',
         title: '',
@@ -345,7 +347,7 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
   closeConfigModal(): void {
     this.showConfigModal = false;
     this.currentConfig = {
-      type: 'IMAGE_SLIDE',
+      type: 'VIDEO_YOUTUBE',
       startTime: '09:00',
       endTime: '10:00',
       title: '',
@@ -362,8 +364,8 @@ export class BannerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.currentConfig.type === 'VIDEO_YOUTUBE' && !this.currentConfig.youtubeUrl?.trim()) {
-      this.notificationService.showError('URL do YouTube é obrigatória para o vídeo');
+    if (!this.currentConfig.youtubeUrl?.trim()) {
+      this.notificationService.showError('URL do YouTube é obrigatória');
       return;
     }
 
