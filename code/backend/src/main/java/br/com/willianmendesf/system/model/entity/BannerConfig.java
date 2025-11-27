@@ -7,7 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -45,5 +48,19 @@ public class BannerConfig {
 
     @Column(name = "muted", nullable = false)
     private Boolean muted = false; // Default: áudio ativo
+
+    @Column(name = "specific_date")
+    private LocalDate specificDate;
+
+    @Column(name = "is_recurring", nullable = false)
+    private Boolean isRecurring = true; // Default: recorrente (todos os dias)
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "banner_config_channels",
+        joinColumns = @JoinColumn(name = "config_id"),
+        inverseJoinColumns = @JoinColumn(name = "channel_id")
+    )
+    private Set<BannerChannel> channels = new HashSet<>();
 }
 

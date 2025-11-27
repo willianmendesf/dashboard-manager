@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,5 +35,13 @@ public class BannerImage {
 
     @Column(name = "transition_duration_seconds")
     private Integer transitionDurationSeconds = 10; // Default 10 segundos
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "banner_image_channels",
+        joinColumns = @JoinColumn(name = "image_id"),
+        inverseJoinColumns = @JoinColumn(name = "channel_id")
+    )
+    private Set<BannerChannel> channels = new HashSet<>();
 }
 

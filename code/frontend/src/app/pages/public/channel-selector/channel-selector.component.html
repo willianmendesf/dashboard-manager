@@ -1,0 +1,57 @@
+<div class="channel-selector-container">
+  <div class="channel-selector-content">
+    <!-- Header -->
+    <div class="header">
+      <button 
+        class="back-button"
+        (click)="goBack()"
+        aria-label="Voltar para página inicial"
+        title="Voltar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h1 class="title">Escolha o Canal</h1>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Carregando canais...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !isLoading" class="error-container">
+      <p class="error-message">{{ error }}</p>
+      <button class="btn-retry" (click)="loadChannels()">Tentar Novamente</button>
+    </div>
+
+    <!-- Channels Grid -->
+    <div *ngIf="!isLoading && !error && channels.length > 0" class="channels-grid">
+      <div 
+        *ngFor="let channel of channels" 
+        class="channel-card"
+        (click)="selectChannel(channel)"
+        (keydown.enter)="selectChannel(channel)"
+        (keydown.space)="selectChannel(channel); $event.preventDefault()"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="'Selecionar canal ' + channel.name">
+        <div class="channel-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 2l-4 4-4-4"></path>
+          </svg>
+        </div>
+        <h3 class="channel-name">{{ channel.name }}</h3>
+        <p *ngIf="channel.description" class="channel-description">{{ channel.description }}</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !error && channels.length === 0" class="empty-state">
+      <p>Nenhum canal disponível no momento.</p>
+    </div>
+  </div>
+</div>
+

@@ -98,12 +98,27 @@
       gap: 6px;
       margin-top: 8px;
       padding-top: 8px;
+    }
+
+    .channels-info {
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid #f3f4f6;
       font-size: 13px;
-      color: #4b5563;
-      
-      .transition-icon {
-        font-size: 14px;
+
+      .all-channels {
+        color: #059669;
+        font-weight: 600;
+        background: #d1fae5;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .specific-channels {
+        color: #667eea;
+        font-weight: 500;
       }
     }
   }
@@ -133,6 +148,39 @@
 
     td {
       color: #6b7280;
+
+      .specific-date {
+        color: #667eea;
+        font-weight: 500;
+        background: #eef2ff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .recurring-date {
+        color: #059669;
+        font-weight: 500;
+        background: #d1fae5;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .all-channels {
+        color: #059669;
+        font-weight: 600;
+        background: #d1fae5;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .specific-channels {
+        color: #667eea;
+        font-weight: 500;
+      }
     }
 
     tr:hover {
@@ -150,6 +198,24 @@
       margin-bottom: 5px;
       font-weight: 500;
       color: #1f2937;
+    }
+
+    &.form-row {
+      display: flex;
+      gap: 15px;
+      align-items: flex-end;
+
+      .form-group-half {
+        flex: 1;
+        margin-bottom: 0;
+
+        label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: 500;
+          color: #1f2937;
+        }
+      }
     }
 
     input[type="text"],

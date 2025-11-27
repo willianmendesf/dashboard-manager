@@ -14,5 +14,6 @@ public class BannerCurrentStateDTO {
     private String videoUrl;
     private Boolean muted;
     private List<BannerImageDTO> images;
+    private Long channelId; // Opcional: identifica o canal
 }
 

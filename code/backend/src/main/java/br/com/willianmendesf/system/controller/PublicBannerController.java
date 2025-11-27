@@ -16,10 +16,11 @@ public class PublicBannerController {
     private final BannerService bannerService;
 
     @GetMapping("/current-state")
-    public ResponseEntity<BannerCurrentStateDTO> getCurrentState() {
+    public ResponseEntity<BannerCurrentStateDTO> getCurrentState(
+            @RequestParam(required = false) Long channelId) {
         try {
-            log.debug("Public request to get current banner state");
-            return ResponseEntity.ok(bannerService.getCurrentState());
+            log.debug("Public request to get current banner state for channelId: {}", channelId);
+            return ResponseEntity.ok(bannerService.getCurrentState(channelId));
         } catch (Exception e) {
             log.error("Error getting current banner state", e);
             return ResponseEntity.internalServerError().build();
