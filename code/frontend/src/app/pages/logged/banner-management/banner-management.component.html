@@ -87,12 +87,12 @@
         <tr>
           <th>Título</th>
           <th>Data</th>
+          <th>Canais</th>
           <th>Início</th>
           <th>Fim</th>
           <th>URL do YouTube</th>
-          <th>Canais</th>
           <th>Áudio</th>
-          <th>Ativo</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -107,9 +107,6 @@
               Diário
             </span>
           </td>
-          <td>{{ config.startTime }}</td>
-          <td>{{ config.endTime }}</td>
-          <td>{{ config.youtubeUrl || '-' }}</td>
           <td>
             <span *ngIf="config.channelNames && config.channelNames.length === 1 && config.channelNames[0] === 'Todos'" class="all-channels">
               Todos
@@ -121,6 +118,9 @@
               N/A
             </span>
           </td>
+          <td>{{ config.startTime }}</td>
+          <td>{{ config.endTime }}</td>
+          <td>{{ config.youtubeUrl || '-' }}</td>
           <td>{{ config.muted ? 'Mudo' : 'Ativo' }}</td>
           <td>
             <span [class]="config.isActive ? 'badge-active' : 'badge-inactive'">
