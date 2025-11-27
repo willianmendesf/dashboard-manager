@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, debounceTime, distinctUntilChanged, interval, Subscription, of } from 'rxjs';
+import { takeUntil, switchMap, catchError } from 'rxjs/operators';
 import { EventService, Event } from '../../../shared/service/event.service';
 import { AttendanceService, MemberAttendance } from '../../../shared/service/attendance.service';
 import { UtilsService } from '../../../shared/services/utils.service';
@@ -30,6 +30,7 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
   public utilsService = inject(UtilsService);
+  private pollingSubscription?: Subscription;
 
   selectedDate: string = new Date().toISOString().split('T')[0];
   events: Event[] = [];
@@ -61,6 +62,7 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.stopPolling();
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
   }
@@ -101,6 +103,7 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
   }
 
   onDateChange() {
+    this.stopPolling();
     this.selectedEventId = null;
     this.members = [];
     this.filteredMembers = [];
@@ -113,6 +116,7 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
   }
 
   onEventChange() {
+    this.stopPolling();
     this.searchTerm = '';
     this.loadMembers();
   }
@@ -121,6 +125,7 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
     if (!this.selectedEventId) {
       this.members = [];
       this.filteredMembers = [];
+      this.stopPolling();
       return;
     }
 
@@ -139,11 +144,13 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
           this.updateTableData();
           this.loading = false;
           this.cdr.markForCheck();
+          this.startPolling();
         },
         error: (err) => {
           console.error('Error loading members:', err);
           this.error = 'Erro ao carregar membros';
           this.loading = false;
+          this.stopPolling();
           this.cdr.markForCheck();
         }
       });
@@ -259,6 +266,90 @@ export class ListaPresencaComponent implements OnInit, OnDestroy {
 
   goToLanding(): void {
     this.router.navigate(['/landing']);
+  }
+
+  /**
+   * Inicia o polling periódico para atualizar os status de presença em tempo real
+   * Polling silencioso em background que não interfere com a UI
+   */
+  private startPolling(): void {
+    // Para qualquer polling existente antes de iniciar um novo
+    this.stopPolling();
+
+    // Só inicia polling se houver um evento selecionado
+    if (!this.selectedEventId) {
+      return;
+    }
+
+    // Polling a cada 4 segundos (balance entre responsividade e carga no servidor)
+    this.pollingSubscription = interval(4000)
+      .pipe(
+        switchMap(() => {
+          if (!this.selectedEventId) {
+            return of(null);
+          }
+          // Faz requisição em background sem mostrar loading
+          return this.attendanceService.getMembersByEvent(this.selectedEventId)
+            .pipe(
+              catchError(err => {
+                // Erro silencioso - não interrompe o polling
+                console.warn('Erro no polling de presença:', err);
+                return of(null);
+              })
+            );
+        }),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe({
+        next: (memberAttendances) => {
+          if (memberAttendances && memberAttendances.length > 0) {
+            this.updateMembersStatus(memberAttendances);
+          }
+        }
+      });
+  }
+
+  /**
+   * Para o polling periódico
+   */
+  private stopPolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = undefined;
+    }
+  }
+
+  /**
+   * Atualiza apenas os status de presença dos membros existentes
+   * Preserva estados de loading e outras propriedades para não perder estado da UI
+   */
+  private updateMembersStatus(memberAttendances: MemberAttendance[]): void {
+    // Cria um mapa dos novos status para busca rápida
+    const statusMap = new Map<number, boolean>();
+    memberAttendances.forEach(ma => {
+      statusMap.set(ma.member.id, ma.isPresent);
+    });
+
+    // Atualiza apenas o campo isPresent dos membros existentes
+    let hasChanges = false;
+    this.members.forEach(member => {
+      const newStatus = statusMap.get(member.member.id);
+      if (newStatus !== undefined && member.isPresent !== newStatus) {
+        // Só atualiza se o membro não estiver em estado de loading
+        // para não interferir com ações do usuário
+        if (!member.isLoading) {
+          member.isPresent = newStatus;
+          hasChanges = true;
+        }
+      }
+    });
+
+    // Atualiza a tabela apenas se houver mudanças
+    if (hasChanges) {
+      this.applyFilters();
+      this.updateTableData();
+      this.cdr.markForCheck();
+    }
   }
 }
 
