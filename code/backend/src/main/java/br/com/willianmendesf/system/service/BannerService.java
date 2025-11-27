@@ -4,19 +4,23 @@ import br.com.willianmendesf.system.exception.BannerException;
 import br.com.willianmendesf.system.model.dto.BannerConfigDTO;
 import br.com.willianmendesf.system.model.dto.BannerCurrentStateDTO;
 import br.com.willianmendesf.system.model.dto.BannerImageDTO;
+import br.com.willianmendesf.system.model.entity.BannerChannel;
 import br.com.willianmendesf.system.model.entity.BannerConfig;
 import br.com.willianmendesf.system.model.entity.BannerImage;
 import br.com.willianmendesf.system.model.enums.BannerType;
+import br.com.willianmendesf.system.repository.BannerChannelRepository;
 import br.com.willianmendesf.system.repository.BannerConfigRepository;
 import br.com.willianmendesf.system.repository.BannerImageRepository;
 import br.com.willianmendesf.system.service.storage.StorageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -26,17 +30,21 @@ public class BannerService {
 
     private final BannerConfigRepository configRepository;
     private final BannerImageRepository imageRepository;
+    private final BannerChannelRepository channelRepository;
     private final StorageService storageService;
 
-    public BannerCurrentStateDTO getCurrentState() {
+    public BannerCurrentStateDTO getCurrentState(Long channelId) {
         try {
             LocalTime currentTime = LocalTime.now();
-            log.debug("Getting current banner state for time: {}", currentTime);
+            LocalDate currentDate = LocalDate.now();
+            log.debug("Getting current banner state for time: {}, date: {}, channelId: {}", currentTime, currentDate, channelId);
 
-            // Buscar configuração ativa para o horário atual
-            BannerConfig activeConfig = configRepository.findActiveByTime(currentTime).orElse(null);
+            // Buscar configuração ativa para o horário atual, considerando data e canal
+            BannerConfig activeConfig = configRepository.findActiveByTimeAndChannelAndDate(
+                    currentTime, currentDate, channelId).orElse(null);
 
             BannerCurrentStateDTO state = new BannerCurrentStateDTO();
+            state.setChannelId(channelId);
 
             if (activeConfig != null && activeConfig.getType() == BannerType.VIDEO_YOUTUBE) {
                 // Modo VIDEO
@@ -50,14 +58,28 @@ public class BannerService {
                 state.setMode("SLIDE");
                 state.setVideoUrl(null);
                 state.setMuted(null);
-                List<BannerImage> activeImages = imageRepository.findByActiveTrueOrderByDisplayOrderAsc();
+                List<BannerImage> activeImages = imageRepository.findByActiveTrueAndChannelsIdOrderByDisplayOrderAsc(channelId);
+                
+                // Criar DTOs primeiro sem acessar canais
                 List<BannerImageDTO> imageDTOs = activeImages.stream()
                         .map(BannerImageDTO::new)
                         .collect(Collectors.toList());
+                
+                // Depois, inicializar e popular canais de forma segura (se necessário)
+                // Por enquanto, deixamos channelIds como null para evitar ConcurrentModificationException
+                // Os canais podem ser carregados em uma chamada separada se necessário
                 state.setImages(imageDTOs);
                 log.debug("Current state: SLIDE - {} images", imageDTOs.size());
             }
 
+            return state;
+        } catch (ConcurrentModificationException e) {
+            // Erro de concorrência ao acessar coleções lazy - retornar estado vazio
+            log.debug("Concurrent modification while loading banner state (channelId: {}), returning empty state", channelId);
+            BannerCurrentStateDTO state = new BannerCurrentStateDTO();
+            state.setChannelId(channelId);
+            state.setMode("SLIDE");
+            state.setImages(new ArrayList<>());
             return state;
         } catch (Exception e) {
             log.error("Error getting current banner state", e);
@@ -69,7 +91,10 @@ public class BannerService {
         try {
             log.info("Getting all banner configs");
             // Retornar TODAS as configurações (ativas e inativas) ordenadas
-            return configRepository.findAll().stream()
+            List<BannerConfig> configs = configRepository.findAll();
+            
+            // Criar DTOs primeiro sem acessar canais
+            List<BannerConfigDTO> dtos = configs.stream()
                     .sorted((a, b) -> {
                         // Ordenar por: ativo primeiro, depois por order, depois por startTime
                         int activeCompare = Boolean.compare(b.getIsActive(), a.getIsActive());
@@ -81,6 +106,40 @@ public class BannerService {
                     })
                     .map(BannerConfigDTO::new)
                     .collect(Collectors.toList());
+            
+            // Carregar nomes dos canais de forma segura usando uma query separada
+            List<BannerChannel> allChannels = channelRepository.findAll();
+            for (int i = 0; i < configs.size(); i++) {
+                BannerConfig config = configs.get(i);
+                BannerConfigDTO dto = dtos.get(i);
+                
+                // Buscar canais associados usando uma query nativa para evitar problemas de lazy loading
+                try {
+                    List<Long> channelIds = configRepository.findChannelIdsByConfigId(config.getId());
+                    if (channelIds != null && !channelIds.isEmpty()) {
+                        dto.setChannelIds(channelIds);
+                        // Mapear IDs para nomes
+                        List<String> channelNames = allChannels.stream()
+                                .filter(ch -> channelIds.contains(ch.getId()))
+                                .map(BannerChannel::getName)
+                                .collect(Collectors.toList());
+                        dto.setChannelNames(channelNames);
+                    } else {
+                        // Se não tem canais específicos, está em todos
+                        dto.setChannelIds(null);
+                        dto.setChannelNames(List.of("Todos"));
+                    }
+                } catch (Exception e) {
+                    log.debug("Could not load channels for config {}: {}", config.getId(), e.getMessage());
+                    dto.setChannelNames(List.of("Todos")); // Default para "Todos" em caso de erro
+                }
+            }
+            
+            return dtos;
+        } catch (ConcurrentModificationException e) {
+            // Erro de concorrência - retornar lista vazia
+            log.debug("Concurrent modification while loading configs, returning empty list");
+            return new ArrayList<>();
         } catch (Exception e) {
             log.error("Error getting all banner configs", e);
             throw new BannerException("Erro ao buscar configurações de banners", e);
@@ -92,7 +151,30 @@ public class BannerService {
             log.info("Getting banner config by ID: {}", id);
             BannerConfig config = configRepository.findById(id)
                     .orElseThrow(() -> new BannerException("Configuração não encontrada com ID: " + id));
-            return new BannerConfigDTO(config);
+            
+            BannerConfigDTO dto = new BannerConfigDTO(config);
+            
+            // Carregar nomes dos canais de forma segura
+            try {
+                List<Long> channelIds = configRepository.findChannelIdsByConfigId(id);
+                if (channelIds != null && !channelIds.isEmpty()) {
+                    dto.setChannelIds(channelIds);
+                    List<BannerChannel> allChannels = channelRepository.findAll();
+                    List<String> channelNames = allChannels.stream()
+                            .filter(ch -> channelIds.contains(ch.getId()))
+                            .map(BannerChannel::getName)
+                            .collect(Collectors.toList());
+                    dto.setChannelNames(channelNames);
+                } else {
+                    dto.setChannelIds(null);
+                    dto.setChannelNames(List.of("Todos"));
+                }
+            } catch (Exception e) {
+                log.debug("Could not load channels for config {}: {}", id, e.getMessage());
+                dto.setChannelNames(List.of("Todos"));
+            }
+            
+            return dto;
         } catch (BannerException e) {
             throw e;
         } catch (Exception e) {
@@ -114,6 +196,8 @@ public class BannerService {
             config.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
             config.setOrder(dto.getOrder() != null ? dto.getOrder() : 0);
             config.setMuted(dto.getMuted() != null ? dto.getMuted() : false);
+            config.setSpecificDate(dto.getSpecificDate());
+            config.setIsRecurring(dto.getIsRecurring() != null ? dto.getIsRecurring() : true);
 
             // Validação básica
             if (config.getStartTime().isAfter(config.getEndTime())) {
@@ -125,7 +209,29 @@ public class BannerService {
                 throw new BannerException("URL do YouTube é obrigatória para tipo VIDEO_YOUTUBE");
             }
 
+            // Validação de data específica
+            if (config.getIsRecurring() == false && config.getSpecificDate() == null) {
+                throw new BannerException("Data específica é obrigatória quando não é recorrente");
+            }
+            if (config.getIsRecurring() == true && config.getSpecificDate() != null) {
+                throw new BannerException("Data específica não deve ser informada quando é recorrente");
+            }
+
+            // Salvar a configuração primeiro para obter o ID
             BannerConfig saved = configRepository.save(config);
+
+            // Associar canais após salvar (para garantir que a configuração tenha ID)
+            if (dto.getChannelIds() != null && !dto.getChannelIds().isEmpty()) {
+                Set<BannerChannel> channels = new HashSet<>();
+                for (Long channelId : dto.getChannelIds()) {
+                    BannerChannel channel = channelRepository.findById(channelId)
+                            .orElseThrow(() -> new BannerException("Canal não encontrado com ID: " + channelId));
+                    channels.add(channel);
+                }
+                saved.setChannels(channels);
+                saved = configRepository.save(saved); // Salvar novamente com os canais associados
+            }
+
             return new BannerConfigDTO(saved);
         } catch (BannerException e) {
             throw e;
@@ -150,6 +256,8 @@ public class BannerService {
             if (dto.getIsActive() != null) config.setIsActive(dto.getIsActive());
             if (dto.getOrder() != null) config.setOrder(dto.getOrder());
             if (dto.getMuted() != null) config.setMuted(dto.getMuted());
+            if (dto.getSpecificDate() != null) config.setSpecificDate(dto.getSpecificDate());
+            if (dto.getIsRecurring() != null) config.setIsRecurring(dto.getIsRecurring());
 
             // Validação
             if (config.getStartTime().isAfter(config.getEndTime())) {
@@ -159,6 +267,32 @@ public class BannerService {
             if (config.getType() == BannerType.VIDEO_YOUTUBE && 
                 (config.getYoutubeUrl() == null || config.getYoutubeUrl().trim().isEmpty())) {
                 throw new BannerException("URL do YouTube é obrigatória para tipo VIDEO_YOUTUBE");
+            }
+
+            // Validação de data específica
+            if (config.getIsRecurring() == false && config.getSpecificDate() == null) {
+                throw new BannerException("Data específica é obrigatória quando não é recorrente");
+            }
+            if (config.getIsRecurring() == true && config.getSpecificDate() != null) {
+                throw new BannerException("Data específica não deve ser informada quando é recorrente");
+            }
+
+            // Atualizar canais
+            if (dto.getChannelIds() != null) {
+                // Deletar associações antigas primeiro usando query nativa para evitar problemas com lazy loading
+                configRepository.deleteConfigChannelAssociations(id);
+                
+                // Criar nova coleção com os canais selecionados
+                Set<BannerChannel> channels = new HashSet<>();
+                if (!dto.getChannelIds().isEmpty()) {
+                    for (Long channelId : dto.getChannelIds()) {
+                        BannerChannel channel = channelRepository.findById(channelId)
+                                .orElseThrow(() -> new BannerException("Canal não encontrado com ID: " + channelId));
+                        channels.add(channel);
+                    }
+                }
+                // Setar a nova coleção - o JPA vai gerenciar as novas associações
+                config.setChannels(channels);
             }
 
             BannerConfig saved = configRepository.save(config);
@@ -198,6 +332,10 @@ public class BannerService {
             log.info("Deleting banner config with ID: {}", id);
             BannerConfig config = configRepository.findById(id)
                     .orElseThrow(() -> new BannerException("Configuração não encontrada com ID: " + id));
+            
+            // Deletar associações ManyToMany diretamente da tabela de junção
+            configRepository.deleteConfigChannelAssociations(id);
+            
             configRepository.delete(config);
         } catch (BannerException e) {
             throw e;
@@ -207,12 +345,54 @@ public class BannerService {
         }
     }
 
-    public List<BannerImageDTO> getAllImages() {
+    public List<BannerImageDTO> getAllImages(Long channelId) {
         try {
-            log.info("Getting all banner images");
-            return imageRepository.findByActiveTrueOrderByDisplayOrderAsc().stream()
+            log.info("Getting all banner images for channelId: {}", channelId);
+            List<BannerImage> images;
+            if (channelId != null) {
+                images = imageRepository.findByActiveTrueAndChannelsIdOrderByDisplayOrderAsc(channelId);
+            } else {
+                images = imageRepository.findByActiveTrueOrderByDisplayOrderAsc();
+            }
+            
+            // Criar DTOs primeiro sem acessar canais
+            List<BannerImageDTO> dtos = images.stream()
                     .map(BannerImageDTO::new)
                     .collect(Collectors.toList());
+            
+            // Carregar nomes dos canais de forma segura usando uma query separada
+            List<BannerChannel> allChannels = channelRepository.findAll();
+            for (int i = 0; i < images.size(); i++) {
+                BannerImage image = images.get(i);
+                BannerImageDTO dto = dtos.get(i);
+                
+                // Buscar canais associados usando uma query nativa para evitar problemas de lazy loading
+                try {
+                    List<Long> channelIds = imageRepository.findChannelIdsByImageId(image.getId());
+                    if (channelIds != null && !channelIds.isEmpty()) {
+                        dto.setChannelIds(channelIds);
+                        // Mapear IDs para nomes
+                        List<String> channelNames = allChannels.stream()
+                                .filter(ch -> channelIds.contains(ch.getId()))
+                                .map(BannerChannel::getName)
+                                .collect(Collectors.toList());
+                        dto.setChannelNames(channelNames);
+                    } else {
+                        // Se não tem canais específicos, está em todos
+                        dto.setChannelIds(null);
+                        dto.setChannelNames(List.of("Todos"));
+                    }
+                } catch (Exception e) {
+                    log.debug("Could not load channels for image {}: {}", image.getId(), e.getMessage());
+                    dto.setChannelNames(List.of("Todos")); // Default para "Todos" em caso de erro
+                }
+            }
+            
+            return dtos;
+        } catch (ConcurrentModificationException e) {
+            // Erro de concorrência - retornar lista vazia
+            log.debug("Concurrent modification while loading images (channelId: {}), returning empty list", channelId);
+            return new ArrayList<>();
         } catch (Exception e) {
             log.error("Error getting all banner images", e);
             throw new BannerException("Erro ao buscar imagens", e);
@@ -224,7 +404,30 @@ public class BannerService {
             log.info("Getting banner image by ID: {}", id);
             BannerImage image = imageRepository.findById(id)
                     .orElseThrow(() -> new BannerException("Imagem não encontrada com ID: " + id));
-            return new BannerImageDTO(image);
+            
+            BannerImageDTO dto = new BannerImageDTO(image);
+            
+            // Carregar nomes dos canais de forma segura
+            try {
+                List<Long> channelIds = imageRepository.findChannelIdsByImageId(id);
+                if (channelIds != null && !channelIds.isEmpty()) {
+                    dto.setChannelIds(channelIds);
+                    List<BannerChannel> allChannels = channelRepository.findAll();
+                    List<String> channelNames = allChannels.stream()
+                            .filter(ch -> channelIds.contains(ch.getId()))
+                            .map(BannerChannel::getName)
+                            .collect(Collectors.toList());
+                    dto.setChannelNames(channelNames);
+                } else {
+                    dto.setChannelIds(null);
+                    dto.setChannelNames(List.of("Todos"));
+                }
+            } catch (Exception e) {
+                log.debug("Could not load channels for image {}: {}", id, e.getMessage());
+                dto.setChannelNames(List.of("Todos"));
+            }
+            
+            return dto;
         } catch (BannerException e) {
             throw e;
         } catch (Exception e) {
@@ -248,7 +451,21 @@ public class BannerService {
                 throw new BannerException("URL da imagem é obrigatória");
             }
 
+            // Salvar a imagem primeiro para obter o ID
             BannerImage saved = imageRepository.save(image);
+
+            // Associar canais após salvar (para garantir que a imagem tenha ID)
+            if (dto.getChannelIds() != null && !dto.getChannelIds().isEmpty()) {
+                Set<BannerChannel> channels = new HashSet<>();
+                for (Long channelId : dto.getChannelIds()) {
+                    BannerChannel channel = channelRepository.findById(channelId)
+                            .orElseThrow(() -> new BannerException("Canal não encontrado com ID: " + channelId));
+                    channels.add(channel);
+                }
+                saved.setChannels(channels);
+                saved = imageRepository.save(saved); // Salvar novamente com os canais associados
+            }
+
             return new BannerImageDTO(saved);
         } catch (BannerException e) {
             throw e;
@@ -271,6 +488,24 @@ public class BannerService {
             if (dto.getDisplayOrder() != null) image.setDisplayOrder(dto.getDisplayOrder());
             if (dto.getTransitionDurationSeconds() != null) image.setTransitionDurationSeconds(dto.getTransitionDurationSeconds());
 
+            // Atualizar canais
+            if (dto.getChannelIds() != null) {
+                // Deletar associações antigas primeiro usando query nativa para evitar problemas com lazy loading
+                imageRepository.deleteImageChannelAssociations(id);
+                
+                // Criar nova coleção com os canais selecionados
+                Set<BannerChannel> channels = new HashSet<>();
+                if (!dto.getChannelIds().isEmpty()) {
+                    for (Long channelId : dto.getChannelIds()) {
+                        BannerChannel channel = channelRepository.findById(channelId)
+                                .orElseThrow(() -> new BannerException("Canal não encontrado com ID: " + channelId));
+                        channels.add(channel);
+                    }
+                }
+                // Setar a nova coleção - o JPA vai gerenciar as novas associações
+                image.setChannels(channels);
+            }
+
             BannerImage saved = imageRepository.save(image);
             return new BannerImageDTO(saved);
         } catch (BannerException e) {
@@ -287,6 +522,9 @@ public class BannerService {
             log.info("Deleting banner image with ID: {}", id);
             BannerImage image = imageRepository.findById(id)
                     .orElseThrow(() -> new BannerException("Imagem não encontrada com ID: " + id));
+
+            // Deletar associações ManyToMany diretamente da tabela de junção
+            imageRepository.deleteImageChannelAssociations(id);
 
             // Deletar arquivo físico primeiro
             if (image.getImageUrl() != null && !image.getImageUrl().trim().isEmpty()) {

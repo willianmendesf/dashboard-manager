@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BannerService, BannerCurrentStateDTO, BannerImageDTO } from '../../../shared/service/banner.service';
 import { interval, Subject } from 'rxjs';
@@ -19,6 +19,7 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   private bannerService = inject(BannerService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
@@ -39,9 +40,16 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   private slideTimeout: any = null;
   private progressInterval: any = null;
   private slideStartTime: number = 0;
+  private channelId: number | undefined;
 
   ngOnInit(): void {
-    this.loadCurrentState();
+    // Obter channelId da rota se disponível
+    this.route.params.subscribe(params => {
+      const channelIdParam = params['channelId'];
+      this.channelId = channelIdParam ? Number(channelIdParam) : undefined;
+      this.loadCurrentState();
+    });
+
     // Polling a cada 5 segundos
     interval(5000)
       .pipe(takeUntil(this.destroy$))
@@ -62,7 +70,7 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   }
 
   private loadCurrentState(): void {
-    this.bannerService.getCurrentState()
+    this.bannerService.getCurrentState(this.channelId)
       .pipe(
         catchError(error => {
           console.error('Erro ao carregar estado atual:', error);
@@ -202,19 +210,27 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
       return;
     }
     
+    // Verificar se estava com 1 ou menos imagens e agora tem mais (ou vice-versa)
+    const hadOneOrLess = this.currentImages.length <= 1;
+    const nowHasMore = newImages.length > 1;
+    const shouldRestartCarousel = hadOneOrLess && nowHasMore;
+    
     // Atualizar apenas as imagens sem transição completa
     this.currentImages = newImages;
     
     // Resetar índice apenas se necessário (imagem atual não existe mais)
     if (this.currentImageIndex >= this.currentImages.length) {
       this.currentImageIndex = 0;
-      this.updateCurrentImageUrl();
-      // Reiniciar carrossel apenas se o índice foi resetado
+    }
+    
+    this.updateCurrentImageUrl();
+    
+    // Reiniciar carrossel se:
+    // 1. Passou de 1 ou menos para mais de 1 imagem (precisa iniciar carrossel)
+    // 2. Ou se o carrossel não está rodando (timeout/interval são null)
+    const carouselNotRunning = !this.slideTimeout && !this.progressInterval;
+    if (shouldRestartCarousel || carouselNotRunning) {
       this.startSlideCarousel();
-    } else {
-      // Se o índice ainda é válido, apenas atualizar a URL da imagem atual
-      // mas NÃO reiniciar o carrossel para não interromper a transição atual
-      this.updateCurrentImageUrl();
     }
     
     // Forçar detecção de mudanças
@@ -305,6 +321,16 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
     this.currentVideoId = null;
     this.videoIframeKey = ''; // Limpar key do vídeo
     
+    // Parar qualquer carrossel anterior que possa estar rodando
+    if (this.slideTimeout) {
+      clearTimeout(this.slideTimeout);
+      this.slideTimeout = null;
+    }
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
+    
     // Criar nova referência do array para garantir detecção de mudanças
     this.currentImages = state.images ? [...state.images] : [];
     
@@ -317,8 +343,12 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
     // Forçar detecção de mudanças antes de iniciar carrossel
     this.cdr.detectChanges();
 
-    // Iniciar carrossel de slides
-    this.startSlideCarousel();
+    // Aguardar um pequeno delay para garantir que o DOM foi atualizado
+    // Isso é especialmente importante quando transiciona de vídeo para slides
+    setTimeout(() => {
+      // Iniciar carrossel de slides
+      this.startSlideCarousel();
+    }, 100);
   }
 
   private startSlideCarousel(): void {
@@ -332,8 +362,8 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
       this.progressInterval = null;
     }
 
-    // Se não há imagens ou apenas uma, não iniciar carrossel
-    if (this.currentImages.length <= 1) {
+    // Se não há imagens, não iniciar carrossel
+    if (this.currentImages.length === 0) {
       this.currentSlideProgress = 0;
       return;
     }
@@ -343,7 +373,9 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
       this.currentImageIndex = 0;
     }
 
-    // Iniciar transição da imagem atual
+    // Se há apenas 1 imagem, ainda assim iniciar transição para respeitar o tempo configurado
+    // Isso permite que quando novas imagens forem adicionadas, o carrossel já esteja funcionando
+    // Iniciar transição da imagem atual (mesmo que seja apenas 1)
     this.startCurrentSlideTransition();
   }
 
@@ -372,35 +404,47 @@ export class MuralDigitalComponent implements OnInit, OnDestroy {
   }
 
   private nextSlide(): void {
-    if (this.currentImages.length > 0) {
-      // Limpar intervalos
-      if (this.progressInterval) {
-        clearInterval(this.progressInterval);
-        this.progressInterval = null;
-      }
+    if (this.currentImages.length === 0) {
+      return;
+    }
+    
+    // Limpar intervalos
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
+    
+    // Se há apenas 1 imagem, apenas reiniciar a transição sem fade
+    if (this.currentImages.length === 1) {
+      this.currentSlideProgress = 0;
+      this.isImageTransitioning = false;
+      this.startCurrentSlideTransition();
+      this.cdr.detectChanges();
+      return;
+    }
+    
+    // Se há mais de 1 imagem, fazer transição normal
+    // Fade out completo antes de trocar
+    this.isImageTransitioning = true;
+    this.cdr.detectChanges();
+    
+    // Aguardar fade out completo (800ms) antes de trocar imagem
+    setTimeout(() => {
+      // Avançar para próxima imagem
+      this.currentImageIndex = (this.currentImageIndex + 1) % this.currentImages.length;
+      this.updateCurrentImageUrl();
+      this.isImageTransitioning = false;
+      this.currentSlideProgress = 0;
       
-      // Fade out completo antes de trocar
-      this.isImageTransitioning = true;
+      // Forçar detecção de mudanças para mostrar nova imagem
       this.cdr.detectChanges();
       
-      // Aguardar fade out completo (800ms) antes de trocar imagem
+      // Aguardar um frame para garantir que a nova imagem está carregada
       setTimeout(() => {
-        // Avançar para próxima imagem
-        this.currentImageIndex = (this.currentImageIndex + 1) % this.currentImages.length;
-        this.updateCurrentImageUrl();
-        this.isImageTransitioning = false;
-        this.currentSlideProgress = 0;
-        
-        // Forçar detecção de mudanças para mostrar nova imagem
-        this.cdr.detectChanges();
-        
-        // Aguardar um frame para garantir que a nova imagem está carregada
-        setTimeout(() => {
-          // Reiniciar transição para nova imagem
-          this.startCurrentSlideTransition();
-        }, 50);
-      }, 800);
-    }
+        // Reiniciar transição para nova imagem
+        this.startCurrentSlideTransition();
+      }, 50);
+    }, 800);
   }
 
   private updateCurrentImageUrl(): void {

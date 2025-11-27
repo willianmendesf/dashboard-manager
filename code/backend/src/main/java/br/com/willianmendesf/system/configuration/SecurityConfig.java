@@ -103,6 +103,7 @@ public class SecurityConfig {
                     return (servletPath != null && servletPath.startsWith("/public/")) ||
                            (requestURI != null && requestURI.contains("/public/"));
                 }).permitAll()
+                .requestMatchers("/banners/channels/active").permitAll() // Listar canais ativos (público)
                 .requestMatchers("/configurations/FAVICON_URL").permitAll() // Favicon (público)
                 .requestMatchers("/configurations/LOGO_URL").permitAll() // Logo (público)
                 .requestMatchers("/enrollments/request").permitAll() // Solicitação de participação em grupos (público)

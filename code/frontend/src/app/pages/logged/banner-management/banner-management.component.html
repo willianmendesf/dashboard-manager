@@ -12,7 +12,13 @@
     [class.active]="activeTab === 'schedules'"
     (click)="activeTab = 'schedules'"
     class="tab-button">
-    Programação
+    Vídeo
+  </button>
+  <button 
+    [class.active]="activeTab === 'channels'"
+    (click)="activeTab = 'channels'"
+    class="tab-button">
+    Canais
   </button>
 </div>
 
@@ -46,6 +52,15 @@
         <p class="transition-info">
           Tempo de Transição: {{ image.transitionDurationSeconds || 10 }}s
         </p>
+        <p class="channels-info" *ngIf="image.channelNames && image.channelNames.length > 0">
+          <strong>Canais:</strong> 
+          <span *ngIf="image.channelNames.length === 1 && image.channelNames[0] === 'Todos'" class="all-channels">
+            Todos
+          </span>
+          <span *ngIf="!(image.channelNames.length === 1 && image.channelNames[0] === 'Todos')" class="specific-channels">
+            {{ image.channelNames.join(', ') }}
+          </span>
+        </p>
       </div>
     </div>
   </div>
@@ -54,9 +69,9 @@
 <!-- Schedules Tab -->
 <div *ngIf="activeTab === 'schedules'" class="tab-content">
   <div class="section-header">
-    <h2>Programação de Horários</h2>
+    <h2>Vídeos</h2>
     <button (click)="openConfigModal()" class="btn btn-primary">
-      Adicionar Horário
+      Adicionar Vídeo
     </button>
   </div>
 
@@ -71,25 +86,41 @@
       <thead>
         <tr>
           <th>Título</th>
-          <th>Tipo</th>
+          <th>Data</th>
+          <th>Canais</th>
           <th>Início</th>
           <th>Fim</th>
-          <th>URL/Config</th>
+          <th>URL do YouTube</th>
           <th>Áudio</th>
-          <th>Ativo</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let config of configs">
           <td>{{ config.title || '-' }}</td>
-          <td>{{ getConfigTypeLabel(config.type) }}</td>
+          <td>
+            <span *ngIf="config.isRecurring === false && config.specificDate" class="specific-date">
+              {{ formatDate(config.specificDate) }}
+            </span>
+            <span *ngIf="config.isRecurring === true || !config.specificDate" class="recurring-date">
+              Diário
+            </span>
+          </td>
+          <td>
+            <span *ngIf="config.channelNames && config.channelNames.length === 1 && config.channelNames[0] === 'Todos'" class="all-channels">
+              Todos
+            </span>
+            <span *ngIf="config.channelNames && !(config.channelNames.length === 1 && config.channelNames[0] === 'Todos')" class="specific-channels">
+              {{ config.channelNames.join(', ') }}
+            </span>
+            <span *ngIf="!config.channelNames || config.channelNames.length === 0">
+              N/A
+            </span>
+          </td>
           <td>{{ config.startTime }}</td>
           <td>{{ config.endTime }}</td>
-          <td>
-            <span *ngIf="config.type === 'VIDEO_YOUTUBE'">{{ config.youtubeUrl }}</span>
-            <span *ngIf="config.type === 'IMAGE_SLIDE'">-</span>
-          </td>
+          <td>{{ config.youtubeUrl || '-' }}</td>
           <td>{{ config.muted ? 'Mudo' : 'Ativo' }}</td>
           <td>
             <span [class]="config.isActive ? 'badge-active' : 'badge-inactive'">
@@ -115,6 +146,113 @@
     </table>
   </div>
 </div>
+
+<!-- Channels Tab -->
+<div *ngIf="activeTab === 'channels'" class="tab-content">
+  <div class="section-header">
+    <h2>Canais</h2>
+    <button (click)="openChannelModal()" class="btn btn-primary">
+      Adicionar Canal
+    </button>
+  </div>
+
+  <div *ngIf="isLoadingChannels" class="loading">Carregando...</div>
+
+  <div *ngIf="!isLoadingChannels && channels.length === 0" class="empty-state">
+    <p>Nenhum canal cadastrado</p>
+  </div>
+
+  <div *ngIf="!isLoadingChannels && channels.length > 0" class="configs-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let channel of channels">
+          <td><strong>{{ channel.name }}</strong></td>
+          <td>{{ channel.description || '-' }}</td>
+          <td>
+            <span [class]="channel.isActive ? 'badge-active' : 'badge-inactive'">
+              {{ channel.isActive ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <button 
+                (click)="toggleChannelActive(channel)" 
+                [class]="channel.isActive ? 'btn btn-sm btn-warning' : 'btn btn-sm btn-success'"
+                [title]="channel.isActive ? 'Desativar' : 'Ativar'">
+                {{ channel.isActive ? 'Desativar' : 'Ativar' }}
+              </button>
+              <div class="action-buttons">
+                <button class="btn-action edit" (click)="openChannelModal(channel)" title="Editar" [innerHTML]="getIcon('edit')" [attr.aria-label]="'Editar'"></button>
+                <button class="btn-action delete" (click)="deleteChannel(channel.id!)" title="Excluir" [innerHTML]="getIcon('delete')" [attr.aria-label]="'Excluir'"></button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Channel Modal -->
+<app-modal 
+  [isOpen]="showChannelModal"
+  [title]="isEditingChannel ? 'Editar Canal' : 'Novo Canal'"
+  (close)="closeChannelModal()">
+  <div class="modal-content">
+    <div class="form-group">
+      <label>Nome *</label>
+      <input 
+        type="text" 
+        [(ngModel)]="currentChannel.name"
+        placeholder="Nome do canal"
+        class="form-control"
+        required />
+    </div>
+
+    <div class="form-group">
+      <label>Descrição</label>
+      <textarea 
+        [(ngModel)]="currentChannel.description"
+        placeholder="Descrição do canal (opcional)"
+        class="form-control"
+        rows="3"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Ordem de Exibição</label>
+      <input 
+        type="number" 
+        [(ngModel)]="currentChannel.displayOrder"
+        min="0"
+        class="form-control" />
+      <small class="form-text">Canais são exibidos em ordem crescente</small>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input 
+          type="checkbox" 
+          [(ngModel)]="currentChannel.isActive" />
+        <span>Ativo (canal será exibido na seleção)</span>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button (click)="closeChannelModal()" class="btn btn-secondary">Cancelar</button>
+      <button (click)="saveChannel()" class="btn btn-primary">
+        {{ isEditingChannel ? 'Salvar Alterações' : 'Criar Canal' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
 
 <!-- Image Modal -->
 <app-modal 
@@ -221,6 +359,22 @@
       </label>
     </div>
 
+    <div class="form-group">
+      <label>Canais</label>
+      <div class="channels-selection">
+        <div *ngFor="let channel of channels" class="channel-checkbox">
+          <label>
+            <input 
+              type="checkbox"
+              [checked]="isChannelSelected(channel.id!, currentImage.channelIds)"
+              (change)="currentImage.channelIds = toggleChannelSelection(channel.id!, currentImage.channelIds)" />
+            <span>{{ channel.name }}</span>
+          </label>
+        </div>
+        <small class="form-text">Selecione os canais onde esta imagem será exibida. Se nenhum for selecionado, a imagem ficará disponível para todos os canais.</small>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button (click)="closeImageModal()" class="btn btn-secondary">Cancelar</button>
       <button (click)="saveImage()" class="btn btn-primary" [disabled]="!imagePreview && !isEditingImage">
@@ -233,17 +387,9 @@
 <!-- Config Modal -->
 <app-modal 
   [isOpen]="showConfigModal"
-  [title]="isEditingConfig ? 'Editar Configuração' : 'Nova Configuração'"
+  [title]="isEditingConfig ? 'Editar Vídeo' : 'Novo Vídeo'"
   (close)="closeConfigModal()">
   <div class="modal-content">
-    <div class="form-group">
-      <label>Tipo *</label>
-      <select [(ngModel)]="currentConfig.type" class="form-control">
-        <option value="IMAGE_SLIDE">Slide de Imagens</option>
-        <option value="VIDEO_YOUTUBE">Vídeo YouTube</option>
-      </select>
-    </div>
-
     <div class="form-group">
       <label>Título</label>
       <input 
@@ -255,39 +401,62 @@
     </div>
 
     <div class="form-group">
-      <label>Horário de Início *</label>
-      <input 
-        type="time" 
-        [(ngModel)]="currentConfig.startTime"
-        class="form-control"
-        required />
-    </div>
-
-    <div class="form-group">
-      <label>Horário de Fim *</label>
-      <input 
-        type="time" 
-        [(ngModel)]="currentConfig.endTime"
-        class="form-control"
-        required />
-    </div>
-
-    <div class="form-group" *ngIf="currentConfig.type === 'VIDEO_YOUTUBE'">
       <label>URL do YouTube *</label>
       <input 
         type="text" 
         [(ngModel)]="currentConfig.youtubeUrl"
         class="form-control"
-        placeholder="https://www.youtube.com/watch?v=..." />
+        placeholder="https://www.youtube.com/watch?v=..."
+        required />
+      <small class="form-text">Cole o link completo do vídeo do YouTube</small>
     </div>
 
-    <div class="form-group" *ngIf="currentConfig.type === 'VIDEO_YOUTUBE'">
+    <div class="form-group">
       <label>
         <input 
           type="checkbox" 
           [(ngModel)]="currentConfig.muted" />
         Iniciar com áudio mudo
       </label>
+    </div>
+
+    <div class="form-group form-row">
+      <div class="form-group-half">
+        <label>Horário de Início *</label>
+        <input 
+          type="time" 
+          [(ngModel)]="currentConfig.startTime"
+          class="form-control"
+          required />
+      </div>
+      <div class="form-group-half">
+        <label>Horário de Fim *</label>
+        <input 
+          type="time" 
+          [(ngModel)]="currentConfig.endTime"
+          class="form-control"
+          required />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input 
+          type="checkbox" 
+          [(ngModel)]="currentConfig.isRecurring" />
+        Recorrente (todos os dias)
+      </label>
+      <small class="form-text">Se desmarcado, você poderá escolher uma data específica</small>
+    </div>
+
+    <div class="form-group" *ngIf="currentConfig.isRecurring === false">
+      <label>Data Específica *</label>
+      <input 
+        type="date" 
+        [(ngModel)]="currentConfig.specificDate"
+        class="form-control"
+        required />
+      <small class="form-text">O vídeo será exibido apenas nesta data</small>
     </div>
 
     <div class="form-group">
@@ -298,6 +467,22 @@
         class="form-control"
         min="0" />
       <small class="form-text">Em caso de horários sobrepostos, menor número tem prioridade</small>
+    </div>
+
+    <div class="form-group">
+      <label>Canais</label>
+      <div class="channels-selection">
+        <div *ngFor="let channel of channels" class="channel-checkbox">
+          <label>
+            <input 
+              type="checkbox"
+              [checked]="isChannelSelected(channel.id!, currentConfig.channelIds)"
+              (change)="currentConfig.channelIds = toggleChannelSelection(channel.id!, currentConfig.channelIds)" />
+            <span>{{ channel.name }}</span>
+          </label>
+        </div>
+        <small class="form-text">Selecione os canais onde esta programação será exibida. Se nenhum for selecionado, ficará disponível para todos os canais.</small>
+      </div>
     </div>
 
     <div class="form-group">
