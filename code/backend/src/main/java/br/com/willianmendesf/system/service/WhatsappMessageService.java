@@ -101,12 +101,9 @@ public class WhatsappMessageService {
 
     private void sendMediaMessage(WhatsappSender message) {
         log.info("Sending media message!");
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
         var body = createMediaMessage(message);
-
-        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+        HttpEntity<MultiValueMap<String, Object>> request = 
+            whatsappSender.createMultipartRequestEntity(body, MediaType.MULTIPART_FORM_DATA);
         whatsappSender.sendRequest(SEND_MESSAGE + message.getMediaType().getDesc(), request);
         log.info("Message media sent!");
     }
