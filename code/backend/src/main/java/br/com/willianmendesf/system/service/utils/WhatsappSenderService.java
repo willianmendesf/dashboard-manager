@@ -228,6 +228,24 @@ public class WhatsappSenderService {
         
         return new HttpEntity<>(headers);
     }
+    
+    /**
+     * Cria HttpEntity para requisições multipart (form-data) com Basic Auth
+     */
+    public <T> HttpEntity<T> createMultipartRequestEntity(T body, MediaType contentType) {
+        HttpHeaders headers = new HttpHeaders();
+        if (contentType != null) {
+            headers.setContentType(contentType);
+        }
+        
+        // Adicionar Basic Auth se configurado
+        String basicAuth = getBasicAuthCredentials();
+        if (basicAuth != null) {
+            headers.set("Authorization", "Basic " + basicAuth);
+        }
+        
+        return new HttpEntity<>(body, headers);
+    }
 
     public ResponseEntity<String> sendRequest(String endpoint, HttpEntity<?> requestEntity) {
         try {

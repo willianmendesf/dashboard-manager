@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Objects.isNull;
 
@@ -653,12 +655,16 @@ public class AppointmentSchedulerService {
 
     /**
      * Envia mensagens para os destinatários
+     * Lança exceção se todos os envios falharem
      */
     private void sendMessages(String type, AppointmentEntity appointment, Collection<String> recipients) {
         if (recipients == null || recipients.isEmpty())
             return;
 
         String monitoringMessage = MessagesUtils.generateMonitoringMessage(appointment);
+        int totalRecipients = recipients.size();
+        AtomicInteger successCount = new AtomicInteger(0);
+        List<String> errors = new ArrayList<>();
 
         recipients.forEach(recipient -> {
             try {
@@ -676,11 +682,29 @@ public class AppointmentSchedulerService {
                     message.setMessage(monitoringMessage);
                 }
                 whatsapp.sendMessage(message);
+                successCount.incrementAndGet();
             } catch (Exception e) {
+                String errorMsg = String.format("Error sending message to recipient %s: %s", 
+                    recipient, e.getMessage());
                 log.error("Error sending message to recipient {} for appointment {} (ID: {}): {}. Continuing with other recipients.", 
                         recipient, appointment.getName(), appointment.getId(), e.getMessage(), e);
-                // Continuar com os próximos destinatários mesmo se um falhar
+                errors.add(errorMsg);
             }
         });
+        
+        // Se todos os envios falharam, lançar exceção para marcar o agendamento como falha
+        if (successCount.get() == 0 && totalRecipients > 0) {
+            String errorMessage = String.format(
+                "Failed to send messages to all %d recipient(s) for appointment '%s' (ID: %d). Errors: %s",
+                totalRecipients, appointment.getName(), appointment.getId(), 
+                String.join("; ", errors));
+            throw new RuntimeException(errorMessage);
+        }
+        
+        // Se pelo menos um falhou mas não todos, logar aviso
+        if (successCount.get() > 0 && successCount.get() < totalRecipients) {
+            log.warn("Partial failure: {}/{} messages sent successfully for appointment {} (ID: {})", 
+                successCount.get(), totalRecipients, appointment.getName(), appointment.getId());
+        }
     }
 }

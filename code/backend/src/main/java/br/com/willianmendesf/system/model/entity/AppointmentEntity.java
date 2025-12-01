@@ -62,6 +62,9 @@ public class AppointmentEntity {
     @Column(name = "version")
     private Long version = 0L;
 
+    @Column(name = "is_system_appointment")
+    private Boolean isSystemAppointment = false;
+
     public void setAppointmentEntity(AppointmentEntity entity) {
         if (isNull(entity)) throw new AppointmentException("AppointmentEntity input be not null.");
 
@@ -86,11 +89,11 @@ public class AppointmentEntity {
         this.recipientType = entity.getRecipientType() != null ? entity.getRecipientType() : this.recipientType;
         this.imageToSend = entity.getImageToSend() != null ? entity.getImageToSend() : this.imageToSend;
         this.version = entity.getVersion() != null ? entity.getVersion() : this.version;
-
         if (entity.getRetries() != null) this.retries = entity.getRetries();
         if (entity.getEnabled() != null) this.enabled = entity.getEnabled();
         if (entity.getTimeout() != null) this.timeout = entity.getTimeout();
         if (entity.getSendImage() != null) this.sendImage = entity.getSendImage();
+        if (entity.getIsSystemAppointment() != null) this.isSystemAppointment = entity.getIsSystemAppointment();
     }
 
     public AppointmentEntity() { }
@@ -121,6 +124,7 @@ public class AppointmentEntity {
         this.sendImage = entity.getSendImage();
         this.imageToSend = entity.getImageToSend();
         this.version = entity.getVersion();
+        if (entity.getIsSystemAppointment() != null) this.isSystemAppointment = entity.getIsSystemAppointment();
     }
 
     public AppointmentEntity(AppointmentEntity entity) {
@@ -148,6 +152,7 @@ public class AppointmentEntity {
         this.recipientType = entity.getRecipientType();
         this.sendImage = entity.getSendImage();
         this.imageToSend = entity.getImageToSend();
+        if (entity.getIsSystemAppointment() != null) this.isSystemAppointment = entity.getIsSystemAppointment();
     }
 
     public AppointmentEntity(
@@ -198,6 +203,7 @@ public class AppointmentEntity {
         this.recipientType = recipientType;
         this.sendImage = sendImage;
         this.imageToSend = imageToSend;
+        this.isSystemAppointment = false;
     }
 
     @Override
