@@ -555,7 +555,7 @@ public class MemberImportService {
     /**
      * Generates an Excel template file with header row
      */
-    public byte[] generateTemplate() throws Exception {
+    public byte[] generateTemplate() {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Membros");
             
@@ -578,15 +578,25 @@ public class MemberImportService {
                 cell.setCellStyle(headerStyle);
             }
             
-            // Auto-size columns
+            // Auto-size columns with error handling
             for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
+                try {
+                    sheet.autoSizeColumn(i);
+                } catch (Exception e) {
+                    log.warn("Error auto-sizing column {}: {}", i, e.getMessage());
+                    // Set a default width if auto-size fails
+                    sheet.setColumnWidth(i, 5000);
+                }
             }
             
             // Write to byte array
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            workbook.write(outputStream);
-            return outputStream.toByteArray();
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                workbook.write(outputStream);
+                return outputStream.toByteArray();
+            }
+        } catch (Exception e) {
+            log.error("Error generating member template", e);
+            throw new RuntimeException("Erro ao gerar template de importação: " + e.getMessage(), e);
         }
     }
 }
